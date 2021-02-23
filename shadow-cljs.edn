@@ -1,0 +1,22 @@
+{:builds
+ {:dev
+  {:asset-path "/js"
+   :modules    {:main {:entries [helins.wasmeta.dev]}}
+   :output-dir "resources/public/js"
+   :target     :browser}
+
+
+ :test
+ {:ns-regexp ".+"
+  :runner-ns lambdaisland.chui.shadow.browser-runner
+  :target    :browser-test
+  :test-dir  "resources/chui"}}
+
+ :deps
+ {:alias [:cljs]}
+
+ :dev-http
+ {8000 "resources/public"}
+ 
+ :nrepl
+ {:port 47869}}

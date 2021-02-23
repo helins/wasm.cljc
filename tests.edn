@@ -1,0 +1,16 @@
+#kaocha/v1
+{:tests [{:id                  :jvm
+          :kaocha/ns-patterns  [".+"]
+          :kaocha/source-paths ["src/main"]
+          :kaocha/test-paths   ["src/test"]}
+         {:id                  :node
+          :type                :kaocha.type/cljs
+          :kaocha/ns-patterns  [".+"]
+          :kaocha/source-paths ["src/main"]
+          :kaocha/test-paths   ["src/test"]}
+         {:id                  :browser
+          :type                :kaocha.type/cljs
+          :cljs/repl-env       cljs.repl.browser/repl-env
+          :kaocha/ns-patterns  [".+"]
+          :kaocha/source-paths ["src/main"]
+          :kaocha/test-paths   ["src/test"]}]}

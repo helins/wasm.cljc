@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.helins</groupId>
+  <artifactId>wasmeta</artifactId>
+  <version>0.0.0-alpha0</version>
+  <name>wasmeta</name>
+  <description>Metaprogramming in WebAssembly</description>
+  <url>https://github.com/helins-io/wasmeta.cljc</url>
+  <licenses>
+    <license>
+      <name>Mozilla Public License Version 2.0</name>
+      <url>https://www.mozilla.org/en-US/MPL/2.0/</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+        <name>Adam Helinski</name>
+    </developer>
+  </developers>
+  <scm>
+      <url>https://github.com/helins-io/wasmeta.cljc</url>
+      <connection>scm:git:git://github.com/helins-io/wasmeta.cljc.git</connection>
+      <developerConnection>scm:git:ssh://git@github.com/helins-io/wasmeta.cljc.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+  <dependencies>
+  </dependencies>
+  <build>
+    <sourceDirectory>src/main</sourceDirectory>
+  </build>
+  <repositories>
+    <repository>
+      <id>clojars</id>
+      <url>https://repo.clojars.org/</url>
+    </repository>
+  </repositories>
+  <distributionManagement>
+    <repository>
+      <id>clojars</id>
+      <name>Clojars repository</name>
+      <url>https://clojars.org/repo</url>
+    </repository>
+  </distributionManagement>
+</project>

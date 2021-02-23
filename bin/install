@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+
+clojure -X:jar && clojure -X:install && rm release.jar

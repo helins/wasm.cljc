@@ -1,0 +1,32 @@
+// Common
+
+*.class
+*.jar
+.hg/
+.hgignore
+/.cpcache
+/.nrepl-history
+/.nrepl-port
+/checkouts
+/classes
+/target
+
+
+// CLJS utilities
+
+.cljs
+.cljs_node_repl/
+.shadow-cljs/
+node_modules/
+out
+package.json
+
+
+// Resources
+
+/resources/chui/*
+!/resources/chui/index.html
+/resources/public/*
+!/resources/public/index.html
+
+./runtime/*

@@ -1,0 +1,38 @@
+{:aliases
+ {:cljs
+  {:extra-deps {thheller/shadow-cljs {:mvn/version "RELEASE"}}
+   :main-opts  ["-m" "shadow.cljs.devtools.cli"]}
+
+  :deploy
+  {:exec-args  {:artifact  "release.jar"
+                :installer :remote}
+   :exec-fn    deps-deploy.deps-deploy/deploy
+   :extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}}
+
+  :dev
+  {:extra-deps  {criterium/criterium               {:mvn/version "RELEASE"}
+                 org.wasmer/wasmer-jni-amd64-linux {:local/root "runtime/wasmer-jni-amd64-linux-0.3.0.jar"}}
+   :extra-paths ["src/dev"]}
+
+  :jar
+  {:exec-args    {:jar      "release.jar"
+                  :sync-pom true}
+   :exec-fn      hf.depstar/jar
+   :replace-deps {seancorfield/depstar {:mvn/version "2.0.171"}}}
+
+  :install
+  {:exec-args  {:artifact  "release.jar"
+                :installer :local}
+   :exec-fn    deps-deploy.deps-deploy/deploy
+   :extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}}
+
+  :test
+  {:extra-deps  {lambdaisland/chui   {:mvn/version "0.0.117"}
+                 lambdaisland/kaocha {:mvn/version "1.0-612"}}
+   :extra-paths ["src/test"]}}
+
+ :deps
+ {}
+
+ :paths
+ ["src/main"]}
