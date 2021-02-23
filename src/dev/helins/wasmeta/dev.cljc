@@ -9,7 +9,8 @@
 
   {:author "Adam"}
 
-  (:require [helins.wasmeta :as wasmeta]))
+  (:require [helins.wasmeta        :as wasmeta]
+            [helins.wasmeta.wasmer :as wasmer]))
 
 
 ;;;;;;;;;;
