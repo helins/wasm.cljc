@@ -16,6 +16,16 @@
 ;;;;;;;;;;
 
 
-#_(t/deftest main
+(t/deftest splice
 
-  (t/is (true? true)))
+  (t/is (= [1 2 3]
+           (wasmeta/splice [1 2 3]))
+        "Without splicing")
+
+  (t/is (= [1 2 3]
+           (wasmeta/splice [1 (list 2) 3]))
+        "Nested 1")
+
+  (t/is (= [1 2 3]
+           (wasmeta/splice [1 (list (list 2)) 3]))
+        "Nested several times"))
