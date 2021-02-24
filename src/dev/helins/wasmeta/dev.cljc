@@ -13,6 +13,7 @@
             [helins.wasmer.fn       :as wasmer.fn]
             [helins.wasmer.instance :as wasmer.instance]
             [helins.wasmer.mem      :as wasmer.mem]
+            [helins.wasmer.module   :as wasmer.module]
             [helins.wasmeta         :as wasmeta]))
 
 
@@ -21,6 +22,8 @@
 
 (comment
 
+
+  
 
 
   )

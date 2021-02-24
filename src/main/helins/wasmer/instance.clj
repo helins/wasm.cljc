@@ -9,9 +9,8 @@
 
   {:author "Adam Helinski"}
 
-  (:import java.io.File
-           java.nio.file.Files
-           org.wasmer.Instance))
+  (:import (org.wasmer Instance
+                       Module)))
 
 
 ;;;;;;;;;; Acquiring and discarding an instance
@@ -27,12 +26,24 @@
 
 
 
-(defn from-path
+(defn from-module
 
   ""
 
   ^Instance
 
-  [^String path-wasm]
+  [^Module module]
 
-  (Instance. (Files/readAllBytes (.toPath (File. path-wasm)))))
+  (.instantiate module))
+
+
+
+(defn from-source
+
+  ""
+
+  ^Instance
+
+  [^bytes source]
+
+  (Instance. source))
