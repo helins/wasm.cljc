@@ -7,7 +7,7 @@
 
   "For daydreaming at the REPL."
 
-  {:author "Adam"}
+  {:author "Adam Helinski"}
 
   (:require [kaocha.repl]
             [helins.wasmeta     :as wasmeta]

@@ -7,10 +7,13 @@
 
   "CLJC playground during dev."
 
-  {:author "Adam"}
+  {:author "Adam Helinski"}
 
-  (:require [helins.wasmeta        :as wasmeta]
-            [helins.wasmeta.wasmer :as wasmer]))
+  (:require [helins.wasmer          :as wasmer]
+            [helins.wasmer.fn       :as wasmer.fn]
+            [helins.wasmer.instance :as wasmer.instance]
+            [helins.wasmer.mem      :as wasmer.mem]
+            [helins.wasmeta         :as wasmeta]))
 
 
 ;;;;;;;;;;
