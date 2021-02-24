@@ -3,7 +3,7 @@
 ;; file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
-(ns helins.wasmeta
+(ns helins.wasmeta.wasmer
 
   ""
 
@@ -43,15 +43,28 @@
 ;;;;;;;;;; Retrieving and calling functions
 
 
-(defn call
+(defn arg-array
 
   ""
 
-  [^Function function args]
+  [& arg+]
 
-  (vec (.apply function
-               (into-array Object
-                           args))))
+  (into-array Object
+              arg+))
+
+
+
+(defn- -function
+
+  ;;
+
+  ^Function
+
+  [^Instance instance function-name]
+
+  (-> instance
+      .-exports
+      (.getFunction function-name)))
 
 
 
@@ -59,11 +72,28 @@
 
   ""
 
-  [^Instance instance function-name]
+  [instance function-name]
 
-  (-> instance
-      .-exports
-      (.getFunction function-name)))
+  (let [f (-function instance
+                     function-name)]
+    (fn wasm-function [& arg+]
+      (.apply f
+              (into-array Object
+                          arg+)))))
+
+
+
+(defn function-2
+
+  ""
+
+  [instance function-name]
+
+  (let [f (-function instance
+                     function-name)]
+    (fn wasm-function-2 [arg-array]
+      (.apply f
+              arg-array))))
 
 
 ;;;;;;;;;; Accessing instance memory
@@ -115,6 +145,12 @@
 
   (def i
        (instance "src/wasm/simple.wasm"))
+
+  (let [f (function i
+                    "sum")]
+    (first (f (int 2)
+              (int 3))))
+
 
   
   (-> i
