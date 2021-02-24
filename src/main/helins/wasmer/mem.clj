@@ -9,7 +9,8 @@
 
   {:author "Adam Helinski"}
 
-  (:import (org.wasmer Instance
+  (:import java.nio.ByteBuffer
+           (org.wasmer Instance
                        Memory)))
 
 
@@ -39,6 +40,8 @@
 (defn buffer
 
   ""
+
+  ^ByteBuffer
 
   [^Memory mem]
 

@@ -9,13 +9,13 @@
 
   {:author "Adam"}
 
-  (:require [clojure.test           :as t]
+  (:require [clojure.test   :as t]
             [helins.wasmeta :as wasmeta]))
 
 
 ;;;;;;;;;;
 
 
-(t/deftest main
+#_(t/deftest main
 
   (t/is (true? true)))

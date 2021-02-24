@@ -10,13 +10,14 @@
   {:author "Adam Helinski"}
 
   (:import org.wasmer.Instance
-           org.wasmer.exports.Function))
+           org.wasmer.exports.Function)
+  (:refer-clojure :exclude [find]))
 
 
 ;;;;;;;;;;
 
 
-(defn function
+(defn find
 
   ""
 

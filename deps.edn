@@ -10,8 +10,7 @@
    :extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}}
 
   :dev
-  {:extra-deps  {criterium/criterium               {:mvn/version "RELEASE"}
-                 org.wasmer/wasmer-jni-amd64-linux {:local/root "runtime/wasmer-jni-amd64-linux-0.3.0.jar"}}
+  {:extra-deps  {criterium/criterium {:mvn/version "RELEASE"}}
    :extra-paths ["src/dev"]}
 
   :jar
@@ -32,7 +31,7 @@
    :extra-paths ["src/test"]}}
 
  :deps
- {}
+ {org.wasmer/wasmer-jni-amd64-linux {:local/root "runtime/wasmer-jni-amd64-linux-0.3.0.jar"}}
 
  :paths
  ["src/main"]}
