@@ -142,6 +142,20 @@
                          form+))))))
 
 
+
+(defn module
+
+  ""
+
+  [ctx {:wasm/keys [module-field+]}]
+
+  (update (from-ir+ ctx
+                    module-field+)
+          :wasm/form
+          #(list* 'module
+                  %)))
+
+
 ;;;;;;;;;; Values
 
 
@@ -170,6 +184,7 @@
                     'i32.const i32-const
                     'local     local
                     'local.get local-get
+                    'module    module
                     'param     param
                     'result    result}})
 

@@ -99,6 +99,17 @@
          'func))
 
 
+
+(defn module
+
+  ""
+
+  [module-field+]
+
+  {:wasm/module-field+ module-field+
+   :wasm/target        'module})
+
+
 ;;;;;;;;;; Types - Functions
 
 

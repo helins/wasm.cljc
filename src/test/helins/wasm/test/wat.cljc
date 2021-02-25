@@ -115,6 +115,14 @@
                                                                       (ir/i32-const 42)))])))))))
 
 
+
+(t/deftest module
+
+  (t/is (= '(module
+              (func))
+           (ir->wat (ir/module [(ir/func {})])))))
+
+
 ;;;;;;;;;; Values
 
 
