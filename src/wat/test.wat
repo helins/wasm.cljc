@@ -4,7 +4,8 @@
               (param $b i32)
               (result i32)))
   (func $f
-        (export "add4")
+        (export "add5")
+        (export "f3")
         (type $foo)
         (param $a
                i32)
