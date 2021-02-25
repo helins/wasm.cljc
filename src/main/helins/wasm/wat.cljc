@@ -10,52 +10,8 @@
   {:author "Adam Helinski"})
 
 
-(declare conj-form
-         transl
+(declare transl
          transl+)
-
-
-;;;;;;;;;;
-
-
-(def ir-func
-     {:wasm/target  'func
-      :wasm/ident   '$sum
-      :wasm/export+ [{:wasm/name   "sum"
-                      :wasm/target 'export}]
-      :wasm/param+  [{:wasm/ident  '$a
-                      :wasm/target 'param
-                      :wasm/type   'i32}
-                     {:wasm/ident  '$b
-                      :wasm/target 'param
-                      :wasm/type   'i32}]
-      :wasm/local+  [{:wasm/ident  '$c
-                      :wasm/target 'local
-                      :wasm/type   'i32}]
-      :wasm/result+ [{:wasm/target 'result
-                      :wasm/type   'i32}
-                     #_{:wasm/type 'i64}]
-      :wasm/instr+  [{:wasm/target        'i32.add
-                      :wasm.i32.add/arg-0 {:wasm/target    'local.get
-                                           :wasm.local/get '$a}
-                      :wasm.i32.add/arg-1 {:wasm/target        'i32.add
-                                           :wasm.i32.add/arg-0 {:wasm/target    'local.get
-                                                                :wasm.local/get '$b}
-                                           :wasm.i32.add/arg-1 {:wasm/target   'i32.const
-                                                                :wasm.i32/const 42}}}]})
-
-
-
-(def ir-add
-     {:wasm/target        'i32.add
-      :wasm.i32.add/arg-0 {:wasm/target    'local.get
-                           :wasm.local/get '$a}
-      :wasm.i32.add/arg-1 {:wasm/target        'i32.add
-                           :wasm.i32.add/arg-0 {:wasm/target    'local.get
-                                                :wasm.local/get '$b}
-                           :wasm.i32.add/arg-1 {:wasm/target   'i32.const
-                                                :wasm.i32/const 42}}})
-
 
 
 ;;;;;;;;;; Instructions
@@ -112,12 +68,12 @@
 
   ""
 
-  [ctx {:wasm/keys [name]}]
+  [ctx {:wasm/keys [export]}]
 
   (assoc ctx
          :wasm/form
          (list 'export
-               name)))
+               export)))
 
 
 ;;;;;;;;; Function types
@@ -201,7 +157,7 @@
 ;;;;;;;;;;
 
 
-(def ctx
+(def ctx-default
 
   ""
 
@@ -213,21 +169,6 @@
                     'local.get local-get
                     'param     param
                     'result    result}})
-
-
-;;;;;;;;;;
-
-
-(defn conj-form
-
-  ""
-
-  [ctx form]
-
-  (update ctx
-          :wasm/form
-          conj
-          form))
 
 
 ;;;;;;;;;;
@@ -266,16 +207,23 @@
 
   ""
 
-  [ctx {:as        ir
-        :wasm/keys [target]}]
 
-  (if-some [f (get-in ctx
-                      [:wasm.wat/table
-                       target])]
-    (f ctx
-       ir)
-    (-throw-no-transl ctx
-                      target)))
+  ([ir]
+
+   (transl ctx-default
+           ir))
+
+
+  ([ctx {:as        ir
+         :wasm/keys [target]}]
+ 
+   (if-some [f (get-in ctx
+                       [:wasm.wat/table
+                        target])]
+     (f ctx
+        ir)
+     (-throw-no-transl ctx
+                       target))))
 
 
 
@@ -284,22 +232,28 @@
   ""
 
 
-  [ctx ir+]
+  ([ir]
 
-  (let [table (ctx :wasm.wat/table)]
-    (reduce (fn [ctx-2 {:as        ir
-                        :wasm/keys [target]}]
-              (let [ctx-3 (if-some [f (get table
-                                           target)]
-                            (f ctx-2
-                               ir)
-                            (-throw-no-transl ctx-2
-                                              target))]
-                (update ctx-3
-                        :wasm/form
-                        #(conj (ctx-2 :wasm/form)
-                               %))))
-            (assoc ctx
-                   :wasm/form
-                   [])
-            ir+)))
+   (transl+ ctx-default
+            ir))
+
+
+  ([ctx ir+]
+
+   (let [table (ctx :wasm.wat/table)]
+     (reduce (fn [ctx-2 {:as        ir
+                         :wasm/keys [target]}]
+               (let [ctx-3 (if-some [f (get table
+                                            target)]
+                             (f ctx-2
+                                ir)
+                             (-throw-no-transl ctx-2
+                                               target))]
+                 (update ctx-3
+                         :wasm/form
+                         #(conj (ctx-2 :wasm/form)
+                                %))))
+             (assoc ctx
+                    :wasm/form
+                    [])
+             ir+))))

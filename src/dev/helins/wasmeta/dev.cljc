@@ -9,7 +9,9 @@
 
   {:author "Adam Helinski"}
 
-  (:require [helins.wasmer          :as wasmer]
+  (:require [helins.wasm.ir         :as ir]
+            [helins.wasm.wat        :as wat]
+            [helins.wasmer          :as wasmer]
             [helins.wasmer.fn       :as wasmer.fn]
             [helins.wasmer.instance :as wasmer.instance]
             [helins.wasmer.mem      :as wasmer.mem]
@@ -20,8 +22,22 @@
 ;;;;;;;;;;
 
 
+(def ir-func
+     (ir/func (-> {}
+                  (ir/ident   '$sum)
+                  (ir/export+ ["sum"])
+                  (ir/param+  [['$a 'i32]
+                               ['$b 'i32]])
+                  (ir/local+  [['$c 'i32]])
+                  (ir/result+ ['i32])
+                  (ir/instr+  [(ir/i32-add (ir/local-get '$a)
+                                           (ir/i32-add (ir/local-get '$b)
+                                                       (ir/i32-const 42)))]))))
+
 (comment
 
+
+  (:wasm/form (wat/transl ir-func))
 
 
   )
