@@ -28,8 +28,8 @@
                   (ir/export+ ["sum"])
                   (ir/param+  [['$a 'i32]
                                ['$b 'i32]])
-                  (ir/local+  [['$c 'i32]])
                   (ir/result+ ['i32])
+                  (ir/local+  [['$c 'i32]])
                   (ir/instr+  [(ir/i32-add (ir/local-get '$a)
                                            (ir/i32-add (ir/local-get '$b)
                                                        (ir/i32-const 42)))]))))

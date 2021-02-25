@@ -10,114 +10,25 @@
   {:author "Adam Helinski"})
 
 
-(declare transl
-         transl+)
-
-
-;;;;;;;;;; Instructions
-
-
-(defn i32-add
-
-  ""
-
-  [ctx {:wasm.i32.add/keys [arg-0
-                            arg-1]}]
-
-  (let [ctx-2 (transl ctx
-                      arg-0)
-        ctx-3 (transl ctx-2
-                      arg-1)]
-    (assoc ctx-3
-           :wasm/form
-           (list 'i32.add
-                 (ctx-2 :wasm/form)
-                 (ctx-3 :wasm/form)))))
-
-
-
-(defn i32-const
-
-  ""
-
-  [ctx {:wasm.i32/keys [const]}]
-
-  (assoc ctx
-         :wasm/form
-         (list 'i32.const
-               const)))
-
-
-
-(defn local-get
-
-  ""
-
-  [ctx {ident :wasm.local/get}]
-
-  (assoc ctx
-         :wasm/form
-         (list 'local.get
-               ident)))
-
-
-;;;;;;;;;;
-
-
-(defn export
-
-  ""
-
-  [ctx {:wasm/keys [export]}]
-
-  (assoc ctx
-         :wasm/form
-         (list 'export
-               export)))
+(declare from-ir
+         from-ir+)
 
 
 ;;;;;;;;; Function types
-
-
-(defn func
-
-  ""
-
-  [ctx {:wasm/keys [export+
-                    ident
-                    instr+
-                    local+
-                    param+
-                    result+]}]
-
-  (-> ctx
-      (transl+ (concat export+
-                       param+
-                       result+
-                       local+
-                       instr+))
-      (update :wasm/form
-              (fn [form+]
-                (list* 'func
-                       (if ident
-                         (cons ident
-                               form+)
-                         form+))))))
-
 
 
 (defn local
 
   ""
 
-  [ctx {:wasm/keys [name
+  [ctx {:wasm/keys [ident
                     type]}]
 
   (assoc ctx
          :wasm/form
-         (if name
+         (if ident
            (list 'local
-                 name
+                 ident
                  type)
            (list 'local
                  type))))
@@ -128,14 +39,14 @@
 
   ""
 
-  [ctx {:wasm/keys [name
+  [ctx {:wasm/keys [ident
                     type]}]
 
   (assoc ctx
          :wasm/form
-         (if name
+         (if ident
            (list 'param
-                 name
+                 ident
                  type)
            (list 'param
                  type))))
@@ -152,6 +63,98 @@
          :wasm/form
          (list 'result
                type)))
+
+
+;;;;;;;;;; Instructions - Numeric
+
+
+(defn i32-add
+
+  ""
+
+  [ctx {:wasm.i32.add/keys [arg-0
+                            arg-1]}]
+
+  (let [ctx-2 (from-ir ctx
+                       arg-0)
+        ctx-3 (from-ir ctx-2
+                       arg-1)]
+    (assoc ctx-3
+           :wasm/form
+           (list 'i32.add
+                 (ctx-2 :wasm/form)
+                 (ctx-3 :wasm/form)))))
+
+
+;;;;;;;;;; Instructions - Variables
+
+
+(defn local-get
+
+  ""
+
+  [ctx {ident :wasm.local/get}]
+
+  (assoc ctx
+         :wasm/form
+         (list 'local.get
+               ident)))
+
+
+;;;;;;;;;; Module fields
+
+
+(defn export
+
+  ""
+
+  [ctx {:wasm/keys [export]}]
+
+  (assoc ctx
+         :wasm/form
+         (list 'export
+               export)))
+
+
+(defn func
+
+  ""
+
+  [ctx {:wasm/keys [export+
+                    ident
+                    instr+
+                    local+
+                    param+
+                    result+]}]
+
+  (-> ctx
+      (from-ir+ (concat export+
+                        param+
+                        result+
+                        local+
+                        instr+))
+      (update :wasm/form
+              (fn [form+]
+                (list* 'func
+                       (if ident
+                         (cons ident
+                               form+)
+                         form+))))))
+
+
+;;;;;;;;;; Values
+
+
+(defn i32-const
+
+  ""
+
+  [ctx {:wasm.i32/keys [const]}]
+
+  (assoc ctx
+         :wasm/form
+         (list 'i32.const
+               const)))
 
 
 ;;;;;;;;;;
@@ -185,33 +188,18 @@
                   {:wasm/ctx ctx})))
 
 
-
-(defn- -throw-target-mismatch
-
-  ;;
-
-  [ctx target target-ir]
-
-  (throw (ex-info (str "Target mismatch: '"
-                       target-ir
-                       "' instead of '"
-                       target
-                       "'")
-                  {:wasm/ctx ctx})))
-
-
 ;;;;;;;;;;
 
 
-(defn transl
+(defn from-ir
 
   ""
 
 
   ([ir]
 
-   (transl ctx-default
-           ir))
+   (from-ir ctx-default
+            ir))
 
 
   ([ctx {:as        ir
@@ -227,15 +215,15 @@
 
 
 
-(defn transl+
+(defn from-ir+
 
   ""
 
 
   ([ir]
 
-   (transl+ ctx-default
-            ir))
+   (from-ir+ ctx-default
+             ir))
 
 
   ([ctx ir+]

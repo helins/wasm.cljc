@@ -49,6 +49,19 @@
    :wasm.i32.add/arg-1 arg-1})
 
 
+;;;;;;;;;; Instructions - Variables
+
+
+(defn local-get
+
+  ""
+
+  [variable]
+
+  {:wasm/target    'local.get
+   :wasm.local/get variable})
+
+
 ;;;;;;;;;; Module fields
 
 
@@ -148,7 +161,7 @@
   [ir param+]
 
   (assoc ir
-         :wasm/local+
+         :wasm/param+
          (mapv #(if (vector? %)
                   (let [[ident
                          type] %]
@@ -192,16 +205,3 @@
 
   {:wasm/target    'i32.const
    :wasm.i32/const value})
-
-
-;;;;;;;;;; Variables
-
-
-(defn local-get
-
-  ""
-
-  [variable]
-
-  {:wasm/target    'local.get
-   :wasm.local/get variable})
