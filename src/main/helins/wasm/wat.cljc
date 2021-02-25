@@ -65,7 +65,60 @@
                type)))
 
 
-;;;;;;;;;; Instructions - Numeric
+;;;;;;;;;; Instructions > Numeric > Constants
+
+
+(defn i32-const
+
+  ""
+
+  [ctx {:wasm.i32/keys [const]}]
+
+  (assoc ctx
+         :wasm/form
+         (list 'i32.const
+               const)))
+
+
+
+(defn i64-const
+
+  ""
+
+  [ctx {:wasm.i64/keys [const]}]
+
+  (assoc ctx
+         :wasm/form
+         (list 'i64.const
+               const)))
+
+
+
+(defn f32-const
+
+  ""
+
+  [ctx {:wasm.f32/keys [const]}]
+
+  (assoc ctx
+         :wasm/form
+         (list 'f32.const
+               const)))
+
+
+(defn f64-const
+
+  ""
+
+  [ctx {:wasm.f64/keys [const]}]
+
+  (assoc ctx
+         :wasm/form
+         (list 'f64.const
+               const)))
+
+
+;;;;;;;;;; Instructions > Numeric > i32
 
 
 (defn i32-add
@@ -86,7 +139,7 @@
                  (ctx-3 :wasm/form)))))
 
 
-;;;;;;;;;; Instructions - Variables
+;;;;;;;;;; Instructions > Variables
 
 
 (defn local-get
@@ -156,21 +209,6 @@
                   %)))
 
 
-;;;;;;;;;; Values
-
-
-(defn i32-const
-
-  ""
-
-  [ctx {:wasm.i32/keys [const]}]
-
-  (assoc ctx
-         :wasm/form
-         (list 'i32.const
-               const)))
-
-
 ;;;;;;;;;;
 
 
@@ -182,6 +220,9 @@
                     'func      func
                     'i32.add   i32-add
                     'i32.const i32-const
+                    'i64.const i64-const
+                    'f32.const f32-const
+                    'f64.const f64-const
                     'local     local
                     'local.get local-get
                     'module    module

@@ -59,7 +59,37 @@
            (ir->wat (ir/result 'i32)))))
 
 
-;;;;;;;;;; Instructions numeric
+;;;;;;;;;; Instructions - Numeric - Constants
+
+
+(t/deftest i32-const
+
+  (t/is (= '(i32.const 42)
+           (ir->wat (ir/i32-const 42)))))
+
+
+
+(t/deftest i64-const
+
+  (t/is (= '(i64.const 42)
+           (ir->wat (ir/i64-const 42)))))
+
+
+
+(t/deftest f32-const
+
+  (t/is (= '(f32.const 42.0)
+           (ir->wat (ir/f32-const 42.0)))))
+
+
+
+(t/deftest f64-const
+
+  (t/is (= '(f64.const 42.0)
+           (ir->wat (ir/f64-const 42.0)))))
+
+
+;;;;;;;;;; Instructions - Numeric - i32
 
 
 (t/deftest i32-add
@@ -121,12 +151,3 @@
   (t/is (= '(module
               (func))
            (ir->wat (ir/module [(ir/func {})])))))
-
-
-;;;;;;;;;; Values
-
-
-(t/deftest i32-const
-
-  (t/is (= '(i32.const 42)
-           (ir->wat (ir/i32-const 42)))))

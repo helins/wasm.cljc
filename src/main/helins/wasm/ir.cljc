@@ -35,7 +35,54 @@
          :wasm/instr+
          instr+))
 
-;;;;;;;;;; Instructions - Numeric
+
+;;;;;;;;;; Instructions > Numeric > Constants
+
+
+(defn i32-const
+
+  ""
+
+  [value]
+
+  {:wasm/target    'i32.const
+   :wasm.i32/const value})
+
+
+
+(defn i64-const
+
+  ""
+
+  [value]
+
+  {:wasm/target    'i64.const
+   :wasm.i64/const value})
+
+
+
+(defn f32-const
+
+  ""
+
+  [value]
+
+  {:wasm/target    'f32.const
+   :wasm.f32/const value})
+
+
+
+(defn f64-const
+
+  ""
+
+  [value]
+
+  {:wasm/target    'f64.const
+   :wasm.f64/const value})
+
+
+;;;;;;;;;; Instructions > Numeric > i32
 
 
 (defn i32-add
@@ -204,15 +251,3 @@
          :wasm/result+
          (mapv result
                type+)))
-
-;;;;;;;;;; Values
-
-
-(defn i32-const
-
-  ""
-
-  [value]
-
-  {:wasm/target    'i32.const
-   :wasm.i32/const value})
