@@ -1,19 +1,25 @@
 (module
-  (func (export "add4")
+  (type $foo
+        (func (param $a i32)
+              (param $b i32)
+              (result i32)))
+  (func $f
+        (export "add4")
+        (type $foo)
         (param $a
                i32)
         (param $b
                i32)
         (result i32)
-    local.get $a
-    local.get $b
-    call $foo)
-  (func $foo
-        (param $a
-               i32)
-        (param $b
-               i32)
-        (result i32)
-    (i32.add (local.get $a)
-             (local.get $b)))
+    (block (result i32
+                   i32)
+      (local.get $a)
+      ;; (local.get $b)
+      (i32.const 456))
+    i32.add)
+
+  (export "f" (func $f))
+  (export "f2" (func $f))
+
+  
 )

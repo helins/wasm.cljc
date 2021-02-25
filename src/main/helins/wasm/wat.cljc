@@ -10,45 +10,127 @@
   {:author "Adam Helinski"})
 
 
-
-(declare op
-         op+)
+(declare transl
+         transl+)
 
 
 ;;;;;;;;;;
 
 
 (def fir
-     {:wasm/ir      :func
+     {:wasm/target  'func
       :wasm/name    '$sum
-      :wasm/export  "sum"
-      :wasm/param+  [{:wasm/name '$a
-                      :wasm/type 'i32}
-                     {:wasm/name '$b
-                      :wasm/type 'i32}]
-      :wasm/local+  [{:wasm/name '$c
-                      :wasm/type 'i32}]
-      :wasm/result+ [{:wasm/type 'i32}
+      :wasm/export  {:wasm/name   "sum"
+                     :wasm/target 'export}
+      :wasm/param+  [{:wasm/ident  '$a
+                      :wasm/target 'param
+                      :wasm/type   'i32}
+                     {:wasm/ident  '$b
+                      :wasm/target 'param
+                      :wasm/type   'i32}]
+      :wasm/local+  [{:wasm/ident  '$c
+                      :wasm/target 'local
+                      :wasm/type   'i32}]
+      :wasm/result+ [{:wasm/target 'result
+                      :wasm/type   'i32}
                      #_{:wasm/type 'i64}]
-      :wasm/op+     [{:wasm/op            'i32.add
-                      :wasm.i32.add/arg-0 {:wasm/op        'local.get
+      :wasm/instr+  [{:wasm/target        'i32.add
+                      :wasm.i32.add/arg-0 {:wasm/target    'local.get
                                            :wasm.local/get '$a}
-                      :wasm.i32.add/arg-1 {:wasm/op            'i32.add
-                                           :wasm.i32.add/arg-0 {:wasm/op        'local.get
+                      :wasm.i32.add/arg-1 {:wasm/target        'i32.add
+                                           :wasm.i32.add/arg-0 {:wasm/target    'local.get
                                                                 :wasm.local/get '$b}
-                                           :wasm.i32.add/arg-1 {:wasm/op        'i32.const
+                                           :wasm.i32.add/arg-1 {:wasm/target   'i32.const
                                                                 :wasm.i32/const 42}}}]})
 
 
-;;;;;;;;;; Variables and miscellaneous
+;;;;;;;;;; Instructions
+
+
+(defn i32-add
+
+  ""
+
+  [ctx ir]
+
+  (list* 'i32.add
+         [(transl ctx
+                  (:wasm.i32.add/arg-0 ir))
+          (transl ctx
+                  (:wasm.i32.add/arg-1 ir))]))
+
+
+
+(defn i32-const
+
+  ""
+
+  [_ctx ir]
+
+  (list 'i32.const
+        (:wasm.i32/const ir)))
+
+
+
+(defn local-get
+
+  ""
+
+  [_ctx ir]
+
+  (list 'local.get
+        (:wasm.local/get ir)))
+
+
+;;;;;;;;;;
+
+
+(defn export
+
+  ""
+
+  [{:wasm/keys [name]}]
+
+  (list 'export
+        name))
+
+
+;;;;;;;;; Function types
+
+
+(defn func
+
+  ""
+
+  [ctx ir]
+
+  (list*
+    (concat ['func]
+            (when-some [n (:wasm/name ir)]
+              [n])
+            (transl+ ctx
+                     'export
+                     [(:wasm/export ir)])
+            (transl+ ctx
+                     'param
+                     (:wasm/param+ ir))
+            (transl+ ctx
+                     'result
+                     (:wasm/result+ ir))
+            (transl+ ctx
+                     'local
+                     (:wasm/local+ ir))
+            (transl+ ctx
+                     (:wasm/instr+ ir)))))
+
 
 
 (defn local
 
   ""
 
-  [{:wasm/keys [name
-                type]}]
+  [_ctx {:wasm/keys [name
+                     type]}]
 
   (if name
     (list 'local
@@ -63,8 +145,8 @@
 
   ""
 
-  [{:wasm/keys [name
-                type]}]
+  [_ctx {:wasm/keys [name
+                     type]}]
 
   (if name
     (list 'param
@@ -79,120 +161,109 @@
 
   ""
 
-  [{:wasm/keys [type]}]
+  [_ctx   {:wasm/keys [type]}]
 
   (list 'result
         type))
 
 
-;;;;;;;;;; Op code
+;;;;;;;;;;
 
 
-(defn i32-add
-
-  ""
-
-  [op-map ir]
-
-  (list* 'i32.add
-         [(op op-map
-              (:wasm.i32.add/arg-0 ir))
-          (op op-map
-              (:wasm.i32.add/arg-1 ir))]))
-
-
-
-(defn i32-const
+(def ctx
 
   ""
 
-  [_op-map ir]
-
-  (list 'i32.const
-        (:wasm.i32/const ir)))
-
-
-
-(defn local-get
-
-  ""
-
-  [_op-map ir]
-
-  (list 'local.get
-        (:wasm.local/get ir)))
-
-
-;;;;;
-
-
-(def op-map
-
-  ""
-
-  {'i32.add   i32-add
-   'i32.const i32-const
-   'local.get local-get})
-
-
-
-(defn op
-
-  ""
-
-  [op-map {:as        ir
-           :wasm/keys [op]}]
-
-  ((op-map op) op-map
-               ir))
-
-
-
-(defn op+
-
-  ""
-
-  [op-map ir+]
-
-  (map (fn pass-op-map [ir]
-         (op op-map
-             ir))
-       ir+))
+  {:wasm.wat/table {'export    export
+                    'func      func
+                    'i32.add   i32-add
+                    'i32.const i32-const
+                    'local     local
+                    'local.get local-get
+                    'param     param
+                    'result    result}})
 
 
 ;;;;;;;;;;
 
 
-(defn export
+(defn- -throw-no-transl
+
+  ;;
+
+  [ctx target]
+
+  (throw (ex-info (str "No function IR -> WAT found for target: "
+                       target)
+                  {:wasm/ctx ctx})))
+
+
+
+(defn- -throw-target-mismatch
+
+  ;;
+
+  [ctx target target-ir]
+
+  (throw (ex-info (str "Target mismatch: '"
+                       target-ir
+                       "' instead of '"
+                       target
+                       "'")
+                  {:wasm/ctx ctx})))
+;;;;;;;;;;
+
+
+(defn transl
 
   ""
 
-  [string-name]
+  [ctx {:as        ir
+        :wasm/keys [target]}]
 
-  (list 'export
-        string-name))
+  (if-some [f (get-in ctx
+                      [:wasm.wat/table
+                       target])]
+    (f ctx
+       ir)
+    (-throw-no-transl ctx
+                      target)))
 
 
-;;;;;;;;;
 
-
-(defn func
+(defn transl+
 
   ""
 
-  [op-map ir]
+  ([ctx ir+]
 
-  (list*
-    (concat ['func]
-            (when-some [n (:wasm/name ir)]
-              [n])
-            (when-some [e (:wasm/export ir)]
-              [(export e)])
-            (map param
-                 (:wasm/param+ ir))
-            (map result
-                 (:wasm/result+ ir))
-            (map local
-                 (:wasm/local+ ir))
-            (op+ op-map
-                 (:wasm/op+ ir)))))
+   (let [table (ctx :wasm.wat/table)]
+     (map (fn [{:as        ir
+                :wasm/keys [target]}]
+            (if-some [f (get table
+                             target)]
+              (f ctx
+                 ir)
+              (-throw-no-transl ctx
+                                target)))
+          ir+)))
+
+
+  ([ctx target ir+]
+
+   (let [f (get-in ctx
+                   [:wasm.wat/table
+                    target])]
+     (when-not f
+       (-throw-no-transl ctx
+                         target))
+     (map (fn [{:as       ir
+                target-ir :wasm/target}]
+            (when (not= target-ir
+                        target)
+              (-throw-target-mismatch ctx
+                                      target
+                                      target-ir))
+            (f ctx
+               ir))
+          ir+))))
