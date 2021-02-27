@@ -9,9 +9,9 @@
 
   {:author "Adam Helinski"}
 
-  (:require [helins.binf              :as binf]
-            [helins.binf.leb128       :as binf.leb128]
-            [helins.wasm.compile.type :as wasm.compile.type])
+  (:require [helins.binf                :as binf]
+            [helins.wasm.compile.type   :as wasm.compile.type]
+            [helins.wasm.decompile.misc :as wasm.decompile.misc])
   (:refer-clojure :exclude [val]))
 
 
@@ -43,10 +43,9 @@
 
   [view]
 
-  (let [n-val (binf.leb128/rr-u32 view)]
-    (mapv (fn [_i-val]
-            (val view))
-          (range n-val))))
+  (wasm.decompile.misc/vector (fn [_i-val]
+                                (val view))
+                              view))
 
 
 

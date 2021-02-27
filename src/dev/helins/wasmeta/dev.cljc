@@ -16,6 +16,7 @@
             [helins.binf.string            :as binf.string]
             [helins.wasm.compile.type      :as wasm.compile.type]
             [helins.wasm.decompile         :as wasm.decompile]
+            [helins.wasm.decompile.misc    :as wasm.decompile.misc]
             [helins.wasm.decompile.section :as wasm.decompile.section]
             [helins.wasm.decompile.type    :as wasm.decompile.type]
             [helins.wasm.ir                :as ir]
@@ -53,8 +54,8 @@
 
   (-> (wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/simple.wasm")
       wasm.decompile/main
-      :wasm.section/type
-      (get 0))
+      :wasm.section/function
+      )
 
 
   

@@ -11,6 +11,8 @@
 
   (:require [helins.binf                :as binf]
             [helins.binf.leb128         :as binf.leb128]
+            [helins.wasm.compile.type   :as wasm.compile.type]
+            [helins.wasm.decompile.misc :as wasm.decompile.misc]
             [helins.wasm.decompile.type :as wasm.decompile.type])
   (:refer-clojure :exclude [type]))
 
@@ -51,17 +53,31 @@
 ;;;;;;;;;;
 
 
+(defn function
+
+  ""
+
+  [ctx view]
+
+  (assoc ctx
+         :wasm.section/function
+         (wasm.decompile.misc/vector (fn [_i-func]
+                                       (wasm.decompile.misc/index view))
+                                     view)))
+
+
+
 (defn type
 
   ""
 
-  [ctx header view]
+  [ctx view]
 
   (assoc ctx
          :wasm.section/type
-         (mapv (fn [_i-type]
-                 (wasm.decompile.type/func view))
-               (range (binf.leb128/rr-u32 view)))))
+         (wasm.decompile.misc/vector (fn [_i-type]
+                                       (wasm.decompile.type/func view))
+                                     view)))
 
 
 ;;;;;;;;;;
@@ -101,15 +117,16 @@
 
   [ctx view]
 
-  (reduce (fn [ctx-2 {:as                header
-                      :wasm.section/keys [id
+  (reduce (fn [ctx-2 {:wasm.section/keys [id
                                           n-byte
                                           start]}]
-            (if-some [f (case id
-                          1 type
+            (if-some [f (condp =
+                               id
+                          wasm.compile.type/section-id-type     type
+                          wasm.compile.type/section-id-function function
+                          ; was.compile.type/section-id-
                           nil)]
               (f ctx-2
-                 header
                  (binf/view view
                             start
                             n-byte))
