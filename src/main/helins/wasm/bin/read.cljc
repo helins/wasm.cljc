@@ -20,7 +20,9 @@
                             vec]))
 
 
-(declare u32)
+(declare elemtype
+         mut
+         u32)
 
 
 ;;;;;;;;;; Conventions
@@ -126,7 +128,7 @@
 
   [view]
 
-  (let [b8 (byte view)]
+  (let [b8 (u32 view)]
     (condp =
            b8
       wasm.bin/valtype-i32 'i32
@@ -168,6 +170,87 @@
                       {})))
     [(resulttype view)
      (resulttype view)]))
+
+
+;;;;; Limits
+
+
+(defn limits
+
+  ""
+
+  [view]
+
+  (let [flag (byte view)]
+    (condp =
+           flag
+      wasm.bin/limits-min    [(u32 view)]
+      wasm.bin/limits-minmax [(u32 view)
+                              (u32 view)]
+      (throw (ex-info (str "Unknown limite type: "
+                           flag)
+                      {})))))
+
+
+;;;;; Memory types
+
+
+(defn memtype
+
+  ""
+
+  [view]
+
+  (limits view))
+
+
+;;;;; Table types
+
+
+(defn tabletype
+
+  ""
+
+  [view]
+
+  [(elemtype view)
+   (limits view)])
+
+
+
+(defn elemtype
+
+  ""
+
+  [view]
+
+  (let [type (byte view)]
+    (when (not= type
+                wasm.bin/elemtype)
+      (throw (ex-info (str "Unknown element type: "
+                           type)
+                      {})))
+    'funcref))
+
+
+;;;;; Global types
+
+
+(defn mut
+
+  ""
+
+  [view]
+
+  (let [type (valtype view)
+        flag (byte view)]
+    (condp =
+           flag
+      wasm.bin/mut-const 'const
+      wasm.bin/mut-var   'var
+      (throw (ex-info (str "Unknown mutability flag for global: "
+                           flag)
+                      {})))))
 
 
 ;;;;;;;;;; Modules

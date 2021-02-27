@@ -13,6 +13,9 @@
 ;;;;;;;;;; Types
 
 
+(def elemtype
+     0x70)
+
 (def functype
      0x60)
 
@@ -20,6 +23,12 @@
      0x00)
 
 (def limits-minmax
+     0x01)
+
+(def mut-const
+     0x00)
+
+(def mut-var
      0x01)
 
 (def valtype-i32
