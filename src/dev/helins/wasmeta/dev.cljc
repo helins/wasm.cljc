@@ -9,7 +9,12 @@
 
   {:author "Adam Helinski"}
 
-  (:require [helins.wasm.ir         :as ir]
+  (:require [helins.binf            :as binf]
+            [helins.binf.buffer     :as binf.buffer]
+            [helins.binf.leb128     :as binf.leb128]
+            [helins.binf.string     :as binf.string]
+            [helins.wasm.decompile  :as wasm.decompile]
+            [helins.wasm.ir         :as ir]
             [helins.wasm.wat        :as wat]
             [helins.wasmer          :as wasmer]
             [helins.wasmer.fn       :as wasmer.fn]
@@ -38,6 +43,14 @@
 
 
   (:wasm/form (wat/transl ir-func))
+
+
+
+
+  (wasm.decompile/from-source (wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/simple.wasm"))
+
+
+  
 
 
   )

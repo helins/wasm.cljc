@@ -31,7 +31,9 @@
    :extra-paths ["src/test"]}}
 
  :deps
- {org.wasmer/wasmer-jni-amd64-linux {:local/root "runtime/wasmer-jni-amd64-linux-0.3.0.jar"}}
+ {io.helins/binf                    {:git/url "https://github.com/helins-io/binf.cljc"
+                                     :sha     "653b82f952ebdfb72736effcfd9a4c4011109b6a"}
+  org.wasmer/wasmer-jni-amd64-linux {:local/root "runtime/wasmer-jni-amd64-linux-0.3.0.jar"}}
 
  :paths
  ["src/main"]}
