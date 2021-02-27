@@ -15,10 +15,8 @@
             [helins.binf.leb128            :as binf.leb128]
             [helins.binf.string            :as binf.string]
             [helins.wasm.bin               :as wasm.bin]
+            [helins.wasm.bin.read          :as wasm.bin.read]
             [helins.wasm.decompile         :as wasm.decompile]
-            [helins.wasm.decompile.misc    :as wasm.decompile.misc]
-            [helins.wasm.decompile.section :as wasm.decompile.section]
-            [helins.wasm.decompile.type    :as wasm.decompile.type]
             [helins.wasm.ir                :as ir]
             [helins.wasm.wat               :as wat]
             [helins.wasmer                 :as wasmer]
@@ -54,7 +52,7 @@
 
   (-> (wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/simple.wasm")
       wasm.decompile/main
-      :wasm.section/function
+      :wasm.bin/typesec
       )
 
 

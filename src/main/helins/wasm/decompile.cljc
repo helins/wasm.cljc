@@ -9,14 +9,15 @@
 
   {:author "Adam Helinski"}
 
-  (:require [helins.binf                   :as binf]
-            [helins.wasm.decompile.section :as wasm.decompile.section]))
+  (:require [helins.binf          :as binf]
+            [helins.wasm.bin      :as wasm.bin]
+            [helins.wasm.bin.read :as wasm.bin.read]))
 
 
-;;;;;;;;;;
+;;;;;;;;;; Start of a WASM file
 
 
-(defn source-view
+(defn source->view
 
   ""
 
@@ -28,9 +29,11 @@
 
 
 
-(defn validate-magic
+(defn magic
 
   ""
+
+  ;; Checking for "\0asm" BOM (reversed u32 because view is little-endian).
 
   [view]
 
@@ -52,6 +55,53 @@
          (binf/rr-u32 view)))
 
 
+;;;;;;;;;; Find and parsing sections
+
+
+(defn section-find+
+
+  ""
+
+  [ctx view]
+
+  (assoc ctx
+         :wasm/header+
+         (loop [section+ []]
+           (if (pos? (binf/remaining view))
+             (recur (conj section+
+                          (wasm.bin.read/section view)))
+             section+))))
+
+
+
+(defn section-read+
+
+  ""
+
+  [ctx view]
+
+  (reduce (fn [ctx-2 {:wasm.section/keys [id
+                                          n-byte
+                                          start]}]
+            (if-some [[k
+                       f] (condp =
+                                 id
+                            wasm.bin/section-id-type     [:wasm.bin/typesec
+                                                          wasm.bin.read/typesec]
+                            wasm.bin/section-id-function [:wasm.bin/funcsec
+                                                          wasm.bin.read/funcsec]
+                            ; was.compile.type/section-id-
+                            nil)]
+              (assoc ctx-2
+                     k
+                     (f (binf/view view
+                                   start
+                                   n-byte)))
+              ctx-2))
+          ctx
+          (ctx :wasm/header+)))
+
+
 ;;;;;;;;;;
 
 
@@ -61,8 +111,9 @@
 
   [source]
 
-  (let [view (source-view source)]
-    (validate-magic view)
+  (let [view (source->view source)]
+    (magic view)
     (-> {}
         (version view)
-        (wasm.decompile.section/main view))))
+        (section-find+ view)
+        (section-read+ view))))

@@ -73,3 +73,17 @@
      
 (def section-id-data
      11)
+
+
+;;;;;;;;;; Predicates for validation
+
+
+(defn section-id?
+
+  ""
+
+  [section-id]
+
+  (<= 0
+      section-id
+      12))
