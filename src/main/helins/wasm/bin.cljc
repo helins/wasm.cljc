@@ -3,7 +3,7 @@
 ;; file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
-(ns helins.wasm.compile.type
+(ns helins.wasm.bin
 
   ""
 
@@ -13,16 +13,25 @@
 ;;;;;;;;;; Types
 
 
-(def i32
+(def functype
+     0x60)
+
+(def limits-min
+     0x00)
+
+(def limits-minmax
+     0x01)
+
+(def valtype-i32
      0x7f)
 
-(def i64
+(def valtype-i64
      0x7e)
 
-(def f32
+(def valtype-f32
      0x7d)
 
-(def f64
+(def valtype-f64
      0x7c)
 
 

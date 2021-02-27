@@ -10,7 +10,7 @@
   {:author "Adam Helinski"}
 
   (:require [helins.binf                :as binf]
-            [helins.wasm.compile.type   :as wasm.compile.type]
+            [helins.wasm.bin            :as wasm.bin]
             [helins.wasm.decompile.misc :as wasm.decompile.misc])
   (:refer-clojure :exclude [val]))
 
@@ -27,10 +27,10 @@
   (let [b8 (binf/rr-u8 view)]
     (condp =
            b8
-      wasm.compile.type/i32 'i32
-      wasm.compile.type/i64 'i64
-      wasm.compile.type/f32 'f32
-      wasm.compile.type/f64 'f64
+      wasm.bin/valtype-i32 'i32
+      wasm.bin/valtype-i64 'i64
+      wasm.bin/valtype-f32 'f32
+      wasm.bin/valtype-f64 'f64
       (throw (ex-info (str "Unknown value type: "
                            b8)
                       {})))))
@@ -57,7 +57,7 @@
 
   (let [b-1 (binf/rr-u8 view)]
     (when (not= b-1
-                0x60)
+                wasm.bin/functype)
       (throw (ex-info (str "Function type should start with 0x60, not: "
                            b-1)
                       {})))

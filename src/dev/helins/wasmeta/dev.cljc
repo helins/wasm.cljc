@@ -14,7 +14,7 @@
             [helins.binf.buffer            :as binf.buffer]
             [helins.binf.leb128            :as binf.leb128]
             [helins.binf.string            :as binf.string]
-            [helins.wasm.compile.type      :as wasm.compile.type]
+            [helins.wasm.bin               :as wasm.bin]
             [helins.wasm.decompile         :as wasm.decompile]
             [helins.wasm.decompile.misc    :as wasm.decompile.misc]
             [helins.wasm.decompile.section :as wasm.decompile.section]

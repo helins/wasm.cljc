@@ -11,7 +11,7 @@
 
   (:require [helins.binf                :as binf]
             [helins.binf.leb128         :as binf.leb128]
-            [helins.wasm.compile.type   :as wasm.compile.type]
+            [helins.wasm.bin            :as wasm.bin]
             [helins.wasm.decompile.misc :as wasm.decompile.misc]
             [helins.wasm.decompile.type :as wasm.decompile.type])
   (:refer-clojure :exclude [type]))
@@ -122,8 +122,8 @@
                                           start]}]
             (if-some [f (condp =
                                id
-                          wasm.compile.type/section-id-type     type
-                          wasm.compile.type/section-id-function function
+                          wasm.bin/section-id-type     type
+                          wasm.bin/section-id-function function
                           ; was.compile.type/section-id-
                           nil)]
               (f ctx-2
