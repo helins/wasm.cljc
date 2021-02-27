@@ -7,21 +7,25 @@
 
   "CLJC playground during dev."
 
-  {:author "Adam Helinski"}
+  {:author    "Adam Helinski"
+   :clj-kondo {:linters {:unused-namespace {:level :off}}}}
 
-  (:require [helins.binf            :as binf]
-            [helins.binf.buffer     :as binf.buffer]
-            [helins.binf.leb128     :as binf.leb128]
-            [helins.binf.string     :as binf.string]
-            [helins.wasm.decompile  :as wasm.decompile]
-            [helins.wasm.ir         :as ir]
-            [helins.wasm.wat        :as wat]
-            [helins.wasmer          :as wasmer]
-            [helins.wasmer.fn       :as wasmer.fn]
-            [helins.wasmer.instance :as wasmer.instance]
-            [helins.wasmer.mem      :as wasmer.mem]
-            [helins.wasmer.module   :as wasmer.module]
-            [helins.wasmeta         :as wasmeta]))
+  (:require [helins.binf                   :as binf]
+            [helins.binf.buffer            :as binf.buffer]
+            [helins.binf.leb128            :as binf.leb128]
+            [helins.binf.string            :as binf.string]
+            [helins.wasm.compile.type      :as wasm.compile.type]
+            [helins.wasm.decompile         :as wasm.decompile]
+            [helins.wasm.decompile.section :as wasm.decompile.section]
+            [helins.wasm.decompile.type    :as wasm.decompile.type]
+            [helins.wasm.ir                :as ir]
+            [helins.wasm.wat               :as wat]
+            [helins.wasmer                 :as wasmer]
+            [helins.wasmer.fn              :as wasmer.fn]
+            [helins.wasmer.instance        :as wasmer.instance]
+            [helins.wasmer.mem             :as wasmer.mem]
+            [helins.wasmer.module          :as wasmer.module]
+            [helins.wasmeta                :as wasmeta]))
 
 
 ;;;;;;;;;;
@@ -47,7 +51,10 @@
 
 
 
-  (wasm.decompile/from-source (wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/simple.wasm"))
+  (-> (wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/simple.wasm")
+      wasm.decompile/main
+      :wasm.section/type
+      (get 0))
 
 
   

@@ -9,61 +9,22 @@
 
   {:author "Adam Helinski"}
 
-  (:require [helins.binf        :as binf]
-            [helins.binf.leb128 :as binf.leb128]))
+  (:require [helins.binf                   :as binf]
+            [helins.wasm.decompile.section :as wasm.decompile.section]))
 
 
 ;;;;;;;;;;
 
 
-
-(def section-id+
-
-  ""
-
-  [:custom
-   :type
-   :import
-   :function
-   :table
-   :memory
-   :global
-   :export
-   :start
-   :element
-   :code
-   :data])
-
-
-
-(defn section+
+(defn source-view
 
   ""
 
-  [ctx view]
+  [source]
 
-  (assoc ctx
-         :wasm/section+
-         (loop [section+ []]
-           (if (pos? (binf/remaining view))
-             (recur (conj section+
-                          (let [start  (binf/position view)
-                                id     (binf/rr-u8 view)]
-                            (when-not (<= 0
-                                          id
-                                          12)
-                              (throw (ex-info (str "Unknown section ID: "
-                                                   id)
-                                              {})))
-                            (let [n-byte (binf.leb128/rr-u32 view)]
-                              (binf/skip view
-                                         n-byte)
-                              {:wasm.section/id     id
-                               :wasm.section/n-byte n-byte
-                               :wasm.section/name   (get section-id+
-                                                         id)
-                               :wasm.section/start  start}))))
-             section+))))
+  (-> source
+      binf/view
+      (binf/endian-set :little-endian)))
 
 
 
@@ -91,17 +52,17 @@
          (binf/rr-u32 view)))
 
 
+;;;;;;;;;;
 
-(defn from-source
+
+(defn main
 
   ""
 
   [source]
 
-  (let [view (binf/view source)]
-    (binf/endian-set view
-                     :little-endian)
+  (let [view (source-view source)]
     (validate-magic view)
     (-> {}
         (version view)
-        (section+ view))))
+        (wasm.decompile.section/main view))))
