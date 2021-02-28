@@ -38,6 +38,7 @@
          importdesc-table
          mem
          mut
+         start
          table
          u32)
 
@@ -698,3 +699,26 @@
 
   (list 'global
         (globalidx view)))
+
+
+;;;;;;;;;; Start section
+
+
+(defn startsec
+
+  ""
+
+  [view]
+
+  (vec start
+       view))
+
+
+
+(defn start
+
+  ""
+
+  [view]
+
+  (funcidx view))
