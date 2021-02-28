@@ -107,6 +107,22 @@
      0x03)
 
 
+;;;;; Export section
+
+
+(def exportdesc-func
+     0x00)
+
+(def exportdesc-table
+     0x01)
+
+(def exportdesc-mem
+     0x02)
+
+(def exportdesc-global
+     0x03)
+
+
 ;;;;;;;;;; Predicates for validation
 
 

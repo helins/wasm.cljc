@@ -23,6 +23,12 @@
 
 
 (declare elemtype
+         export
+         exportdesc
+         exportdesc-func
+         exportdesc-global
+         exportdesc-mem
+         exportdesc-table
          global
          import
          importdesc
@@ -496,7 +502,7 @@
 
   [view]
 
-  (list 'table-type
+  (list 'table
         (tabletype view)))
 
 
@@ -581,7 +587,7 @@
   (memtype view))
 
 
-;;;;;;;;;; Global section
+;;;;; Global section
 
 
 (defn globalsec
@@ -603,3 +609,92 @@
 
   [(globaltype view)
    (expr view)])
+
+
+;;;;; Export section
+
+
+(defn exportsec
+
+  ""
+
+  [view]
+
+  (vec export
+       view))
+
+
+
+(defn export
+
+  ""
+
+  [view]
+
+  [(name view)
+   (exportdesc view)])
+
+  
+
+(defn exportdesc
+
+  ""
+
+  [view]
+
+  (let [type (byte view)
+        f    (condp =
+                    type
+               wasm.bin/exportdesc-func   exportdesc-func
+               wasm.bin/exportdesc-table  exportdesc-table
+               wasm.bin/exportdesc-mem    exportdesc-mem
+               wasm.bin/exportdesc-global exportdesc-global
+               (throw (ex-info (str "Unknown type in export description: "
+                                    type)
+                               {})))]
+    (f view)))
+
+
+
+(defn exportdesc-func
+
+  ""
+
+  [view]
+
+  (list 'func
+        (typeidx view)))
+
+
+
+
+(defn exportdesc-table
+
+  ""
+
+  [view]
+
+  (list 'table
+        (tableidx view)))
+
+
+
+(defn exportdesc-mem
+
+  ""
+
+  [view]
+
+  (list 'memory
+        (memidx view)))
+
+
+
+(defn exportdesc-global
+
+  ""
+
+  [view]
+
+  (list 'global
+        (globalidx view)))

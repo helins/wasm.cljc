@@ -98,6 +98,8 @@
                                                           wasm.bin.read/memsec]
                             wasm.bin/section-id-global   [:wasm.bin/globalsec
                                                           wasm.bin.read/globalsec]
+                            wasm.bin/section-id-export   [:wasm.bin/exportsec
+                                                          wasm.bin.read/exportsec]
                             nil)]
               (assoc ctx-2
                      k
