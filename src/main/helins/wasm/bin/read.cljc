@@ -30,6 +30,7 @@
          importdesc-mem
          importdesc-table
          mut
+         table
          u32)
 
 
@@ -511,3 +512,26 @@
 
   (vec idx
        view))
+
+
+;;;;; Table section
+
+
+(defn tablesec
+
+  ""
+
+  [view]
+
+  (vec table
+       view))
+
+
+
+(defn table
+
+  ""
+
+  [view]
+
+  (tabletype view))

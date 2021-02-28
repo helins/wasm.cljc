@@ -92,7 +92,9 @@
                                                           wasm.bin.read/importsec]
                             wasm.bin/section-id-function [:wasm.bin/funcsec
                                                           wasm.bin.read/funcsec]
-                            ; was.compile.type/section-id-
+                            wasm.bin/section-id-table    [:wasm.bin/tablesec
+                                                          wasm.bin.read/tablesec]
+                            ;wasm.bin/section-id-
                             nil)]
               (assoc ctx-2
                      k
