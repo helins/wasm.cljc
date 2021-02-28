@@ -23,6 +23,7 @@
 
 
 (declare elemtype
+         global
          import
          importdesc
          importdesc-func
@@ -271,6 +272,25 @@
       (throw (ex-info (str "Unknown mutability flag for global: "
                            flag)
                       {})))))
+
+
+;;;;;;;;;; Instructions
+
+
+(defn expr
+
+  ""
+
+  [view]
+
+  (let [position (binf/position view)]
+    (loop [n-byte 0]
+      (if (= wasm.bin/end
+             (byte view))
+        (binf/ra-buffer view
+                        position
+                        n-byte)
+        (recur (inc n-byte))))))
 
 
 ;;;;;;;;;; Modules
@@ -559,3 +579,27 @@
   [view]
 
   (memtype view))
+
+
+;;;;;;;;;; Global section
+
+
+(defn globalsec
+
+  ""
+
+  [view]
+
+  (vec global
+       view))
+
+
+
+(defn global
+
+  ""
+
+  [view]
+
+  [(globaltype view)
+   (expr view)])

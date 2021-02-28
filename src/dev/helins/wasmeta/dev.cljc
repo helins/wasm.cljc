@@ -52,7 +52,7 @@
 
   (-> (wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/simple.wasm")
       wasm.decompile/main
-      :wasm.bin/memsec
+      :wasm.bin/globalsec
       )
 
 

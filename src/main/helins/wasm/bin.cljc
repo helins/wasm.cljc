@@ -44,6 +44,13 @@
      0x7c)
 
 
+;;;;;;;;;; Instructions
+
+
+(def end
+     0x0b)
+
+
 ;;;;;;;;; Sections
 
 

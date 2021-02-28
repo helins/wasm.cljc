@@ -96,7 +96,8 @@
                                                           wasm.bin.read/tablesec]
                             wasm.bin/section-id-memory   [:wasm.bin/memsec
                                                           wasm.bin.read/memsec]
-                            ;wasm.bin/section-id-
+                            wasm.bin/section-id-global   [:wasm.bin/globalsec
+                                                          wasm.bin.read/globalsec]
                             nil)]
               (assoc ctx-2
                      k
