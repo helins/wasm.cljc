@@ -56,7 +56,7 @@
       ;(wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/simple.wasm")
       ;(wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/export.wasm")
       wasm.decompile/main
-  ;    :wasm.bin/elemsec
+      :wasm.bin/elemsec
       )
 
 

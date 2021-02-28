@@ -104,6 +104,8 @@
                                                           wasm.bin.read/startsec]
                             wasm.bin/section-id-element  [:wasm.bin/elemsec
                                                           wasm.bin.read/elemsec]
+                            wasm.bin/section-id-data     [:wasm.bin/datasec
+                                                          wasm.bin.read/datasec]
                             nil)]
               (assoc ctx-2
                      k

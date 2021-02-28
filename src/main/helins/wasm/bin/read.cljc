@@ -22,7 +22,8 @@
                             vec]))
 
 
-(declare elem
+(declare data
+         elem
          elemtype
          export
          exportdesc
@@ -60,6 +61,17 @@
              (conj v
                    (f view)))
       v)))
+
+
+
+(defn vec-byte
+
+  ""
+
+  [view]
+
+  (binf/rr-buffer view
+                  (u32 view)))
 
 
 ;;;;;;;;;; Values
@@ -748,3 +760,28 @@
    (expr view)
    (vec funcidx
         view)])
+
+
+;;;;;;;;;; Data section
+
+
+(defn datasec
+
+  ""
+
+  [view]
+
+  (vec data
+       view))
+
+
+
+(defn data
+
+  ""
+
+  [view]
+
+  [(memidx view)
+   (expr view)
+   (vec-byte view)])
