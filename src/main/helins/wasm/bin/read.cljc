@@ -22,7 +22,8 @@
                             vec]))
 
 
-(declare custom
+(declare code
+         custom
          data
          elem
          elemtype
@@ -32,6 +33,7 @@
          exportdesc-global
          exportdesc-mem
          exportdesc-table
+         func
          global
          import
          importdesc
@@ -39,6 +41,7 @@
          importdesc-global
          importdesc-mem
          importdesc-table
+         locals
          mem
          mut
          start
@@ -774,6 +777,55 @@
         view)])
 
 
+;;;;; Code section
+
+
+(defn codesec
+
+  ""
+
+  [view]
+
+  (vec code
+       view))
+
+
+
+(defn code
+
+  ""
+
+  [view]
+
+  [{:wasm/n-byte (u32 view)
+    :wasm/start  (binf/position view)}
+   (func view)])
+
+
+
+(defn func
+
+  ""
+
+  [view]
+
+  [(locals view)
+   (expr view)])
+
+
+
+(defn locals
+
+  ""
+
+  [view]
+
+  (vec (fn [view]
+         [(u32 view)
+          (valtype view)])
+       view))
+
+
 ;;;;; Data section
 
 
@@ -811,7 +863,7 @@
   [view]
 
   (when (not= (binf/rr-u32 view)
-               0x6d736100)
+              0x6d736100)
     (throw (ex-info "WASM file does not start with magic word"
                     {}))))
 

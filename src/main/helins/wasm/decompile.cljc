@@ -86,6 +86,8 @@
                                                             wasm.bin.read/startsec]
                               wasm.bin/section-id-element  [:wasm.bin/elemsec
                                                             wasm.bin.read/elemsec]
+                              wasm.bin/section-id-code     [:wasm.bin/codesec
+                                                            wasm.bin.read/codesec]
                               wasm.bin/section-id-data     [:wasm.bin/datasec
                                                             wasm.bin.read/datasec]
                               nil)]
