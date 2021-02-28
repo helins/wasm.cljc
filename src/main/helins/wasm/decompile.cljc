@@ -28,33 +28,6 @@
       (binf/endian-set :little-endian)))
 
 
-
-(defn magic
-
-  ""
-
-  ;; Checking for "\0asm" BOM (reversed u32 because view is little-endian).
-
-  [view]
-
-  (when (not= (binf/rr-u32 view)
-               0x6d736100)
-    (throw (ex-info "WASM file does not start with magic word"
-                    {}))))
-
-
-
-(defn version
-
-  ""
-
-  [ctx view]
-
-  (assoc ctx
-         :wasm/version
-         (binf/rr-u32 view)))
-
-
 ;;;;;;;;;; Find and parsing sections
 
 
@@ -83,36 +56,45 @@
   (reduce (fn [ctx-2 {:wasm.section/keys [id
                                           n-byte
                                           start]}]
-            (if-some [[k
-                       f] (condp =
-                                 id
-                            wasm.bin/section-id-type     [:wasm.bin/typesec
-                                                          wasm.bin.read/typesec]
-                            wasm.bin/section-id-import   [:wasm.bin/importsec
-                                                          wasm.bin.read/importsec]
-                            wasm.bin/section-id-function [:wasm.bin/funcsec
-                                                          wasm.bin.read/funcsec]
-                            wasm.bin/section-id-table    [:wasm.bin/tablesec
-                                                          wasm.bin.read/tablesec]
-                            wasm.bin/section-id-memory   [:wasm.bin/memsec
-                                                          wasm.bin.read/memsec]
-                            wasm.bin/section-id-global   [:wasm.bin/globalsec
-                                                          wasm.bin.read/globalsec]
-                            wasm.bin/section-id-export   [:wasm.bin/exportsec
-                                                          wasm.bin.read/exportsec]
-                            wasm.bin/section-id-start    [:wasm.bin/startsec
-                                                          wasm.bin.read/startsec]
-                            wasm.bin/section-id-element  [:wasm.bin/elemsec
-                                                          wasm.bin.read/elemsec]
-                            wasm.bin/section-id-data     [:wasm.bin/datasec
-                                                          wasm.bin.read/datasec]
-                            nil)]
-              (assoc ctx-2
-                     k
-                     (f (binf/view view
-                                   start
-                                   n-byte)))
-              ctx-2))
+            (if (= id
+                   wasm.bin/section-id-custom)
+              (update ctx-2
+                      :wasm.bin/customsec
+                      (fnil conj
+                            [])
+                      (wasm.bin.read/customsec (binf/view view
+                                                          start
+                                                          n-byte)))
+              (if-some [[k
+                         f] (condp =
+                                   id
+                              wasm.bin/section-id-type     [:wasm.bin/typesec
+                                                            wasm.bin.read/typesec]
+                              wasm.bin/section-id-import   [:wasm.bin/importsec
+                                                            wasm.bin.read/importsec]
+                              wasm.bin/section-id-function [:wasm.bin/funcsec
+                                                            wasm.bin.read/funcsec]
+                              wasm.bin/section-id-table    [:wasm.bin/tablesec
+                                                            wasm.bin.read/tablesec]
+                              wasm.bin/section-id-memory   [:wasm.bin/memsec
+                                                            wasm.bin.read/memsec]
+                              wasm.bin/section-id-global   [:wasm.bin/globalsec
+                                                            wasm.bin.read/globalsec]
+                              wasm.bin/section-id-export   [:wasm.bin/exportsec
+                                                            wasm.bin.read/exportsec]
+                              wasm.bin/section-id-start    [:wasm.bin/startsec
+                                                            wasm.bin.read/startsec]
+                              wasm.bin/section-id-element  [:wasm.bin/elemsec
+                                                            wasm.bin.read/elemsec]
+                              wasm.bin/section-id-data     [:wasm.bin/datasec
+                                                            wasm.bin.read/datasec]
+                              nil)]
+                (assoc ctx-2
+                       k
+                       (f (binf/view view
+                                     start
+                                     n-byte)))
+                ctx-2)))
           ctx
           (ctx :wasm/header+)))
 
@@ -127,8 +109,7 @@
   [source]
 
   (let [view (source->view source)]
-    (magic view)
-    (-> {}
-        (version view)
+    (wasm.bin.read/magic view)
+    (-> {:wasm/version (wasm.bin.read/version view)}
         (section-find+ view)
         (section-read+ view))))

@@ -22,7 +22,8 @@
                             vec]))
 
 
-(declare data
+(declare custom
+         data
          elem
          elemtype
          export
@@ -90,7 +91,6 @@
 
 
 ;;;;; Integers
-
 
 
 (defn s32
@@ -430,13 +430,25 @@
 ;;;;; Custom section
 
 
-;(defn customsec
-;
-;  ""
-;
-;  [view]
-;
-;  )
+(defn customsec
+
+  ""
+
+  [view]
+
+  (custom view))
+
+
+
+(defn custom
+
+  ""
+
+  [view]
+
+  [(name view)
+   (binf/rr-buffer view
+                   (binf/remaining view))])
 
 
 ;;;;; Type section
@@ -714,7 +726,7 @@
         (globalidx view)))
 
 
-;;;;;;;;;; Start section
+;;;;; Start section
 
 
 (defn startsec
@@ -736,7 +748,7 @@
   (funcidx view))
 
 
-;;;;;;;;;; Element section
+;;;;; Element section
 
 
 (defn elemsec
@@ -762,7 +774,7 @@
         view)])
 
 
-;;;;;;;;;; Data section
+;;;;; Data section
 
 
 (defn datasec
@@ -785,3 +797,30 @@
   [(memidx view)
    (expr view)
    (vec-byte view)])
+
+
+;;;;; Module
+
+
+(defn magic
+
+  ""
+
+  ;; Checking for "\0asm" BOM (reversed u32 because view is little-endian).
+
+  [view]
+
+  (when (not= (binf/rr-u32 view)
+               0x6d736100)
+    (throw (ex-info "WASM file does not start with magic word"
+                    {}))))
+
+
+
+(defn version
+
+  ""
+
+  [view]
+
+  (binf/rr-u32 view))
