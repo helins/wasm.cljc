@@ -29,6 +29,7 @@
          importdesc-global
          importdesc-mem
          importdesc-table
+         mem
          mut
          table
          u32)
@@ -535,3 +536,26 @@
   [view]
 
   (tabletype view))
+
+
+;;;;; Memory section
+
+
+(defn memsec
+
+  ""
+
+  [view]
+
+  (vec mem
+       view))
+
+
+
+(defn mem
+
+  ""
+
+  [view]
+
+  (memtype view))

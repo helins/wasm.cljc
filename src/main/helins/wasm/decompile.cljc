@@ -94,6 +94,8 @@
                                                           wasm.bin.read/funcsec]
                             wasm.bin/section-id-table    [:wasm.bin/tablesec
                                                           wasm.bin.read/tablesec]
+                            wasm.bin/section-id-memory   [:wasm.bin/memsec
+                                                          wasm.bin.read/memsec]
                             ;wasm.bin/section-id-
                             nil)]
               (assoc ctx-2
