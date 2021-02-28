@@ -401,6 +401,296 @@
         (globalidx view)))
 
 
+;;;;;; Memory instructions
+
+
+(defn memarg
+
+  ""
+
+  [view]
+
+  [(symbol (str "align="
+                (u32 view)))
+   (symbol (str "offset="
+                (u32 view)))])
+
+
+
+(defn i32-load
+
+  ""
+
+  [view]
+
+  (list* 'i32.load
+         (memarg view)))
+
+
+
+(defn i64-load
+
+  ""
+
+  [view]
+
+  (list* 'i32.load
+         (memarg view)))
+
+
+
+(defn f32-load
+
+  ""
+
+  [view]
+
+  (list* 'f32.load
+         (memarg view)))
+
+
+
+(defn f64-load
+
+  ""
+
+  [view]
+
+  (list* 'f64.load
+         (memarg view)))
+
+
+
+(defn i32-load8_s
+
+  ""
+
+  [view]
+
+  (list* 'i32.load_s
+         (memarg view)))
+
+
+
+(defn i32-load8_u
+
+  ""
+
+  [view]
+
+  (list* 'i32.load8_u
+         (memarg view)))
+
+
+
+(defn i32-load16_s
+
+  ""
+
+  [view]
+
+  (list* 'i32.load16_s
+         (memarg view)))
+
+
+
+(defn i32-load16_u
+
+  ""
+
+  [view]
+
+  (list* 'i32.load16_u
+         (memarg view)))
+
+
+
+(defn i64-load8_s
+
+  ""
+
+  [view]
+
+  (list* 'i64.load_s
+         (memarg view)))
+
+
+
+(defn i64-load8_u
+
+  ""
+
+  [view]
+
+  (list* 'i64.load8_u
+         (memarg view)))
+
+
+
+(defn i64-load16_s
+
+  ""
+
+  [view]
+
+  (list* 'i64.load16_s
+         (memarg view)))
+
+
+
+(defn i64-load16_u
+
+  ""
+
+  [view]
+
+  (list* 'i64.load16_u
+         (memarg view)))
+
+
+
+(defn i64-load32_s
+
+  ""
+
+  [view]
+
+  (list* 'i64.load32_s
+         (memarg view)))
+
+
+
+(defn i64-load32_u
+
+  ""
+
+  [view]
+
+  (list* 'i64.load32_u
+         (memarg view)))
+
+
+
+(defn i32-store
+
+  ""
+
+  [view]
+
+  (list* 'i32.store
+         (memarg view)))
+
+
+
+(defn i64-store
+
+  ""
+
+  [view]
+
+  (list* 'i32.store
+         (memarg view)))
+
+
+
+(defn f32-store
+
+  ""
+
+  [view]
+
+  (list* 'f32.store
+         (memarg view)))
+
+
+
+(defn f64-store
+
+  ""
+
+  [view]
+
+  (list* 'f64.store
+         (memarg view)))
+
+
+
+(defn i32-store8
+
+  ""
+
+  [view]
+
+  (list* 'i32.store8
+         (memarg view)))
+
+
+
+(defn i32-store16
+
+  ""
+
+  [view]
+
+  (list* 'i32.store16
+         (memarg view)))
+
+
+
+(defn i64-store8
+
+  ""
+
+  [view]
+
+  (list* 'i64.store8
+         (memarg view)))
+
+
+
+(defn i64-store16
+
+  ""
+
+  [view]
+
+  (list* 'i64.store16
+         (memarg view)))
+
+
+
+(defn i64-store32
+
+  ""
+
+  [view]
+
+  (list* 'i64.store32
+         (memarg view)))
+
+
+
+(defn memory-size
+
+  ""
+
+  [view]
+
+  (list 'memory.size
+        (byte view)))
+
+
+
+(defn memory-grow
+
+  ""
+
+  [view]
+
+  (list 'memory.size
+        (byte view)))
+
+
 ;;;;; Numeric instructions
 
 
@@ -459,16 +749,42 @@
 
   {
    ;; Variables
-   wasm.bin/local-get  local-get
-   wasm.bin/local-set  local-set
-   wasm.bin/local-tee  local-tee
-   wasm.bin/global-get global-get
-   wasm.bin/global-set global-set
+   wasm.bin/local-get    local-get
+   wasm.bin/local-set    local-set
+   wasm.bin/local-tee    local-tee
+   wasm.bin/global-get   global-get
+   wasm.bin/global-set   global-set
+   ;; Memory
+   wasm.bin/i32-load     i32-load
+   wasm.bin/i64-load     i64-load
+   wasm.bin/f32-load     f32-load
+   wasm.bin/f64-load     f64-load
+   wasm.bin/i32-load8_s  i32-load8_s
+   wasm.bin/i32-load8_u  i32-load8_u
+   wasm.bin/i32-load16_s i32-load16_s
+   wasm.bin/i32-load16_u i32-load16_u
+   wasm.bin/i64-load8_s  i64-load8_s
+   wasm.bin/i64-load8_u  i64-load8_u
+   wasm.bin/i64-load16_s i64-load16_s
+   wasm.bin/i64-load16_u i64-load16_u
+   wasm.bin/i64-load32_s i64-load32_s
+   wasm.bin/i64-load32_u i64-load32_u
+   wasm.bin/i32-store    i32-store
+   wasm.bin/i64-store    i64-store
+   wasm.bin/f32-store    f32-store
+   wasm.bin/f64-store    f64-store
+   wasm.bin/i32-store8   i32-store8
+   wasm.bin/i32-store16  i32-store16
+   wasm.bin/i64-store8   i64-store8
+   wasm.bin/i64-store16  i64-store16
+   wasm.bin/i64-store32  i64-store32
+   wasm.bin/memory-size  memory-size
+   wasm.bin/memory-grow  memory-grow
    ;; Numeric constants
-   wasm.bin/const-i32  const-i32
-   wasm.bin/const-i64  const-i64
-   wasm.bin/const-f32  const-f32
-   wasm.bin/const-f64  const-f64
+   wasm.bin/const-i32    const-i32
+   wasm.bin/const-i64    const-i64
+   wasm.bin/const-f32    const-f32
+   wasm.bin/const-f64    const-f64
    })
 
 
