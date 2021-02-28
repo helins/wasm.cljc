@@ -22,7 +22,8 @@
                             vec]))
 
 
-(declare elemtype
+(declare elem
+         elemtype
          export
          exportdesc
          exportdesc-func
@@ -710,8 +711,7 @@
 
   [view]
 
-  (vec start
-       view))
+  (start view))
 
 
 
@@ -722,3 +722,29 @@
   [view]
 
   (funcidx view))
+
+
+;;;;;;;;;; Element section
+
+
+(defn elemsec
+
+  ""
+
+  [view]
+
+  (vec elem
+       view))
+
+
+
+(defn elem
+
+  ""
+
+  [view]
+
+  [(tableidx view)
+   (expr view)
+   (vec funcidx
+        view)])

@@ -10,7 +10,8 @@
   {:author    "Adam Helinski"
    :clj-kondo {:linters {:unused-namespace {:level :off}}}}
 
-  (:require [helins.binf                   :as binf]
+  (:require [clojure.edn]
+            [helins.binf                   :as binf]
             [helins.binf.buffer            :as binf.buffer]
             [helins.binf.leb128            :as binf.leb128]
             [helins.binf.string            :as binf.string]
@@ -51,10 +52,11 @@
 
 
   (-> 
+      (wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/import.wasm")
       ;(wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/simple.wasm")
-      (wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/export.wasm")
+      ;(wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/export.wasm")
       wasm.decompile/main
-      :wasm.bin/startsec
+  ;    :wasm.bin/elemsec
       )
 
 
