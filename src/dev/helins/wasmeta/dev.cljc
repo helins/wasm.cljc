@@ -50,9 +50,9 @@
 
 
 
-  (-> (wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/simple.wasm")
+  (-> (wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/import.wasm")
       wasm.decompile/main
-      :wasm.bin/typesec
+      :wasm.bin/importsec
       )
 
 

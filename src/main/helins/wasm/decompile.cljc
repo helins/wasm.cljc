@@ -88,6 +88,8 @@
                                  id
                             wasm.bin/section-id-type     [:wasm.bin/typesec
                                                           wasm.bin.read/typesec]
+                            wasm.bin/section-id-import   [:wasm.bin/importsec
+                                                          wasm.bin.read/importsec]
                             wasm.bin/section-id-function [:wasm.bin/funcsec
                                                           wasm.bin.read/funcsec]
                             ; was.compile.type/section-id-

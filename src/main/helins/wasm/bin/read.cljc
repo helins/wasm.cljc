@@ -16,11 +16,19 @@
   ;; <!> Keep in mind exclusions <!>
   ;;
   (:refer-clojure :exclude [byte
+                            import
+                            mut
                             name
                             vec]))
 
 
 (declare elemtype
+         import
+         importdesc
+         importdesc-func
+         importdesc-global
+         importdesc-mem
+         importdesc-table
          mut
          u32)
 
@@ -236,14 +244,24 @@
 ;;;;; Global types
 
 
-(defn mut
+(defn globaltype
 
   ""
 
   [view]
 
-  (let [type (valtype view)
-        flag (byte view)]
+  [(valtype view)
+   (mut view)])
+
+
+
+(defn mut
+   
+  ""
+
+  [view]
+
+  (let [flag (byte view)]
     (condp =
            flag
       wasm.bin/mut-const 'const
@@ -266,6 +284,82 @@
   [view]
 
   (u32 view))
+
+
+
+(def typeidx
+
+  "Alias to [[idx]].
+
+   Defined to mimick non-terminal symbol in WASM specification."
+
+  idx)
+
+
+
+
+(def funcidx
+
+  "Alias to [[idx]].
+
+   Defined to mimick non-terminal symbol in WASM specification."
+
+  idx)
+
+
+
+
+(def tableidx
+
+  "Alias to [[idx]].
+
+   Defined to mimick non-terminal symbol in WASM specification."
+
+  idx)
+
+
+
+
+(def memidx
+
+  "Alias to [[idx]].
+
+   Defined to mimick non-terminal symbol in WASM specification."
+
+  idx)
+
+
+
+
+(def globalidx
+
+  "Alias to [[idx]].
+
+   Defined to mimick non-terminal symbol in WASM specification."
+
+  idx)
+
+
+
+
+(def localidx
+
+  "Alias to [[idx]].
+
+   Defined to mimick non-terminal symbol in WASM specification."
+
+  idx)
+
+
+
+
+(def labelidx
+
+  "Alias to [[idx]].
+
+   Defined to mimick non-terminal symbol in WASM specification."
+
+  idx)
 
 
 ;;;;; Sections
@@ -291,7 +385,19 @@
        :wasm.section/start  start})))
 
 
-;;;;;;;;;; Type section
+;;;;; Custom section
+
+
+;(defn customsec
+;
+;  ""
+;
+;  [view]
+;
+;  )
+
+
+;;;;; Type section
 
 
 (defn typesec
@@ -304,7 +410,97 @@
        view))
 
 
-;;;;;;;;;; Function section
+;;;;; Import section
+
+
+(defn importsec
+
+  ""
+
+  [view]
+
+  (vec import
+       view))
+
+
+
+(defn import
+
+  ""
+
+  [view]
+
+  [(name view)
+   (name view)
+   (importdesc view)])
+
+
+
+(defn importdesc
+
+  ""
+
+  [view]
+
+  (let [type (byte view)
+        f    (condp =
+                    type
+               wasm.bin/importdesc-func   importdesc-func
+               wasm.bin/importdesc-table  importdesc-table
+               wasm.bin/importdesc-mem    importdesc-mem
+               wasm.bin/importdesc-global importdesc-global
+               (throw (ex-info (str "Unknown type in import description: "
+                                    type)
+                               {})))]
+    (f view)))
+
+
+
+(defn importdesc-func
+
+  ""
+
+  [view]
+
+  (list 'func
+        (typeidx view)))
+
+
+
+
+(defn importdesc-table
+
+  ""
+
+  [view]
+
+  (list 'table-type
+        (tabletype view)))
+
+
+
+(defn importdesc-mem
+
+  ""
+
+  [view]
+
+  (list 'memory
+        (memtype view)))
+
+
+
+(defn importdesc-global
+
+  ""
+
+  [view]
+
+  (list 'global
+        (globaltype view)))
+  
+
+;;;;; Function section
 
 
 (defn funcsec

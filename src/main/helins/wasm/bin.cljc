@@ -84,6 +84,22 @@
      11)
 
 
+;;;;; Import section
+
+
+(def importdesc-func
+     0x00)
+
+(def importdesc-table
+     0x01)
+
+(def importdesc-mem
+     0x02)
+
+(def importdesc-global
+     0x03)
+
+
 ;;;;;;;;;; Predicates for validation
 
 
