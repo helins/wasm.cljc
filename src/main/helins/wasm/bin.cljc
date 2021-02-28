@@ -47,6 +47,47 @@
 ;;;;;;;;;; Instructions
 
 
+;;;;; Variable instructions
+
+
+(def local-get
+     0x20)
+
+(def local-set
+     0x21)
+
+(def local-tee
+     0x22)
+
+(def global-get
+     0x23)
+
+(def global-set
+     0x24)
+
+
+;;;;; Numeric instructions
+
+
+;;; Constants
+
+
+(def const-i32
+     0x41)
+
+(def const-i64
+     0x42)
+
+(def const-f32
+     0x43)
+
+(def const-f64
+     0x44)
+
+
+;;;;;
+
+
 (def end
      0x0b)
 

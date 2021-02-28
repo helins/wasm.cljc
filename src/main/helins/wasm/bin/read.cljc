@@ -41,9 +41,13 @@
          importdesc-global
          importdesc-mem
          importdesc-table
+         localidx
+         globalidx
          locals
          mem
          mut
+         s32
+         s64
          start
          table
          u32)
@@ -96,6 +100,26 @@
 ;;;;; Integers
 
 
+(defn i32
+
+  ""
+
+  [view]
+
+  (s32 view))
+
+
+
+(defn i64
+
+  ""
+
+  [view]
+
+  (s64 view))
+
+
+
 (defn s32
 
   ""
@@ -106,6 +130,16 @@
 
 
 
+(defn s64
+
+  ""
+
+  [view]
+
+  (binf.leb128/rr-i64 view))
+
+
+
 (defn u32
 
   ""
@@ -113,6 +147,16 @@
   [view]
 
   (binf.leb128/rr-u32 view))
+
+
+
+(defn u64
+
+  ""
+
+  [view]
+
+  (binf.leb128/rr-u64 view))
 
 
 ;;;;; Floating-Point
@@ -300,20 +344,176 @@
 ;;;;;;;;;; Instructions
 
 
+;;;;; Variable instructions
+
+
+(defn local-get
+
+  ""
+
+  [view]
+
+  (list 'local.get
+        (localidx view)))
+
+
+
+(defn local-set
+
+  ""
+
+  [view]
+
+  (list 'local.set
+        (localidx view)))
+
+
+
+(defn local-tee
+
+  ""
+
+  [view]
+
+  (list 'local.tee
+        (localidx view)))
+
+
+
+(defn global-get
+
+  ""
+
+  [view]
+
+  (list 'global.get
+        (globalidx view)))
+
+
+
+(defn global-set
+
+  ""
+
+  [view]
+
+  (list 'global.set
+        (globalidx view)))
+
+
+;;;;; Numeric instructions
+
+
+;;; Constants
+
+
+(defn const-i32
+
+  ""
+
+  [view]
+
+  (list 'i32.const
+        (i32 view)))
+  
+
+
+(defn const-i64
+
+  ""
+
+  [view]
+
+  (list 'i64.const
+        (i64 view)))
+
+
+
+(defn const-f32
+
+  ""
+
+  [view]
+
+  (list 'f32.const
+        (f32 view)))
+
+
+
+(defn const-f64
+
+  ""
+
+  [view]
+
+  (list 'f64.const
+        (f64 view)))
+
+
+;;;;;
+
+
+(def -opcode->f
+
+  ""
+
+  {
+   ;; Variables
+   wasm.bin/local-get  local-get
+   wasm.bin/local-set  local-set
+   wasm.bin/local-tee  local-tee
+   wasm.bin/global-get global-get
+   wasm.bin/global-set global-set
+   ;; Numeric constants
+   wasm.bin/const-i32  const-i32
+   wasm.bin/const-i64  const-i64
+   wasm.bin/const-f32  const-f32
+   wasm.bin/const-f64  const-f64
+   })
+
+
+
 (defn expr
 
   ""
 
   [view]
 
-  (let [position (binf/position view)]
-    (loop [n-byte 0]
-      (if (= wasm.bin/end
-             (byte view))
-        (binf/ra-buffer view
-                        position
-                        n-byte)
-        (recur (inc n-byte))))))
+  (loop [instr+ []]
+    (let [opcode (byte view)]
+      (if (= opcode
+             wasm.bin/end)
+        instr+
+        (recur (conj instr+
+                     (when-some [f (-opcode->f opcode)]
+                       (f view))))))))
+
+
+
+(defn expr-const
+
+  ""
+
+  [view]
+
+  (loop [instr+ []]
+    (let [opcode (byte view)]
+      (if (= opcode
+             wasm.bin/end)
+        instr+
+        (recur (conj instr+
+                     (if-some [f (condp =
+                                        opcode
+                                   wasm.bin/const-i32  const-i32
+                                   wasm.bin/const-i64  const-i64
+                                   wasm.bin/const-f32  const-f32
+                                   wasm.bin/const-f64  const-f64
+                                   wasm.bin/global-get global-get
+                                   nil)]
+                       (f view)
+                       (throw (ex-info (str "Given instruction is illegal in constant expression: "
+                                            opcode)
+                                       {})))))))))
 
 
 ;;;;;;;;;; Modules
@@ -637,7 +837,7 @@
   [view]
 
   [(globaltype view)
-   (expr view)])
+   (expr-const view)])
 
 
 ;;;;; Export section
@@ -772,7 +972,7 @@
   [view]
 
   [(tableidx view)
-   (expr view)
+   (expr-const view)
    (vec funcidx
         view)])
 
@@ -847,7 +1047,7 @@
   [view]
 
   [(memidx view)
-   (expr view)
+   (expr-const view)
    (vec-byte view)])
 
 
