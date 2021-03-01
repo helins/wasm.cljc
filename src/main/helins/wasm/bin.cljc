@@ -240,6 +240,35 @@
    })
 
 
+
+(def opsym->opcode
+
+  ""
+
+  ;; 0xFC is saturated truncation, a "weird" opcode that is actually split by type.
+
+  (reduce-kv (fn [opsym->opcode opcode opsym]
+               (assoc opsym->opcode
+                      opsym
+                      opcode))
+             {}
+             (dissoc opcode->opsym
+                     0xFC)))
+
+
+
+
+
+(defn -trunc_sat?
+
+  ""
+
+  [opcode]
+
+  (= opcode
+     0xFC))
+
+
 ;;;;;;;;;; Types
 
 
