@@ -34,6 +34,7 @@
          exportdesc-mem
          exportdesc-table
          func
+         funcidx
          global
          import
          importdesc
@@ -50,6 +51,7 @@
          s64
          start
          table
+         typeidx
          u32)
 
 
@@ -348,16 +350,37 @@
 
   ""
 
-  [fread opsym view]
 
-  (list opsym
-        (fread view)))
+  ([fread]
+
+   (partial -op-1
+            fread))
+
+
+  ([fread opsym view]
+
+   (list opsym
+         (fread view))))
 
 
 
 (defn -op-2
 
   ""
+
+
+  ([fread]
+
+   (-op-2 fread
+          fread))
+
+
+  ([fread-1 fread-2]
+
+   (partial -op-2
+            fread-1
+            fread-2))
+
 
   ([fread opsym view]
 
@@ -448,10 +471,17 @@
 
   ""
 
-  [fread opsym view]
 
-  (list opsym
-        (fread view)))
+  ([fread]
+
+   (partial -op-constval
+            fread))
+
+
+  ([fread opsym view]
+
+   (list opsym
+         (fread view))))
 
 
 ;;;;;
@@ -472,46 +502,46 @@
                         (partial f
                                  opsym))))
              {}
-             {'local.get    -op-var-local
-              'local.set    -op-var-local
-              'local.tee    -op-var-local
-              'global.get   -op-var-global
-              'global.set   -op-var-global
+             {'call          (-op-1 funcidx)
+              'call_indirect (-op-2 typeidx
+                                    byte)
 
-              'i32.load     -op-memarg
-              'i64.load     -op-memarg
-              'f32.load     -op-memarg
-              'f64.load     -op-memarg
-              'i32.load8_s  -op-memarg
-              'i32.load8_u  -op-memarg
-              'i32.load16_s -op-memarg
-              'i32.load16_u -op-memarg
-              'i64.load8_s  -op-memarg
-              'i64.load8_u  -op-memarg
-              'i64.load16_s -op-memarg
-              'i64.load16_u -op-memarg
-              'i64.load32_s -op-memarg
-              'i64.load32_u -op-memarg
-              'i32.store    -op-memarg
-              'i64.store    -op-memarg
-              'f32.store    -op-memarg
-              'f64.store    -op-memarg
-              'i32.store8   -op-memarg
-              'i32.store16  -op-memarg
-              'i64.store8   -op-memarg
-              'i64.store16  -op-memarg
-              'i64.store32  -op-memarg
-              'memory.size  -op-memory
-              'memory.grow  -op-memory
+              'local.get     -op-var-local
+              'local.set     -op-var-local
+              'local.tee     -op-var-local
+              'global.get    -op-var-global
+              'global.set    -op-var-global
 
-              'i32.const    (partial -op-constval
-                                     i32)
-              'i64.const    (partial -op-constval
-                                     i64)
-              'f32.const    (partial -op-constval
-                                     f32)
-              'f64.const    (partial -op-constval
-                                     f64)}))
+              'i32.load      -op-memarg
+              'i64.load      -op-memarg
+              'f32.load      -op-memarg
+              'f64.load      -op-memarg
+              'i32.load8_s   -op-memarg
+              'i32.load8_u   -op-memarg
+              'i32.load16_s  -op-memarg
+              'i32.load16_u  -op-memarg
+              'i64.load8_s   -op-memarg
+              'i64.load8_u   -op-memarg
+              'i64.load16_s  -op-memarg
+              'i64.load16_u  -op-memarg
+              'i64.load32_s  -op-memarg
+              'i64.load32_u  -op-memarg
+              'i32.store     -op-memarg
+              'i64.store     -op-memarg
+              'f32.store     -op-memarg
+              'f64.store     -op-memarg
+              'i32.store8    -op-memarg
+              'i32.store16   -op-memarg
+              'i64.store8    -op-memarg
+              'i64.store16   -op-memarg
+              'i64.store32   -op-memarg
+              'memory.size   -op-memory
+              'memory.grow   -op-memory
+
+              'i32.const     (-op-constval i32)
+              'i64.const     (-op-constval i64)
+              'f32.const     (-op-constval f32)
+              'f64.const     (-op-constval f64)}))
 
 
 
@@ -540,8 +570,12 @@
              wasm.bin/end)
         instr+
         (recur (conj instr+
-                     (when-some [fread (-opcode->f opcode)]
-                       (fread view))))))))
+                     (if-some [fread (-opcode->f opcode)]
+                       (fread view)
+                       (or (wasm.bin/opcode->opsym opcode)
+                           (throw (ex-info (str "Opcode is not a recognized instruction: "
+                                                opcode)
+                                           {}))))))))))
 
 
 
