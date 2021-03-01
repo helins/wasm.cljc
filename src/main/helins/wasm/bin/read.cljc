@@ -38,6 +38,7 @@
          importdesc-global'
          importdesc-mem'
          importdesc-table'
+         labelidx'
          localidx'
          locals'
          mem'
@@ -135,7 +136,7 @@
 
   [view]
 
-  (binf.leb128/rr-i64 view
+  (binf.leb128/rr-i32 view
                       33))
 
 
@@ -423,7 +424,7 @@
   (let [x (s33' view)]
     (if (< x
            (binf.int64/i* 0))
-      (let [x-2 (binf.int64/u8)]
+      (let [x-2 (binf.int64/u8 x)]
         (if (= x-2
                0x40)
           nil
@@ -434,7 +435,7 @@
 
 (defn block'
 
-  [view]
+  [_opsym view]
 
   (list* 'block
          (blocktype' view)
@@ -444,11 +445,59 @@
 
 (defn loop'
 
-  [view]
+  [_opsym view]
 
   (list* 'loop
          (blocktype' view)
          (expr' view)))
+
+
+
+(defn else'
+
+  [view]
+
+  (list* 'else
+         (expr' view)))
+
+
+
+(defn if'
+
+  [_opsym view]
+
+  (let [blocktype (blocktype' view)]
+    (loop [instr+ []]
+      (let [opcode (byte' view)]
+        (condp =
+               opcode
+          (wasm.bin/opcode* 'else) (list 'if
+                                         blocktype
+                                         (list* 'then
+                                                instr+)
+                                         (else' view))
+          (wasm.bin/opcode* 'end)  (list 'if
+                                         blocktype
+                                         (list* 'then
+                                                instr+))
+          (recur (conj instr+
+                       (if-some [fread (opcode->f opcode)]
+                         (fread view)
+                         (or (wasm.bin/opcode->opsym opcode)
+                             (throw (ex-info (str "Opcode is not a recognized instruction: "
+                                                  opcode)
+                                             {})))))))))))
+
+
+
+(defn br_table'
+
+  [_opsym view]
+
+  (cons br_table'
+        (cons (vec' labelidx'
+                    view)
+              (labelidx' view))))
 
 
 ;;;;; Variable instructions
@@ -1158,6 +1207,11 @@
              {}
              {'block         block'
               'loop          loop'
+              'if            if'
+              'br            (op-1 labelidx')
+              'br_if         (op-1 labelidx')
+              'br_table      (op-1 (partial vec'
+                                            labelidx'))
               'call          (op-1 funcidx')
               'call_indirect (op-2 typeidx'
                                    byte')
