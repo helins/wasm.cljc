@@ -12,11 +12,18 @@
         (param $b
                i32)
         (result i32)
-    (block (result i32
-                   i32)
-      (local.get $a)
-      ;; (local.get $b)
-      (i32.const 456))
+    (local.get $a)
+    (local.get $b)
+    (block
+      (local.set $b
+                 (i32.const 10000)))
+    ;;(block (result i32
+    ;;               i32)
+    ;;  (local.get $a)
+    ;;  ;; (local.get $b)
+    ;;  (i32.const 456))
+    drop
+    (local.get $b)
     i32.add)
 
   (export "f" (func $f))

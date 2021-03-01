@@ -151,16 +151,16 @@
 ;;; Constants
 
 
-(def const-i32
+(def i32-const
      0x41)
 
-(def const-i64
+(def i64-const
      0x42)
 
-(def const-f32
+(def f32-const
      0x43)
 
-(def const-f64
+(def f64-const
      0x44)
 
 

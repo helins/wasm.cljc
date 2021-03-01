@@ -72,7 +72,7 @@
 
 
 
-(defn vec-byte
+(defn -vec-byte
 
   ""
 
@@ -344,7 +344,62 @@
 ;;;;;;;;;; Instructions
 
 
+(defn -op-1
+
+  ""
+
+  [fread opsym view]
+
+  (list opsym
+        (fread view)))
+
+
+
+(defn -op-2
+
+  ""
+
+  ([fread opsym view]
+
+   (-op-2 fread
+          fread
+          opsym
+          view))
+
+
+  ([fread-1 fread-2 opsym view]
+
+   (list opsym
+         (fread-1 view)
+         (fread-2 view))))
+
+
 ;;;;; Variable instructions
+
+
+(defn -op-var-local
+
+  ""
+
+  [opsym view]
+
+  (-op-1 localidx
+         opsym
+         view))
+
+
+
+(defn -op-var-global
+
+  ""
+
+  [opsym view]
+
+  (-op-1 globalidx
+         opsym
+         view))
+
+
 
 
 (defn local-get
@@ -417,278 +472,26 @@
 
 
 
-(defn i32-load
+(defn -op-memarg
 
   ""
 
-  [view]
+  [opsym view]
 
-  (list* 'i32.load
+  (list* opsym
          (memarg view)))
 
 
 
-(defn i64-load
+(defn -op-memory
 
   ""
 
-  [view]
-
-  (list* 'i32.load
-         (memarg view)))
-
-
-
-(defn f32-load
-
-  ""
-
-  [view]
-
-  (list* 'f32.load
-         (memarg view)))
-
-
-
-(defn f64-load
-
-  ""
-
-  [view]
-
-  (list* 'f64.load
-         (memarg view)))
-
-
-
-(defn i32-load8_s
-
-  ""
-
-  [view]
-
-  (list* 'i32.load_s
-         (memarg view)))
-
-
-
-(defn i32-load8_u
-
-  ""
-
-  [view]
-
-  (list* 'i32.load8_u
-         (memarg view)))
-
-
-
-(defn i32-load16_s
-
-  ""
-
-  [view]
-
-  (list* 'i32.load16_s
-         (memarg view)))
-
-
-
-(defn i32-load16_u
-
-  ""
-
-  [view]
-
-  (list* 'i32.load16_u
-         (memarg view)))
-
-
-
-(defn i64-load8_s
-
-  ""
-
-  [view]
-
-  (list* 'i64.load_s
-         (memarg view)))
-
-
-
-(defn i64-load8_u
-
-  ""
-
-  [view]
-
-  (list* 'i64.load8_u
-         (memarg view)))
-
-
-
-(defn i64-load16_s
-
-  ""
-
-  [view]
-
-  (list* 'i64.load16_s
-         (memarg view)))
-
-
-
-(defn i64-load16_u
-
-  ""
-
-  [view]
-
-  (list* 'i64.load16_u
-         (memarg view)))
-
-
-
-(defn i64-load32_s
-
-  ""
-
-  [view]
-
-  (list* 'i64.load32_s
-         (memarg view)))
-
-
-
-(defn i64-load32_u
-
-  ""
-
-  [view]
-
-  (list* 'i64.load32_u
-         (memarg view)))
-
-
-
-(defn i32-store
-
-  ""
-
-  [view]
-
-  (list* 'i32.store
-         (memarg view)))
-
-
-
-(defn i64-store
-
-  ""
-
-  [view]
-
-  (list* 'i32.store
-         (memarg view)))
-
-
-
-(defn f32-store
-
-  ""
-
-  [view]
-
-  (list* 'f32.store
-         (memarg view)))
-
-
-
-(defn f64-store
-
-  ""
-
-  [view]
-
-  (list* 'f64.store
-         (memarg view)))
-
-
-
-(defn i32-store8
-
-  ""
-
-  [view]
-
-  (list* 'i32.store8
-         (memarg view)))
-
-
-
-(defn i32-store16
-
-  ""
-
-  [view]
-
-  (list* 'i32.store16
-         (memarg view)))
-
-
-
-(defn i64-store8
-
-  ""
-
-  [view]
-
-  (list* 'i64.store8
-         (memarg view)))
-
-
-
-(defn i64-store16
-
-  ""
-
-  [view]
-
-  (list* 'i64.store16
-         (memarg view)))
-
-
-
-(defn i64-store32
-
-  ""
-
-  [view]
-
-  (list* 'i64.store32
-         (memarg view)))
-
-
-
-(defn memory-size
-
-  ""
-
-  [view]
-
-  (list 'memory.size
-        (byte view)))
-
-
-
-(defn memory-grow
-
-  ""
-
-  [view]
-
-  (list 'memory.size
-        (byte view)))
+  [opsym view]
+
+  (-op-1 byte
+         opsym
+         view))
 
 
 ;;;;; Numeric instructions
@@ -697,47 +500,14 @@
 ;;; Constants
 
 
-(defn const-i32
+(defn -op-constval
 
   ""
 
-  [view]
+  [fread opsym view]
 
-  (list 'i32.const
-        (i32 view)))
-  
-
-
-(defn const-i64
-
-  ""
-
-  [view]
-
-  (list 'i64.const
-        (i64 view)))
-
-
-
-(defn const-f32
-
-  ""
-
-  [view]
-
-  (list 'f32.const
-        (f32 view)))
-
-
-
-(defn const-f64
-
-  ""
-
-  [view]
-
-  (list 'f64.const
-        (f64 view)))
+  (list opsym
+        (fread view)))
 
 
 ;;;;;
@@ -749,43 +519,94 @@
 
   {
    ;; Variables
-   wasm.bin/local-get    local-get
-   wasm.bin/local-set    local-set
-   wasm.bin/local-tee    local-tee
-   wasm.bin/global-get   global-get
-   wasm.bin/global-set   global-set
+   wasm.bin/local-get    ['local.get
+                          -op-var-local]
+   wasm.bin/local-set    ['local.set
+                          -op-var-local]
+   wasm.bin/local-tee    ['local.tee
+                          -op-var-local]
+   wasm.bin/global-get   ['global.get
+                          -op-var-global]
+   wasm.bin/global-set   ['globalr.set
+                          -op-var-global]
    ;; Memory
-   wasm.bin/i32-load     i32-load
-   wasm.bin/i64-load     i64-load
-   wasm.bin/f32-load     f32-load
-   wasm.bin/f64-load     f64-load
-   wasm.bin/i32-load8_s  i32-load8_s
-   wasm.bin/i32-load8_u  i32-load8_u
-   wasm.bin/i32-load16_s i32-load16_s
-   wasm.bin/i32-load16_u i32-load16_u
-   wasm.bin/i64-load8_s  i64-load8_s
-   wasm.bin/i64-load8_u  i64-load8_u
-   wasm.bin/i64-load16_s i64-load16_s
-   wasm.bin/i64-load16_u i64-load16_u
-   wasm.bin/i64-load32_s i64-load32_s
-   wasm.bin/i64-load32_u i64-load32_u
-   wasm.bin/i32-store    i32-store
-   wasm.bin/i64-store    i64-store
-   wasm.bin/f32-store    f32-store
-   wasm.bin/f64-store    f64-store
-   wasm.bin/i32-store8   i32-store8
-   wasm.bin/i32-store16  i32-store16
-   wasm.bin/i64-store8   i64-store8
-   wasm.bin/i64-store16  i64-store16
-   wasm.bin/i64-store32  i64-store32
-   wasm.bin/memory-size  memory-size
-   wasm.bin/memory-grow  memory-grow
+   wasm.bin/i32-load     ['i32.load
+                          -op-memarg]
+   wasm.bin/i64-load     ['i64.load
+                          -op-memarg]
+   wasm.bin/f32-load     ['f32.load
+                          -op-memarg]
+   wasm.bin/f64-load     ['f64.load
+                          -op-memarg]
+   wasm.bin/i32-load8_s  ['i32.load8_s
+                          -op-memarg]
+   wasm.bin/i32-load8_u  ['i32.load8_u
+                          -op-memarg]
+   wasm.bin/i32-load16_s ['i32.load16_s
+                          -op-memarg]
+   wasm.bin/i32-load16_u ['i32.load16_u
+                          -op-memarg]
+   wasm.bin/i64-load8_s  ['i64.load8_s
+                          -op-memarg]
+   wasm.bin/i64-load8_u  ['i64.load8_u
+                          -op-memarg]
+   wasm.bin/i64-load16_s ['i64.load16_s
+                          -op-memarg]
+   wasm.bin/i64-load16_u ['i64.load16_u
+                          -op-memarg]
+   wasm.bin/i64-load32_s ['i64.load32_s
+                          -op-memarg]
+   wasm.bin/i64-load32_u ['i64.load32_u
+                          -op-memarg]
+   wasm.bin/i32-store    ['i32.store
+                          -op-memarg]
+   wasm.bin/i64-store    ['i64.store
+                          -op-memarg]
+   wasm.bin/f32-store    ['f32.store
+                          -op-memarg]
+   wasm.bin/f64-store    ['f64.store
+                          -op-memarg]
+   wasm.bin/i32-store8   ['i32.store8
+                          -op-memarg]
+   wasm.bin/i32-store16  ['i32.store16
+                          -op-memarg]
+   wasm.bin/i64-store8   ['i64.store8
+                          -op-memarg]
+   wasm.bin/i64-store16  ['i64.store16
+                          -op-memarg]
+   wasm.bin/i64-store32  ['i64.store32
+                          -op-memarg]
+   wasm.bin/memory-size  ['memory.size
+                          -op-memory]
+   wasm.bin/memory-grow  ['memory.grow
+                          -op-memory]
    ;; Numeric constants
-   wasm.bin/const-i32    const-i32
-   wasm.bin/const-i64    const-i64
-   wasm.bin/const-f32    const-f32
-   wasm.bin/const-f64    const-f64
+   wasm.bin/i32-const    ['i32.const
+                          (partial -op-constval
+                                   i32)]
+   wasm.bin/i64-const    ['i64.const
+                          (partial -op-constval
+                                   i64)]
+   wasm.bin/f32-const    ['f32.const
+                          (partial -op-constval
+                                   f32)]
+   wasm.bin/f64-const    ['f64.const
+                          (partial -op-constval
+                                   f64)]
    })
+
+
+
+(def -opcode-const->f
+
+  ""
+
+  (select-keys -opcode->f
+               [wasm.bin/f32-const
+                wasm.bin/f64-const
+                wasm.bin/global-get
+                wasm.bin/i32-const
+                wasm.bin/i64-const]))
 
 
 
@@ -801,8 +622,10 @@
              wasm.bin/end)
         instr+
         (recur (conj instr+
-                     (when-some [f (-opcode->f opcode)]
-                       (f view))))))))
+                     (when-some [[opsym
+                                  fread] (-opcode->f opcode)]
+                       (fread opsym
+                              view))))))))
 
 
 
@@ -818,15 +641,10 @@
              wasm.bin/end)
         instr+
         (recur (conj instr+
-                     (if-some [f (condp =
-                                        opcode
-                                   wasm.bin/const-i32  const-i32
-                                   wasm.bin/const-i64  const-i64
-                                   wasm.bin/const-f32  const-f32
-                                   wasm.bin/const-f64  const-f64
-                                   wasm.bin/global-get global-get
-                                   nil)]
-                       (f view)
+                     (if-some [[opsym
+                                fread] (-opcode-const->f opcode)]
+                       (fread opsym
+                              view)
                        (throw (ex-info (str "Given instruction is illegal in constant expression: "
                                             opcode)
                                        {})))))))))
@@ -1364,7 +1182,7 @@
 
   [(memidx view)
    (expr-const view)
-   (vec-byte view)])
+   (-vec-byte view)])
 
 
 ;;;;; Module
