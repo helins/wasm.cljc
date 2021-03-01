@@ -9,62 +9,59 @@
 
   {:author "Adam Helinski"}
 
-  (:require [helins.binf        :as binf]
+  (:require [clojure.core]
+            [helins.binf        :as binf]
+            [helins.binf.int64  :as binf.int64]
             [helins.binf.leb128 :as binf.leb128]
-            [helins.wasm.bin    :as wasm.bin])
-  ;;
-  ;; <!> Keep in mind exclusions <!>
-  ;;
-  (:refer-clojure :exclude [byte
-                            import
-                            mut
-                            name
-                            vec]))
+            [helins.wasm.bin    :as wasm.bin]))
 
 
-(declare code
-         custom
-         data
-         elem
-         elemtype
-         export
-         exportdesc
-         exportdesc-func
-         exportdesc-global
-         exportdesc-mem
-         exportdesc-table
-         func
-         funcidx
-         global
-         import
-         importdesc
-         importdesc-func
-         importdesc-global
-         importdesc-mem
-         importdesc-table
-         localidx
-         globalidx
-         locals
-         mem
-         mut
-         s32
-         s64
-         start
-         table
-         typeidx
-         u32)
+(declare code'
+         custom'
+         data'
+         elem'
+         elemtype'
+         export'
+         exportdesc'
+         exportdesc-func'
+         exportdesc-global'
+         exportdesc-mem'
+         exportdesc-table'
+         expr'
+         func'
+         funcidx'
+         global'
+         globalidx'
+         import'
+         importdesc'
+         importdesc-func'
+         importdesc-global'
+         importdesc-mem'
+         importdesc-table'
+         localidx'
+         locals'
+         mem'
+         mut'
+         opcode->f
+         opcode-const->f
+         s32'
+         s64'
+         start'
+         table'
+         typeidx'
+         u32')
 
 
 ;;;;;;;;;; Conventions
 
 
-(defn vec
+(defn vec'
 
   ""
 
   [f view]
 
-  (loop [i (u32 view)
+  (loop [i (u32' view)
          v []]
     (if (pos? i)
       (recur (dec i)
@@ -74,14 +71,14 @@
 
 
 
-(defn -vec-byte
+(defn vec-byte
 
   ""
 
   [view]
 
   (binf/rr-buffer view
-                  (u32 view)))
+                  (u32' view)))
 
 
 ;;;;;;;;;; Values
@@ -90,7 +87,7 @@
 ;;;;; Byte
 
 
-(defn byte
+(defn byte'
 
   ""
 
@@ -102,27 +99,27 @@
 ;;;;; Integers
 
 
-(defn i32
+(defn i32'
 
   ""
 
   [view]
 
-  (s32 view))
+  (s32' view))
 
 
 
-(defn i64
+(defn i64'
 
   ""
 
   [view]
 
-  (s64 view))
+  (s64' view))
 
 
 
-(defn s32
+(defn s32'
 
   ""
 
@@ -132,7 +129,18 @@
 
 
 
-(defn s64
+(defn s33'
+
+  ""
+
+  [view]
+
+  (binf.leb128/rr-i64 view
+                      33))
+
+
+
+(defn s64'
 
   ""
 
@@ -142,7 +150,7 @@
 
 
 
-(defn u32
+(defn u32'
 
   ""
 
@@ -152,7 +160,7 @@
 
 
 
-(defn u64
+(defn u64'
 
   ""
 
@@ -164,7 +172,7 @@
 ;;;;; Floating-Point
 
 
-(defn f32
+(defn f32'
 
   ""
 
@@ -174,7 +182,7 @@
 
 
 
-(defn f64
+(defn f64'
 
   ""
 
@@ -186,14 +194,14 @@
 ;;;;; Names
 
 
-(defn name
+(defn name'
 
   ""
 
   [view]
 
   (binf/rr-string view
-                  (u32 view)))
+                  (u32' view)))
 
 
 ;;;;;;;;;; Types
@@ -202,71 +210,79 @@
 ;;;;; Value types
 
 
-(defn valtype
+(defn -valtype
+
+  ""
+
+  [b8]
+  (condp =
+         b8
+    wasm.bin/valtype-i32 'i32
+    wasm.bin/valtype-i64 'i64
+    wasm.bin/valtype-f32 'f32
+    wasm.bin/valtype-f64 'f64
+    (throw (ex-info (str "Unknown value type: "
+                         b8)
+                    {}))))
+
+
+
+(defn valtype'
 
   ""
 
   [view]
 
-  (let [b8 (u32 view)]
-    (condp =
-           b8
-      wasm.bin/valtype-i32 'i32
-      wasm.bin/valtype-i64 'i64
-      wasm.bin/valtype-f32 'f32
-      wasm.bin/valtype-f64 'f64
-      (throw (ex-info (str "Unknown value type: "
-                           b8)
-                      {})))))
+  (-valtype (byte' view)))
 
 
 ;;;;; Result types
 
 
-(defn resulttype
+(defn resulttype'
 
   ""
 
   [view]
 
-  (vec valtype
-       view))
+  (vec' valtype'
+        view))
 
 
 ;;;;; Funtion types
 
 
-(defn functype
+(defn functype'
 
   ""
 
   [view]
 
-  (let [b8-1 (byte view)]
+  (let [b8-1 (byte' view)]
     (when (not= b8-1
                 wasm.bin/functype)
       (throw (ex-info (str "Function type should start with 0x60, not: "
                            b8-1)
                       {})))
-    [(resulttype view)
-     (resulttype view)]))
+    [(resulttype' view)
+     (resulttype' view)]))
 
 
 ;;;;; Limits
 
 
-(defn limits
+(defn limits'
 
   ""
 
   [view]
 
-  (let [flag (byte view)]
+  (let [flag (byte' view)]
     (condp =
            flag
-      wasm.bin/limits-min    [(u32 view)]
-      wasm.bin/limits-minmax [(u32 view)
-                              (u32 view)]
+      wasm.bin/limits-min    [(u32' view)]
+      wasm.bin/limits-minmax [(u32' view)
+                              (u32' view)]
       (throw (ex-info (str "Unknown limite type: "
                            flag)
                       {})))))
@@ -275,36 +291,36 @@
 ;;;;; Memory types
 
 
-(defn memtype
+(defn memetype'
 
   ""
 
   [view]
 
-  (limits view))
+  (limits' view))
 
 
 ;;;;; Table types
 
 
-(defn tabletype
+(defn tabletype'
 
   ""
 
   [view]
 
-  [(elemtype view)
-   (limits view)])
+  [(elemtype' view)
+   (limits' view)])
 
 
 
-(defn elemtype
+(defn elemtype'
 
   ""
 
   [view]
 
-  (let [type (byte view)]
+  (let [type (byte' view)]
     (when (not= type
                 wasm.bin/elemtype)
       (throw (ex-info (str "Unknown element type: "
@@ -316,24 +332,24 @@
 ;;;;; Global types
 
 
-(defn globaltype
+(defn globaltype'
 
   ""
 
   [view]
 
-  [(valtype view)
-   (mut view)])
+  [(valtype' view)
+   (mut' view)])
 
 
 
-(defn mut
+(defn mut'
    
   ""
 
   [view]
 
-  (let [flag (byte view)]
+  (let [flag (byte' view)]
     (condp =
            flag
       wasm.bin/mut-const 'const
@@ -346,14 +362,14 @@
 ;;;;;;;;;; Instructions
 
 
-(defn -op-1
+(defn op-1
 
   ""
 
 
   ([fread]
 
-   (partial -op-1
+   (partial op-1
             fread))
 
 
@@ -364,30 +380,30 @@
 
 
 
-(defn -op-2
+(defn op-2
 
   ""
 
 
   ([fread]
 
-   (-op-2 fread
-          fread))
+   (op-2 fread
+         fread))
 
 
   ([fread-1 fread-2]
 
-   (partial -op-2
+   (partial op-2
             fread-1
             fread-2))
 
 
   ([fread opsym view]
 
-   (-op-2 fread
-          fread
-          opsym
-          view))
+   (op-2 fread
+         fread
+         opsym
+         view))
 
 
   ([fread-1 fread-2 opsym view]
@@ -397,68 +413,106 @@
          (fread-2 view))))
 
 
+;;;;; Control instructions
+
+
+(defn blocktype'
+
+  [view]
+
+  (let [x (s33' view)]
+    (if (< x
+           (binf.int64/i* 0))
+      (let [x-2 (binf.int64/u8)]
+        (if (= x-2
+               0x40)
+          nil
+          (-valtype x-2)))
+      (binf.int64/u32 x))))
+
+
+
+(defn block'
+
+  [view]
+
+  (list* 'block
+         (blocktype' view)
+         (expr' view)))
+
+
+
+(defn loop'
+
+  [view]
+
+  (list* 'loop
+         (blocktype' view)
+         (expr' view)))
+
+
 ;;;;; Variable instructions
 
 
-(defn -op-var-local
+(defn op-var-local
 
   ""
 
   [opsym view]
 
-  (-op-1 localidx
-         opsym
-         view))
+  (op-1 localidx'
+        opsym
+        view))
 
 
 
-(defn -op-var-global
+(defn op-var-global
 
   ""
 
   [opsym view]
 
-  (-op-1 globalidx
-         opsym
-         view))
+  (op-1 globalidx'
+        opsym
+        view))
 
 
 ;;;;;; Memory instructions
 
 
-(defn memarg
+(defn memarg'
 
   ""
 
   [view]
 
   [(symbol (str "align="
-                (u32 view)))
+                (u32' view)))
    (symbol (str "offset="
-                (u32 view)))])
+                (u32' view)))])
 
 
 
-(defn -op-memarg
+(defn op-memarg
 
   ""
 
   [opsym view]
 
   (list* opsym
-         (memarg view)))
+         (memarg' view)))
 
 
 
-(defn -op-memory
+(defn op-memory
 
   ""
 
   [opsym view]
 
-  (-op-1 byte
-         opsym
-         view))
+  (op-1 byte'
+        opsym
+        view))
 
 
 ;;;;; Numeric instructions
@@ -467,14 +521,14 @@
 ;;; Constants
 
 
-(defn -op-constval
+(defn op-constval
 
   ""
 
 
   ([fread]
 
-   (partial -op-constval
+   (partial op-constval
             fread))
 
 
@@ -487,90 +541,19 @@
 ;;;;;
 
 
-(def -opcode->f
-
-  ""
-
-  (reduce-kv (fn [opcode->f opsym f]
-               (let [opcode (wasm.bin/opsym->opcode opsym)]
-                 (when-not opcode
-                   (throw (ex-info (str "Opcode not found for: "
-                                        opsym)
-                                   {})))
-                 (assoc opcode->f
-                        opcode
-                        (partial f
-                                 opsym))))
-             {}
-             {'call          (-op-1 funcidx)
-              'call_indirect (-op-2 typeidx
-                                    byte)
-
-              'local.get     -op-var-local
-              'local.set     -op-var-local
-              'local.tee     -op-var-local
-              'global.get    -op-var-global
-              'global.set    -op-var-global
-
-              'i32.load      -op-memarg
-              'i64.load      -op-memarg
-              'f32.load      -op-memarg
-              'f64.load      -op-memarg
-              'i32.load8_s   -op-memarg
-              'i32.load8_u   -op-memarg
-              'i32.load16_s  -op-memarg
-              'i32.load16_u  -op-memarg
-              'i64.load8_s   -op-memarg
-              'i64.load8_u   -op-memarg
-              'i64.load16_s  -op-memarg
-              'i64.load16_u  -op-memarg
-              'i64.load32_s  -op-memarg
-              'i64.load32_u  -op-memarg
-              'i32.store     -op-memarg
-              'i64.store     -op-memarg
-              'f32.store     -op-memarg
-              'f64.store     -op-memarg
-              'i32.store8    -op-memarg
-              'i32.store16   -op-memarg
-              'i64.store8    -op-memarg
-              'i64.store16   -op-memarg
-              'i64.store32   -op-memarg
-              'memory.size   -op-memory
-              'memory.grow   -op-memory
-
-              'i32.const     (-op-constval i32)
-              'i64.const     (-op-constval i64)
-              'f32.const     (-op-constval f32)
-              'f64.const     (-op-constval f64)}))
-
-
-
-(def -opcode-const->f
-
-  ""
-
-  (select-keys -opcode->f
-               [(wasm.bin/opcode* 'f32.const)
-                (wasm.bin/opcode* 'f64.const)
-                (wasm.bin/opcode* 'global.get)
-                (wasm.bin/opcode* 'i32.const)
-                (wasm.bin/opcode* 'i64.const)]))
-
-
-
-(defn expr
+(defn expr'
 
   ""
 
   [view]
 
   (loop [instr+ []]
-    (let [opcode (byte view)]
+    (let [opcode (byte' view)]
       (if (= opcode
-             wasm.bin/end)
+             (wasm.bin/opcode* 'end))
         instr+
         (recur (conj instr+
-                     (if-some [fread (-opcode->f opcode)]
+                     (if-some [fread (opcode->f opcode)]
                        (fread view)
                        (or (wasm.bin/opcode->opsym opcode)
                            (throw (ex-info (str "Opcode is not a recognized instruction: "
@@ -586,12 +569,12 @@
   [view]
 
   (loop [instr+ []]
-    (let [opcode (byte view)]
+    (let [opcode (byte' view)]
       (if (= opcode
              wasm.bin/end)
         instr+
         (recur (conj instr+
-                     (if-some [fread (-opcode-const->f opcode)]
+                     (if-some [fread (opcode-const->f opcode)]
                        (fread view)
                        (throw (ex-info (str "Given instruction is illegal in constant expression: "
                                             opcode)
@@ -610,22 +593,11 @@
 
   [view]
 
-  (u32 view))
+  (u32' view))
 
 
 
-(def typeidx
-
-  "Alias to [[idx]].
-
-   Defined to mimick non-terminal symbol in WASM specification."
-
-  idx)
-
-
-
-
-(def funcidx
+(def typeidx'
 
   "Alias to [[idx]].
 
@@ -635,19 +607,7 @@
 
 
 
-
-(def tableidx
-
-  "Alias to [[idx]].
-
-   Defined to mimick non-terminal symbol in WASM specification."
-
-  idx)
-
-
-
-
-(def memidx
+(def funcidx'
 
   "Alias to [[idx]].
 
@@ -657,19 +617,7 @@
 
 
 
-
-(def globalidx
-
-  "Alias to [[idx]].
-
-   Defined to mimick non-terminal symbol in WASM specification."
-
-  idx)
-
-
-
-
-(def localidx
+(def tableidx'
 
   "Alias to [[idx]].
 
@@ -679,8 +627,37 @@
 
 
 
+(def memidx'
 
-(def labelidx
+  "Alias to [[idx]].
+
+   Defined to mimick non-terminal symbol in WASM specification."
+
+  idx)
+
+
+
+(def globalidx'
+
+  "Alias to [[idx]].
+
+   Defined to mimick non-terminal symbol in WASM specification."
+
+  idx)
+
+
+
+(def localidx'
+
+  "Alias to [[idx]].
+
+   Defined to mimick non-terminal symbol in WASM specification."
+
+  idx)
+
+
+
+(def labelidx'
 
   "Alias to [[idx]].
 
@@ -692,18 +669,18 @@
 ;;;;; Sections
 
 
-(defn section
+(defn section'
 
   ""
 
   [view]
 
-  (let [id (byte view)]
+  (let [id (byte' view)]
     (when-not (wasm.bin/section-id? id)
       (throw (ex-info (str "Unknown section ID: "
                            id)
                       {})))
-    (let [n-byte (u32 view)
+    (let [n-byte (u32' view)
           start  (binf/position view)]
       (binf/skip view
                  n-byte)
@@ -715,79 +692,80 @@
 ;;;;; Custom section
 
 
-(defn customsec
+(defn customsec'
 
   ""
 
   [view]
 
-  (custom view))
+  (custom' view))
 
 
 
-(defn custom
+(defn custom'
 
   ""
 
   [view]
 
-  [(name view)
-   (binf/rr-buffer view
-                   (binf/remaining view))])
+  [(name' view)
+   (binf/view view
+              (binf/position view)
+              (binf/remaining view))])
 
 
 ;;;;; Type section
 
 
-(defn typesec
+(defn typesec'
 
   ""
 
   [view]
 
-  (vec functype
-       view))
+  (vec' functype'
+        view))
 
 
 ;;;;; Import section
 
 
-(defn importsec
+(defn importsec'
 
   ""
 
   [view]
 
-  (vec import
-       view))
+  (vec' import'
+        view))
 
 
 
-(defn import
-
-  ""
-
-  [view]
-
-  [(name view)
-   (name view)
-   (importdesc view)])
-
-
-
-(defn importdesc
+(defn import'
 
   ""
 
   [view]
 
-  (let [type (byte view)
+  [(name' view)
+   (name' view)
+   (importdesc' view)])
+
+
+
+(defn importdesc'
+
+  ""
+
+  [view]
+
+  (let [type (byte' view)
         f    (condp =
                     type
-               wasm.bin/importdesc-func   importdesc-func
-               wasm.bin/importdesc-table  importdesc-table
-               wasm.bin/importdesc-mem    importdesc-mem
-               wasm.bin/importdesc-global importdesc-global
+               wasm.bin/importdesc-func   importdesc-func'
+               wasm.bin/importdesc-table  importdesc-table'
+               wasm.bin/importdesc-mem    importdesc-mem'
+               wasm.bin/importdesc-global importdesc-global'
                (throw (ex-info (str "Unknown type in import description: "
                                     type)
                                {})))]
@@ -795,171 +773,171 @@
 
 
 
-(defn importdesc-func
+(defn importdesc-func'
 
   ""
 
   [view]
 
   (list 'func
-        (typeidx view)))
+        (typeidx' view)))
 
 
 
 
-(defn importdesc-table
+(defn importdesc-table'
 
   ""
 
   [view]
 
   (list 'table
-        (tabletype view)))
+        (tabletype' view)))
 
 
 
-(defn importdesc-mem
+(defn importdesc-mem'
 
   ""
 
   [view]
 
   (list 'memory
-        (memtype view)))
+        (memetype' view)))
 
 
 
-(defn importdesc-global
+(defn importdesc-global'
 
   ""
 
   [view]
 
   (list 'global
-        (globaltype view)))
+        (globaltype' view)))
   
 
 ;;;;; Function section
 
 
-(defn funcsec
+(defn funcsec'
 
   ""
 
   [view]
 
-  (vec idx
-       view))
+  (vec' typeidx'
+        view))
 
 
 ;;;;; Table section
 
 
-(defn tablesec
+(defn tablesec'
 
   ""
 
   [view]
 
-  (vec table
-       view))
+  (vec' table'
+        view))
 
 
 
-(defn table
+(defn table'
 
   ""
 
   [view]
 
-  (tabletype view))
+  (tabletype' view))
 
 
 ;;;;; Memory section
 
 
-(defn memsec
+(defn memsec'
 
   ""
 
   [view]
 
-  (vec mem
-       view))
+  (vec' mem'
+        view))
 
 
 
-(defn mem
+(defn mem'
 
   ""
 
   [view]
 
-  (memtype view))
+  (memetype' view))
 
 
 ;;;;; Global section
 
 
-(defn globalsec
+(defn globalsec'
 
   ""
 
   [view]
 
-  (vec global
-       view))
+  (vec' global'
+        view))
 
 
 
-(defn global
+(defn global'
 
   ""
 
   [view]
 
-  [(globaltype view)
+  [(globaltype' view)
    (expr-const view)])
 
 
 ;;;;; Export section
 
 
-(defn exportsec
+(defn exportsec'
 
   ""
 
   [view]
 
-  (vec export
-       view))
+  (vec' export'
+        view))
 
 
 
-(defn export
+(defn export'
 
   ""
 
   [view]
 
-  [(name view)
-   (exportdesc view)])
+  [(name' view)
+   (exportdesc' view)])
 
   
 
-(defn exportdesc
+(defn exportdesc'
 
   ""
 
   [view]
 
-  (let [type (byte view)
+  (let [type (byte' view)
         f    (condp =
                     type
-               wasm.bin/exportdesc-func   exportdesc-func
-               wasm.bin/exportdesc-table  exportdesc-table
-               wasm.bin/exportdesc-mem    exportdesc-mem
-               wasm.bin/exportdesc-global exportdesc-global
+               wasm.bin/exportdesc-func   exportdesc-func'
+               wasm.bin/exportdesc-table  exportdesc-table'
+               wasm.bin/exportdesc-mem    exportdesc-mem'
+               wasm.bin/exportdesc-global exportdesc-global'
                (throw (ex-info (str "Unknown type in export description: "
                                     type)
                                {})))]
@@ -967,176 +945,176 @@
 
 
 
-(defn exportdesc-func
+(defn exportdesc-func'
 
   ""
 
   [view]
 
   (list 'func
-        (typeidx view)))
+        (typeidx' view)))
 
 
 
 
-(defn exportdesc-table
+(defn exportdesc-table'
 
   ""
 
   [view]
 
   (list 'table
-        (tableidx view)))
+        (tableidx' view)))
 
 
 
-(defn exportdesc-mem
+(defn exportdesc-mem'
 
   ""
 
   [view]
 
   (list 'memory
-        (memidx view)))
+        (memidx' view)))
 
 
 
-(defn exportdesc-global
+(defn exportdesc-global'
 
   ""
 
   [view]
 
   (list 'global
-        (globalidx view)))
+        (globalidx' view)))
 
 
 ;;;;; Start section
 
 
-(defn startsec
+(defn startsec'
 
   ""
 
   [view]
 
-  (start view))
+  (start' view))
 
 
 
-(defn start
+(defn start'
 
   ""
 
   [view]
 
-  (funcidx view))
+  (funcidx' view))
 
 
 ;;;;; Element section
 
 
-(defn elemsec
+(defn elemsec'
 
   ""
 
   [view]
 
-  (vec elem
-       view))
+  (vec' elem'
+        view))
+ 
 
 
-
-(defn elem
+(defn elem'
 
   ""
 
   [view]
 
-  [(tableidx view)
+  [(tableidx' view)
    (expr-const view)
-   (vec funcidx
-        view)])
+   (vec' funcidx'
+         view)])
 
 
 ;;;;; Code section
 
 
-(defn codesec
+(defn codesec'
 
   ""
 
   [view]
 
-  (vec code
-       view))
+  (vec' code'
+        view))
 
 
 
-(defn code
+(defn code'
 
   ""
 
   [view]
 
-  [{:wasm/n-byte (u32 view)
+  [{:wasm/n-byte (u32' view)
     :wasm/start  (binf/position view)}
-   (func view)])
+   (func' view)])
 
 
 
-(defn func
-
-  ""
-
-  [view]
-
-  [(locals view)
-   (expr view)])
-
-
-
-(defn locals
+(defn func'
 
   ""
 
   [view]
 
-  (vec (fn [view]
-         [(u32 view)
-          (valtype view)])
-       view))
+  [(locals' view)
+   (expr' view)])
+
+
+
+(defn locals'
+
+  ""
+
+  [view]
+
+  (vec' (fn [view]
+          [(u32' view)
+           (valtype' view)])
+        view))
 
 
 ;;;;; Data section
 
 
-(defn datasec
+(defn datasec'
 
   ""
 
   [view]
 
-  (vec data
-       view))
+  (vec' data'
+        view))
 
 
 
-(defn data
+(defn data'
 
   ""
 
   [view]
 
-  [(memidx view)
+  [(memidx' view)
    (expr-const view)
-   (-vec-byte view)])
+   (vec-byte view)])
 
 
 ;;;;; Module
 
 
-(defn magic
+(defn magic'
 
   ""
 
@@ -1151,10 +1129,86 @@
 
 
 
-(defn version
+(defn version'
 
   ""
 
   [view]
 
   (binf/rr-u32 view))
+
+
+;;;;;;;;;;
+
+
+(def opcode->f
+
+  ""
+
+  (reduce-kv (fn [opcode->f opsym f]
+               (let [opcode (wasm.bin/opsym->opcode opsym)]
+                 (when-not opcode
+                   (throw (ex-info (str "Opcode not found for: "
+                                        opsym)
+                                   {})))
+                 (assoc opcode->f
+                        opcode
+                        (partial f
+                                 opsym))))
+             {}
+             {'block         block'
+              'loop          loop'
+              'call          (op-1 funcidx')
+              'call_indirect (op-2 typeidx'
+                                   byte')
+
+              'local.get     op-var-local
+              'local.set     op-var-local
+              'local.tee     op-var-local
+              'global.get    op-var-global
+              'global.set    op-var-global
+
+              'i32.load      op-memarg 
+              'i64.load      op-memarg
+              'f32.load      op-memarg
+              'f64.load      op-memarg
+              'i32.load8_s   op-memarg
+              'i32.load8_u   op-memarg
+              'i32.load16_s  op-memarg
+              'i32.load16_u  op-memarg
+              'i64.load8_s   op-memarg
+              'i64.load8_u   op-memarg
+              'i64.load16_s  op-memarg
+              'i64.load16_u  op-memarg
+              'i64.load32_s  op-memarg
+              'i64.load32_u  op-memarg
+              'i32.store     op-memarg
+              'i64.store     op-memarg
+              'f32.store     op-memarg
+              'f64.store     op-memarg
+              'i32.store8    op-memarg
+              'i32.store16   op-memarg
+              'i64.store8    op-memarg
+              'i64.store16   op-memarg
+              'i64.store32   op-memarg
+              'memory.size   op-memory
+              'memory.grow   op-memory
+
+              'i32.const     (op-constval i32')
+              'i64.const     (op-constval i64')
+              'f32.const     (op-constval f32')
+              'f64.const     (op-constval f64')}))
+
+
+
+(def opcode-const->f
+
+  ""
+
+  (select-keys opcode->f
+               [(wasm.bin/opcode* 'f32.const)
+                (wasm.bin/opcode* 'f64.const)
+                (wasm.bin/opcode* 'global.get)
+                (wasm.bin/opcode* 'i32.const)
+                (wasm.bin/opcode* 'i64.const)]))
+
