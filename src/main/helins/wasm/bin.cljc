@@ -247,15 +247,51 @@
 
   ;; 0xFC is saturated truncation, a "weird" opcode that is actually split by type.
 
-  (reduce-kv (fn [opsym->opcode opcode opsym]
-               (assoc opsym->opcode
-                      opsym
-                      opcode))
-             {}
-             (dissoc opcode->opsym
-                     0xFC)))
+  (as-> {}
+        table
+    (reduce-kv (fn [opsym->opcode opcode opsym]
+                 (assoc opsym->opcode
+                        opsym
+                        opcode))
+               table
+               (dissoc opcode->opsym
+                       0xFC))
+    (reduce-kv (fn [opsym->opcode arg opsym]
+                 (assoc opsym->opcode
+                        opsym
+                        [0xFC arg]))
+               table
+               (opcode->opsym 0xFC))))
 
 
+
+(defmacro opcode*
+
+  ""
+
+  [opsym]
+
+  (get opsym->opcode
+       (cond
+         (symbol? opsym)       opsym
+         (and (coll? opsym)
+              (= (first opsym)
+                 'quote))      (second opsym)
+         :else                 (throw (ex-info (str "Opsym must be a symbol: "
+                                                    opsym)
+                                               {})))))
+
+
+
+(defmacro opsym*
+
+  ""
+
+  [opcode & arg+]
+
+  `(quote ~(get-in opcode->opsym
+                   (cons opcode
+                         arg+))))
 
 
 
