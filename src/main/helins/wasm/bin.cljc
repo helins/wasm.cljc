@@ -7,7 +7,10 @@
 
   ""
 
-  {:author "Adam Helinski"})
+  {:author "Adam Helinski"}
+
+  #?(:cljs (:require-macros [helins.wasm.bin :refer [opcode*
+                                                     opsym*]])))
 
 
 ;;;;;;;;;;
@@ -72,7 +75,7 @@
    0x3a 'i32.store8
    0x3b 'i32.store16
    0x3c 'i64.store8
-   0x3d 'i64.Store16
+   0x3d 'i64.store16
    0x3e 'i64.store32
 
    0x3f 'memory.size

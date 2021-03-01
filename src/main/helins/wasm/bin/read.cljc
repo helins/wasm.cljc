@@ -400,62 +400,6 @@
          view))
 
 
-
-
-(defn local-get
-
-  ""
-
-  [view]
-
-  (list 'local.get
-        (localidx view)))
-
-
-
-(defn local-set
-
-  ""
-
-  [view]
-
-  (list 'local.set
-        (localidx view)))
-
-
-
-(defn local-tee
-
-  ""
-
-  [view]
-
-  (list 'local.tee
-        (localidx view)))
-
-
-
-(defn global-get
-
-  ""
-
-  [view]
-
-  (list 'global.get
-        (globalidx view)))
-
-
-
-(defn global-set
-
-  ""
-
-  [view]
-
-  (list 'global.set
-        (globalidx view)))
-
-
 ;;;;;; Memory instructions
 
 
@@ -517,83 +461,57 @@
 
   ""
 
-  {
-   ;; Variables
-   wasm.bin/local-get    ['local.get
-                          -op-var-local]
-   wasm.bin/local-set    ['local.set
-                          -op-var-local]
-   wasm.bin/local-tee    ['local.tee
-                          -op-var-local]
-   wasm.bin/global-get   ['global.get
-                          -op-var-global]
-   wasm.bin/global-set   ['globalr.set
-                          -op-var-global]
-   ;; Memory
-   wasm.bin/i32-load     ['i32.load
-                          -op-memarg]
-   wasm.bin/i64-load     ['i64.load
-                          -op-memarg]
-   wasm.bin/f32-load     ['f32.load
-                          -op-memarg]
-   wasm.bin/f64-load     ['f64.load
-                          -op-memarg]
-   wasm.bin/i32-load8_s  ['i32.load8_s
-                          -op-memarg]
-   wasm.bin/i32-load8_u  ['i32.load8_u
-                          -op-memarg]
-   wasm.bin/i32-load16_s ['i32.load16_s
-                          -op-memarg]
-   wasm.bin/i32-load16_u ['i32.load16_u
-                          -op-memarg]
-   wasm.bin/i64-load8_s  ['i64.load8_s
-                          -op-memarg]
-   wasm.bin/i64-load8_u  ['i64.load8_u
-                          -op-memarg]
-   wasm.bin/i64-load16_s ['i64.load16_s
-                          -op-memarg]
-   wasm.bin/i64-load16_u ['i64.load16_u
-                          -op-memarg]
-   wasm.bin/i64-load32_s ['i64.load32_s
-                          -op-memarg]
-   wasm.bin/i64-load32_u ['i64.load32_u
-                          -op-memarg]
-   wasm.bin/i32-store    ['i32.store
-                          -op-memarg]
-   wasm.bin/i64-store    ['i64.store
-                          -op-memarg]
-   wasm.bin/f32-store    ['f32.store
-                          -op-memarg]
-   wasm.bin/f64-store    ['f64.store
-                          -op-memarg]
-   wasm.bin/i32-store8   ['i32.store8
-                          -op-memarg]
-   wasm.bin/i32-store16  ['i32.store16
-                          -op-memarg]
-   wasm.bin/i64-store8   ['i64.store8
-                          -op-memarg]
-   wasm.bin/i64-store16  ['i64.store16
-                          -op-memarg]
-   wasm.bin/i64-store32  ['i64.store32
-                          -op-memarg]
-   wasm.bin/memory-size  ['memory.size
-                          -op-memory]
-   wasm.bin/memory-grow  ['memory.grow
-                          -op-memory]
-   ;; Numeric constants
-   wasm.bin/i32-const    ['i32.const
-                          (partial -op-constval
-                                   i32)]
-   wasm.bin/i64-const    ['i64.const
-                          (partial -op-constval
-                                   i64)]
-   wasm.bin/f32-const    ['f32.const
-                          (partial -op-constval
-                                   f32)]
-   wasm.bin/f64-const    ['f64.const
-                          (partial -op-constval
-                                   f64)]
-   })
+  (reduce-kv (fn [opcode->f opsym f]
+               (let [opcode (wasm.bin/opsym->opcode opsym)]
+                 (when-not opcode
+                   (throw (ex-info (str "Opcode not found for: "
+                                        opsym)
+                                   {})))
+                 (assoc opcode->f
+                        opcode
+                        (partial f
+                                 opsym))))
+             {}
+             {'local.get    -op-var-local
+              'local.set    -op-var-local
+              'local.tee    -op-var-local
+              'global.get   -op-var-global
+              'global.set   -op-var-global
+
+              'i32.load     -op-memarg
+              'i64.load     -op-memarg
+              'f32.load     -op-memarg
+              'f64.load     -op-memarg
+              'i32.load8_s  -op-memarg
+              'i32.load8_u  -op-memarg
+              'i32.load16_s -op-memarg
+              'i32.load16_u -op-memarg
+              'i64.load8_s  -op-memarg
+              'i64.load8_u  -op-memarg
+              'i64.load16_s -op-memarg
+              'i64.load16_u -op-memarg
+              'i64.load32_s -op-memarg
+              'i64.load32_u -op-memarg
+              'i32.store    -op-memarg
+              'i64.store    -op-memarg
+              'f32.store    -op-memarg
+              'f64.store    -op-memarg
+              'i32.store8   -op-memarg
+              'i32.store16  -op-memarg
+              'i64.store8   -op-memarg
+              'i64.store16  -op-memarg
+              'i64.store32  -op-memarg
+              'memory.size  -op-memory
+              'memory.grow  -op-memory
+
+              'i32.const    (partial -op-constval
+                                     i32)
+              'i64.const    (partial -op-constval
+                                     i64)
+              'f32.const    (partial -op-constval
+                                     f32)
+              'f64.const    (partial -op-constval
+                                     f64)}))
 
 
 
@@ -602,11 +520,11 @@
   ""
 
   (select-keys -opcode->f
-               [wasm.bin/f32-const
-                wasm.bin/f64-const
-                wasm.bin/global-get
-                wasm.bin/i32-const
-                wasm.bin/i64-const]))
+               [(wasm.bin/opcode* 'f32.const)
+                (wasm.bin/opcode* 'f64.const)
+                (wasm.bin/opcode* 'global.get)
+                (wasm.bin/opcode* 'i32.const)
+                (wasm.bin/opcode* 'i64.const)]))
 
 
 
@@ -622,10 +540,8 @@
              wasm.bin/end)
         instr+
         (recur (conj instr+
-                     (when-some [[opsym
-                                  fread] (-opcode->f opcode)]
-                       (fread opsym
-                              view))))))))
+                     (when-some [fread (-opcode->f opcode)]
+                       (fread view))))))))
 
 
 
@@ -641,10 +557,8 @@
              wasm.bin/end)
         instr+
         (recur (conj instr+
-                     (if-some [[opsym
-                                fread] (-opcode-const->f opcode)]
-                       (fread opsym
-                              view)
+                     (if-some [fread (-opcode-const->f opcode)]
+                       (fread view)
                        (throw (ex-info (str "Given instruction is illegal in constant expression: "
                                             opcode)
                                        {})))))))))
