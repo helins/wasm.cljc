@@ -11,6 +11,7 @@
    :clj-kondo {:linters {:unused-namespace {:level :off}}}}
 
   (:require [clojure.edn]
+            [clojure.pprint]
             [helins.binf            :as binf]
             [helins.binf.buffer     :as binf.buffer]
             [helins.binf.int        :as binf.int]
@@ -82,9 +83,10 @@
       ;(wasmer.module/load-source "src/wasm/simple.wasm")
       ;(wasmer.module/load-source "src/wasm/export.wasm")
       wasm.decompile/main
-      :wasm.bin/codesec
+      ;:wasm.bin/codesec
       ;:wasm.bin/globalsec
       ;:wasm.bin/elemsec
+      clojure.pprint/pprint
       )
 
 

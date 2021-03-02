@@ -429,8 +429,29 @@
         (if (= x-2
                0x40)
           nil
-          (-valtype x-2)))
+          (list 'result
+                (-valtype x-2))))
       (binf.int64/u32 x))))
+
+
+
+(defn block-expr
+
+  ""
+
+
+  ([view]
+
+   (block-expr (blocktype' view)
+               (expr' view)))
+
+
+  ([blocktype expr]
+
+   (if blocktype
+     (cons blocktype
+           expr)
+     expr)))
 
 
 
@@ -439,8 +460,7 @@
   [_opsym view]
 
   (list* 'block
-         (blocktype' view)
-         (expr' view)))
+         (block-expr view)))
 
 
 
@@ -449,8 +469,7 @@
   [_opsym view]
 
   (list* 'loop
-         (blocktype' view)
-         (expr' view)))
+         (block-expr view)))
 
 
 
@@ -472,15 +491,15 @@
       (let [opcode (byte' view)]
         (condp =
                opcode
-          (wasm.bin/opcode* 'else) (list 'if
-                                         blocktype
-                                         (list* 'then
-                                                instr+)
-                                         (else' view))
-          (wasm.bin/opcode* 'end)  (list 'if
-                                         blocktype
-                                         (list* 'then
-                                                instr+))
+          (wasm.bin/opcode* 'else) (cons 'if
+                                         (block-expr blocktype
+                                                     [(list* 'then
+                                                              instr+)
+                                                       (else' view)]))
+          (wasm.bin/opcode* 'end)  (cons 'if
+                                         (block-expr blocktype
+                                                     [(list* 'then
+                                                             instr+)]))
           (recur (conj instr+
                        (if-some [fread (opcode->f opcode)]
                          (fread view)
