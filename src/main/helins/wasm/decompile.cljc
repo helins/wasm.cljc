@@ -37,13 +37,14 @@
 
   [ctx view]
 
-  (assoc ctx
-         :wasm/header+
-         (loop [section+ []]
-           (if (pos? (binf/remaining view))
-             (recur (conj section+
-                          (wasm.bin.read/section' view)))
-             section+))))
+  (assoc-in ctx
+            [:wasm/file
+             :wasm.file/section+]
+            (loop [section+ []]
+              (if (pos? (binf/remaining view))
+                (recur (conj section+
+                             (wasm.bin.read/section' view)))
+                section+))))
 
 
 
@@ -91,14 +92,17 @@
                               wasm.bin/section-id-data     [:wasm.bin/datasec
                                                             wasm.bin.read/datasec']
                               nil)]
-                (assoc ctx-2
-                       k
-                       (f (binf/view view
-                                     start
-                                     n-byte)))
+                (assoc-in ctx-2
+                          [:wasm/bin
+                           k]
+                          (f (binf/view view
+                                        start
+                                        n-byte)))
                 ctx-2)))
           ctx
-          (ctx :wasm/header+)))
+          (get-in ctx
+                  [:wasm/file
+                   :wasm.file/section+])))
 
 
 ;;;;;;;;;;
