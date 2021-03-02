@@ -136,7 +136,7 @@
 
   [view]
 
-  (binf.leb128/rr-i32 view
+  (binf.leb128/rr-i64 view
                       33))
 
 
@@ -424,7 +424,8 @@
   (let [x (s33' view)]
     (if (< x
            (binf.int64/i* 0))
-      (let [x-2 (binf.int64/u8 x)]
+      (let [x-2 (bit-and 0x7F
+                         (binf.int64/u8 x))]
         (if (= x-2
                0x40)
           nil

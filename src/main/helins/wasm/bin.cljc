@@ -228,7 +228,7 @@
    0xc3 'i64.extend16_s
    0xc4 'i64.extend32_s
 
-   ;;;; [0xC5, 0xFB] is reserver
+   ;;;; [0xC5, 0xFB] is reserved
 
    0xFC {0 'i32.trunc_sat_f32_s
          1 'i32.trunc_sat_f32_u

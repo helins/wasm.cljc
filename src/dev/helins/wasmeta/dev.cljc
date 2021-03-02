@@ -51,12 +51,36 @@
 
 
 
+  (defn f
+
+    [fname & arg+]
+
+    (let [inst (wasmer.instance/from-source (wasmer.module/load-source "src/wasm/test.wasm"))
+          ret  (apply (-> (wasmer.fn/find inst
+                                          fname)
+                          wasmer.fn/return-vec
+                          wasmer.fn/normal-call)
+                      arg+)]
+      (wasmer.instance/discard inst)
+      ret))
+
+  (f "args"
+     (int 0)
+     (long 1)
+     (float 1)
+     (double 2))
+
+  (f "global")
+
+
+
+
 
   (-> 
-      (wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/test.wasm")
-      ;(wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/import.wasm")
-      ;(wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/simple.wasm")
-      ;(wasmer.module/load-source "/home/adam/projects/clj/helins/wasmeta/src/wasm/export.wasm")
+      (wasmer.module/load-source "src/wasm/test.wasm")
+      ;(wasmer.module/load-source "src/wasm/import.wasm")
+      ;(wasmer.module/load-source "src/wasm/simple.wasm")
+      ;(wasmer.module/load-source "src/wasm/export.wasm")
       wasm.decompile/main
       :wasm.bin/codesec
       ;:wasm.bin/globalsec
