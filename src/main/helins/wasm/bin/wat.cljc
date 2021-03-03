@@ -265,7 +265,7 @@
 
   ""
 
-  [ctx resource+ resource-type k-section k-idx k-idx-resolve f-entry]
+  [ctx resource+ resource-type k-section k-idx k-idx-resolve]
 
   (update ctx
           :wasm/wat
@@ -285,8 +285,9 @@
                         (-> wat-2
                             (assoc-in [k-section
                                        id]
-                                      (f-entry id
-                                               resource))
+                                      (list* resource-type
+                                             id
+                                             resource))
                             (assoc k-idx
                                    (inc idx))
                             (assoc-in [k-idx-resolve
@@ -314,17 +315,13 @@
                      (throw (ex-info (str "Function type index overflow: "
                                           typeidx)
                                      {})))
-                   (get bin-typesec
-                        typeidx))
+                   (funcsign (get bin-typesec
+                                  typeidx)))
                  bin-funcsec)
             'func
             :wasm.wat/func
             :wasm.wat.func/idx
-            :wasm.wat.func/idx-resolve
-            (fn [func-id type-]
-              (list* 'func
-                     func-id
-                     (funcsign type-)))))
+            :wasm.wat.func/idx-resolve))
 
 
 ;;;;;;;;;; Table section
@@ -342,8 +339,22 @@
             'table
             :wasm.wat/table
             :wasm.wat.table/idx
-            :wasm.wat.table/idx-resolve
-            (fn [table-id table]
-              (list* 'table
-                     table-id
-                     table))))
+            :wasm.wat.table/idx-resolve))
+
+
+;;;;;;;;;; Memory section
+
+
+(defn memsec'
+
+  ""
+
+  [{:as                           ctx
+    {bin-memsec :wasm.bin/memsec} :wasm/bin}]
+
+  (resource ctx
+            bin-memsec
+            'memory
+            :wasm.wat/memory
+            :wasm.wat.memory/idx
+            :wasm.wat.memory/idx-resolve))
