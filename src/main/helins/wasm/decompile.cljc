@@ -115,7 +115,8 @@
 
   (-> ctx
       wasm.bin.wat/importsec'
-      wasm.bin.wat/exportsec'))
+      wasm.bin.wat/exportsec'
+      wasm.bin.wat/funcsec'))
 
 
 ;;;;;;;;;;

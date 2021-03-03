@@ -226,6 +226,20 @@
 ;;;;;;;;;; Export section
 
 
+(defn export-id
+
+  ""
+
+  [wat-exportsec resource-type idx]
+
+  (when-some [string (get-in wat-exportsec
+                             [resource-type
+                              idx])]
+    (symbol (str "$"
+                 string))))
+
+
+
 (defn exportsec'
 
   ""
@@ -234,7 +248,7 @@
     {:wasm.bin/keys [exportsec]} :wasm/bin}]
 
   (assoc-in ctx
-            [:wasm/bin
+            [:wasm/wat
              :wasm.wat/exportsec]
             (reduce (fn [acc [string exportdesc]]
                       (assoc-in acc
@@ -247,27 +261,47 @@
 ;;;;;;;;;; Function section
 
 
-#_(defn funcsec'
+(defn funcsec'
 
   ""
 
-  [ctx view]
+  [{:as                             ctx
+    {bin-funcsec :wasm.bin/funcsec
+     bin-typesec :wasm.bin/typesec} :wasm/bin}]
 
   (update ctx
           :wasm/wat
-          (fn [{:as            wat
-                :wasm.wat/keys [typesec]}]
-            (assoc wat
-                   :wasm.wat/funcsec
-                   (mapv (fn [typeidx]
-                           (if (<= typeidx
-                                   (count typesec))
-                             (funcsign (get typesec
-                                            typeidx))
-                             (throw (ex-info (str "Function type index overflow: "
-                                                  typeidx)
-                                             {}))))
-                         (wasm.bin.read/funcsec' view))))))
+          (fn [{:as           wat
+                wat-exportsec :wasm.wat/exportsec}]
+            (reduce (fn [{:as                 wat-2
+                          :wasm.wat.func/keys [idx]}
+                         typeidx]
+                      (when (> typeidx
+                               (count bin-typesec))
+                        (throw (ex-info (str "Function type index overflow: "
+                                             typeidx)
+                                        {})))
+                      (let [idx-2   (or idx
+                                        0)
+                            func-id (or (export-id wat-exportsec
+                                                   'func
+                                                   idx-2)
+                                        (symbol (str "$func-"
+                                                     idx-2)))]
+                        (-> wat-2
+                            (assoc-in [:wasm.wat/func
+                                       func-id]
+                                      (list* 'func
+                                             func-id
+                                             (funcsign (get bin-typesec
+                                                            typeidx))))
+                            (assoc :wasm.wat.func/idx
+                                   (inc idx-2))
+                            (assoc-in [:wasm.wat.func/idx-resolve
+                                       idx-2]
+                                      func-id))))
+                    wat
+                    bin-funcsec))))
 
 
 ;;;;;;;;;; Table section

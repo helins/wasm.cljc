@@ -10,7 +10,7 @@
   {:author    "Adam Helinski"
    :clj-kondo {:linters {:unused-namespace {:level :off}}}}
 
-  (:require [clojure.edn]
+  (:require #?(:clj [clojure.edn])
             [clojure.pprint]
             [helins.binf            :as binf]
             [helins.binf.buffer     :as binf.buffer]
@@ -88,6 +88,7 @@
       ;(wasmer.module/load-source "src/wasm/export.wasm")
       wasm.decompile/main
       wasm.decompile/to-wat
+      :wasm/wat
       ;:wasm/bin
       ;:wasm.bin/codesec
       ;wasm.decompile/codesec
