@@ -1144,8 +1144,8 @@
 
   [view]
 
-  (let [start  (binf/position view)
-        n-byte (u32' view)]
+  (let [n-byte (u32' view)
+        start  (binf/position view)]
     (binf/skip view
                n-byte)
     (binf/view view
@@ -1160,8 +1160,8 @@
 
   [view]
 
-  [(locals' view)
-   (expr' view)])
+  (into (locals' view)
+        (expr' view)))
 
 
 
@@ -1171,10 +1171,13 @@
 
   [view]
 
-  (vec' (fn [view]
-          [(u32' view)
-           (valtype' view)])
-        view))
+  (into []
+        (mapcat identity)
+        (vec' (fn [view]
+                (repeat (u32' view)
+                        (list 'local
+                              (valtype' view))))
+              view)))
 
 
 ;;;;; Data section

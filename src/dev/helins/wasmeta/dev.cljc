@@ -87,7 +87,9 @@
       ;(wasmer.module/load-source "src/wasm/simple.wasm")
       ;(wasmer.module/load-source "src/wasm/export.wasm")
       wasm.decompile/main
-      ;:wasm.bin/codesec
+      :wasm/bin
+      :wasm.bin/codesec
+      wasm.decompile/codesec
       ;:wasm.bin/globalsec
       ;:wasm.bin/elemsec
       clojure.pprint/pprint

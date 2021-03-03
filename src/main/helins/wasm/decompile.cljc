@@ -153,6 +153,19 @@
 ;;;;;;;;;;
 
 
+(defn codesec
+
+  ""
+
+  [view+]
+  
+  (mapv wasm.bin.read/func'
+        view+))
+
+
+;;;;;;;;;;
+
+
 (defn init
 
   ""
