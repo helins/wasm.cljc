@@ -9,8 +9,7 @@
 
   {:author "Adam Helinski"}
 
-  (:require [helins.wasm.bin      :as wasm.bin]
-            [helins.wasm.bin.read :as wasm.bin.read]))
+  (:require [helins.wasm.bin.read :as wasm.bin.read]))
 
 
 (declare functype'
@@ -20,8 +19,7 @@
          importdesc-global'
          importdesc-mem'
          importdesc-table'
-         table
-         )
+         table)
 
 
 ;;;;;;;;;; Miscellaneous
@@ -61,50 +59,10 @@
       ctx-2)))
 
 
-;;;;;;;;;; Type section
-
-
-(defn typesec'
-
-  ""
-
-  [ctx view]
-
-  (assoc-in ctx
-            [:wasm/wat
-             :wasm.wat/typesec]
-            (wasm.bin.read/typesec' view)))
-
-
 ;;;;;;;;;; Import section
 
 
-(defn importsec'
-
-  ""
-
-  [ctx view]
-
-  (vec' import'
-        ctx
-        view))
-
-
-
-(defn import'
-
-  ""
-
-  [ctx view]
-
-  (importdesc' ctx
-               (wasm.bin.read/name' view)
-               (wasm.bin.read/name' view)
-               view))
-
-
-
-(defn import-sym
+(defn import-id
 
   ""
 
@@ -117,29 +75,53 @@
 
 
 
+(defn importsec'
+
+  ""
+
+  [{:as                          ctx
+    {:wasm.bin/keys [importsec]} :wasm/bin}]
+
+  (reduce (fn [ctx-2 import-]
+            (import' ctx-2
+                     import-))
+          ctx
+          importsec))
+
+
+
+(defn import'
+
+  ""
+
+  [ctx [module name- importdesc]]
+
+  (importdesc' ctx
+               (import-id module
+                          name-)
+               (list 'import
+                     module
+                     name-)
+               importdesc))
+
+
+
 (defn importdesc'
 
   ""
 
-  [ctx module name- view]
+  [ctx import-id import-abbr importdesc]
 
-  (let [type (wasm.bin.read/byte' view)
-        f    (condp =
-                    type
-               wasm.bin/importdesc-func   importdesc-func'
-               wasm.bin/importdesc-table  importdesc-table'
-               wasm.bin/importdesc-mem    importdesc-mem'
-               wasm.bin/importdesc-global importdesc-global'
-               (throw (ex-info (str "Unknown type in import description: "
-                                    type)
-                               {})))]
-    (f ctx
-       (import-sym module
-                   name-)
-       (list 'import
-             module
-             name-)
-       view)))
+  ((condp =
+          (first importdesc)
+     'func   importdesc-func'
+     'table  importdesc-table'
+     'mem    importdesc-mem'
+     'global importdesc-global')
+   ctx
+   import-id
+   import-abbr
+   importdesc))
 
 
 
@@ -147,20 +129,21 @@
 
   ""
 
-  [ctx sym k-sec k-idx k-resolve entry]
+  [ctx import-id k-sec k-idx k-resolve entry]
 
   (update ctx
           :wasm/wat
           (fn [wat]
-            (let [idx (or (wat k-idx)
+            (let [idx (or (get wat
+                               k-idx)
                           0)]
               (-> wat
                   (assoc-in [k-sec
-                             sym]
+                             import-id]
                             entry)
                   (assoc-in [k-resolve
                              idx]
-                            sym)
+                            import-id)
                   (assoc k-idx
                          (inc idx)))))))
 
@@ -170,19 +153,20 @@
 
   ""
 
-  [ctx sym import- view]
+  [ctx import-id import-abbr importdesc]
 
   (importdesc-any ctx
-                  sym
+                  import-id
                   :wasm.wat/func
                   :wasm.wat.func/idx
                   :wasm.wat.func/idx-resolve
                   (list* 'func
-                         sym
-                         import-
-                         (funcsign (get-in (ctx :wasm/wat)
-                                           [:wasm.wat/typesec
-                                            (wasm.bin.read/typeidx' view)])))))
+                         import-id
+                         import-abbr
+                         (funcsign (get-in ctx
+                                           [:wasm/bin
+                                            :wasm.bin/typesec
+                                            (second importdesc)])))))
 
 
 
@@ -190,17 +174,17 @@
 
   ""
 
-  [ctx sym import- view]
+  [ctx import-id import-abbr importdesc]
 
   (importdesc-any ctx
-                  sym
+                  import-id
                   :wasm.wat/table
                   :wasm.wat.table/idx
                   :wasm.wat.table/idx-resolve
                   (list* 'table
-                         sym
-                         import-
-                         (table view))))
+                         import-id
+                         import-abbr
+                         (rest importdesc))))
 
 
 
@@ -208,17 +192,17 @@
 
   ""
 
-  [ctx sym import- view]
+  [ctx import-id import-abbr importdesc]
 
   (importdesc-any ctx
-                  sym
+                  import-id
                   :wasm.wat/memory
                   :wasm.wat.memory/idx
                   :wasm.wat.memory/idx-resolve
-                  (list* 'table
-                         sym
-                         import-
-                         (wasm.bin.read/limits' view))))
+                  (list* 'memory
+                         import-id
+                         import-abbr
+                         (rest importdesc))))
 
 
 
@@ -226,29 +210,23 @@
 
   ""
 
-  [ctx sym import- view]
+  [ctx import-id import-abbr importdesc]
 
   (importdesc-any ctx
-                  sym
+                  import-id
                   :wasm.wat/global
                   :wasm.wat.global/idx
                   :wasm.wat.global/idx-resolve
                   (list* 'global
-                         sym
-                         import-
-                         (let [valtype (wasm.bin.read/valtype' view)]
-                           (if (= (wasm.bin.read/mut' view)
-                                  'var)
-                             (list 'mut
-                                   valtype)
-                             valtype))
-                         (wasm.bin.read/expr' view))))
+                         import-id
+                         import-abbr
+                         (rest importdesc))))
 
 
 ;;;;;;;;;; Function section
 
 
-(defn funcsec'
+#_(defn funcsec'
 
   ""
 
@@ -274,7 +252,7 @@
 ;;;;;;;;;; Table section
 
 
-(defn tablesec'
+#_(defn tablesec'
 
   ""
 
@@ -288,7 +266,7 @@
 
 
 
-(defn table
+#_(defn table
 
   ""
 

@@ -107,47 +107,13 @@
 
 
 
-(defn section-read-2+
+(defn to-wat
 
   ""
 
-  [ctx view]
+  [ctx]
 
-  (reduce (fn [ctx-2 {:wasm.section/keys [id
-                                          n-byte
-                                          start]}]
-            (if (= id
-                   wasm.bin/section-id-custom)
-              (update ctx-2
-                      :wasm.bin/customsec
-                      (fnil conj
-                            [])
-                      (wasm.bin.read/customsec' (binf/view view
-                                                           start
-                                                           n-byte)))
-              (if-some [f (condp =
-                                 id
-                            wasm.bin/section-id-type     wasm.bin.wat/typesec'
-                            wasm.bin/section-id-import   wasm.bin.wat/importsec'
-                            wasm.bin/section-id-function wasm.bin.wat/funcsec'
-                            wasm.bin/section-id-table    wasm.bin.wat/tablesec'
-                            ;wasm.bin/section-id-memory   wasm.bin.wat/memsec'
-                            ;wasm.bin/section-id-global   wasm.bin.wat/globalsec'
-                            ;wasm.bin/section-id-export   wasm.bin.wat/exportsec'
-                            ;wasm.bin/section-id-start    wasm.bin.wat/startsec'
-                            ;wasm.bin/section-id-element  wasm.bin.wat/elemsec'
-                            ;wasm.bin/section-id-code     wasm.bin.wat/codesec'
-                            ;wasm.bin/section-id-data     wasm.bin.wat/datasec'
-                            nil)]
-                (f ctx-2
-                   (binf/view view
-                              start
-                              n-byte))
-                ctx-2)))
-          ctx
-          (get-in ctx
-                  [:wasm/file
-                   :wasm.file/section+])))
+  (wasm.bin.wat/importsec' ctx))
 
 
 ;;;;;;;;;;
@@ -187,15 +153,3 @@
   (let [view (source->view source)]
     (-> (init view)
         (section-read+ view))))
-
-
-
-(defn main-2
-
-  ""
-
-  [source]
-
-  (let [view (source->view source)]
-    (-> (init view)
-        (section-read-2+ view))))
