@@ -307,6 +307,43 @@
 ;;;;;;;;;; Table section
 
 
+(defn tablesec'
+
+  ""
+  
+  [{:as                               ctx
+    {bin-tablesec :wasm.bin/tablesec} :wasm/bin}]
+
+  (update ctx
+          :wasm/wat
+          (fn [{:as           wat
+                wat-exportsec :wasm.wat/exportsec}]
+            (reduce (fn [{:as                  wat-2
+                          :wasm.wat.table/keys [idx]}
+                         table]
+                      (let [idx-2    (or idx
+                                         0)
+                            table-id (or (export-id wat-exportsec
+                                                    'table
+                                                    idx-2)
+                                         (symbol (str "$table-"
+                                                      idx-2)))]
+                        (-> wat-2
+                            (assoc-in [:wasm.wat/table
+                                       table-id]
+                                      (list* 'table
+                                             table-id
+                                             table))
+                            (assoc :wasm.wat.func/idx
+                                   (inc idx-2))
+                            (assoc-in [:wasm.wat.table/idx-resolve
+                                       idx-2]
+                                      table-id))))
+                    wat
+                    bin-tablesec))))
+
+
+
 #_(defn tablesec'
 
   ""
