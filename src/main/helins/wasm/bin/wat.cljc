@@ -312,7 +312,7 @@
             (map (fn [typeidx]
                    (when (> typeidx
                             (count bin-typesec))
-                     (throw (ex-info (str "Function type index overflow: "
+                     (throw (ex-info (str "Function type index out of bounds: "
                                           typeidx)
                                      {})))
                    (funcsign (get bin-typesec
@@ -400,6 +400,50 @@
                               funcidx]))))))
 
 
+;;;;;;;;;; Element section
+
+
+(defn elemsec'
+
+  ""
+
+  [{:as          ctx
+    {bin-elemsec :wasm.bin/elemsec} :wasm/bin}]
+
+  (cond->
+    ctx
+    (not-empty bin-elemsec)
+    (update :wasm/wat
+            (fn [{:as               wat
+                  idx-resolve-func  :wasm.wat.func/idx-resolve
+                  idx-resolve-table :wasm.wat.table/idx-resolve}]
+              (update wat
+                      :wasm/element
+                      (fn [wat-element]
+                        (reduce (fn [wat-element-2 [tableidx offset & funcidx+]]
+                                  (let [table-id (or (get idx-resolve-table
+                                                          tableidx)
+                                                     (throw (ex-info (str "In element, table index out of bounds: "
+                                                                          tableidx)
+                                                                     {})))]
+                                    (update wat-element-2
+                                            table-id
+                                            (fnil conj
+                                                  [])
+                                            (list* 'elem
+                                                   table-id
+                                                   offset
+                                                   (mapv (fn [funcidx]
+                                                           (or (get idx-resolve-func
+                                                                    funcidx)
+                                                               (throw (ex-info (str "In element, function index out of bound: "
+                                                                                    funcidx)
+                                                                               {}))))
+                                                         funcidx+)))))
+                               wat-element
+                                bin-elemsec)))))))
+
+
 ;;;;;;;;;; Data section
 
 
@@ -422,7 +466,7 @@
                         (reduce (fn [wat-datasec-2 [memidx & rs]]
                                   (let [mem-id (or (get idx-resolve
                                                         memidx)
-                                                   (throw (ex-info (str "Memory index overflow in data segment: "
+                                                   (throw (ex-info (str "In data segment, memory index out of bounds: "
                                                                         memidx)
                                                                    {})))]
                                     (update wat-datasec-2
