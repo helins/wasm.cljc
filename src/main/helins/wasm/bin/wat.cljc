@@ -20,6 +20,7 @@
          importdesc-global'
          importdesc-mem'
          importdesc-table'
+         table
          )
 
 
@@ -199,10 +200,7 @@
                   (list* 'table
                          sym
                          import-
-                         (let [elemtype (wasm.bin.read/elemtype' view)
-                               limits   (wasm.bin.read/limits' view)]
-                           (conj limits
-                                 elemtype)))))
+                         (table view))))
 
 
 
@@ -271,3 +269,32 @@
                                                   typeidx)
                                              {}))))
                          (wasm.bin.read/funcsec' view))))))
+
+
+;;;;;;;;;; Table section
+
+
+(defn tablesec'
+
+  ""
+
+  [ctx view]
+
+  (assoc-in ctx
+            [:wasm/wat
+             :wasm.wat/tabelsec]
+            (wasm.bin.read/vec' table
+                                view)))
+
+
+
+(defn table
+
+  ""
+
+  [view]
+
+  (let [elemtype (wasm.bin.read/elemtype' view)
+        limits   (wasm.bin.read/limits' view)]
+    (conj limits
+          elemtype)))
