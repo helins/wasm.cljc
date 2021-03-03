@@ -9,8 +9,7 @@
 
   {:author "Adam Helinski"}
 
-  (:require [clojure.core]
-            [helins.binf        :as binf]
+  (:require [helins.binf        :as binf]
             [helins.binf.int64  :as binf.int64]
             [helins.binf.leb128 :as binf.leb128]
             [helins.wasm.bin    :as wasm.bin]))
@@ -292,7 +291,7 @@
 ;;;;; Memory types
 
 
-(defn memetype'
+(defn memtype'
 
   ""
 
@@ -872,7 +871,7 @@
   [view]
 
   (list 'memory
-        (memetype' view)))
+        (memtype' view)))
 
 
 
@@ -942,7 +941,7 @@
 
   [view]
 
-  (memetype' view))
+  (memtype' view))
 
 
 ;;;;; Global section
@@ -1207,7 +1206,7 @@
   (binf/rr-u32 view))
 
 
-;;;;;;;;;;
+;;;;;;;;;; All operations which needs to process more than their opsym
 
 
 (def opcode->f

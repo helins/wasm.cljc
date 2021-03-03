@@ -19,6 +19,7 @@
             [helins.binf.string     :as binf.string]
             [helins.wasm.bin        :as wasm.bin]
             [helins.wasm.bin.read   :as wasm.bin.read]
+            [helins.wasm.bin.wat    :as wasm.bin.wat]
             [helins.wasm.decompile  :as wasm.decompile]
             [helins.wasm.ir         :as ir]
             [helins.wasm.wat        :as wat]
@@ -62,7 +63,10 @@
                           wasmer.fn/return-vec
                           wasmer.fn/normal-call)
                       arg+)]
-      (wasmer.instance/discard inst)
+      ;;
+      ;; Causes segfaults when GC kicks in
+      ;;
+      ;; (wasmer.instance/discard inst)
       ret))
 
   (f "args"
@@ -71,18 +75,18 @@
      (float 1)
      (double 2))
 
-  (f "global")
+  (f "foo")
 
 
 
 
 
   (-> 
-      (wasmer.module/load-source "src/wasm/test.wasm")
-      ;(wasmer.module/load-source "src/wasm/import.wasm")
+      ;(wasmer.module/load-source "src/wasm/test.wasm")
+      (wasmer.module/load-source "src/wasm/import.wasm")
       ;(wasmer.module/load-source "src/wasm/simple.wasm")
       ;(wasmer.module/load-source "src/wasm/export.wasm")
-      wasm.decompile/main
+      wasm.decompile/main-2
       ;:wasm.bin/codesec
       ;:wasm.bin/globalsec
       ;:wasm.bin/elemsec
