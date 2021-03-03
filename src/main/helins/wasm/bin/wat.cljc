@@ -13,7 +13,8 @@
             [helins.wasm.bin.read :as wasm.bin.read]))
 
 
-(declare import'
+(declare functype'
+         import'
          importdesc'
          importdesc-func'
          importdesc-global'
@@ -23,6 +24,25 @@
 
 
 ;;;;;;;;;; Miscellaneous
+
+
+(defn funcsign
+
+  ""
+
+  [[param+ result+]]
+
+  (cond->
+    (mapv (fn [valtype i-param]
+            (list 'param
+                  (symbol (str "$param-"
+                               i-param))
+                  valtype))
+          (rest param+)
+          (range))
+    result+
+    (conj result+)))
+
 
 
 (defn vec'
@@ -51,7 +71,7 @@
 
   (assoc-in ctx
             [:wasm/wat
-             :wasm.wat/type]
+             :wasm.wat/typesec]
             (wasm.bin.read/typesec' view)))
 
 
@@ -159,21 +179,9 @@
                   (list* 'func
                          sym
                          import-
-                         (let [[param+
-                                result+] (get-in (ctx :wasm/wat)
-                                                 [:wasm.wat/type
-                                                  (wasm.bin.read/typeidx' view)])]
-                           (cond->
-                             (mapv (fn [valtype i-param]
-                                     (list 'param
-                                           (symbol (str "$param-"
-                                                        i-param))
-                                           valtype))
-                                   param+
-                                   (range))
-                             (not-empty result+)
-                             (conj (list* 'result
-                                          result+)))))))
+                         (funcsign (get-in (ctx :wasm/wat)
+                                           [:wasm.wat/typesec
+                                            (wasm.bin.read/typeidx' view)])))))
 
 
 
@@ -237,3 +245,29 @@
                                    valtype)
                              valtype))
                          (wasm.bin.read/expr' view))))
+
+
+;;;;;;;;;; Function section
+
+
+(defn funcsec'
+
+  ""
+
+  [ctx view]
+
+  (update ctx
+          :wasm/wat
+          (fn [{:as            wat
+                :wasm.wat/keys [typesec]}]
+            (assoc wat
+                   :wasm.wat/funcsec
+                   (mapv (fn [typeidx]
+                           (if (<= typeidx
+                                   (count typesec))
+                             (funcsign (get typesec
+                                            typeidx))
+                             (throw (ex-info (str "Function type index overflow: "
+                                                  typeidx)
+                                             {}))))
+                         (wasm.bin.read/funcsec' view))))))

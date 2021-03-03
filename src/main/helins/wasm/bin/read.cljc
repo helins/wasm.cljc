@@ -249,10 +249,22 @@
         view))
 
 
+
+(defn resulttype
+
+  ""
+
+  [sym view]
+
+  (when-some [valtype+ (not-empty (resulttype' view))]
+    (cons sym
+          valtype+)))
+
+
 ;;;;; Funtion types
 
 
-(defn functype'
+(defn funcref'
 
   ""
 
@@ -263,9 +275,22 @@
                 wasm.bin/functype)
       (throw (ex-info (str "Function type should start with 0x60, not: "
                            b8-1)
-                      {})))
-    [(resulttype' view)
-     (resulttype' view)]))
+                      {}))))
+  nil)
+
+
+
+(defn functype'
+
+  ""
+
+  [view]
+
+  (funcref' view)
+  [(resulttype 'param
+               view)
+   (resulttype 'result
+               view)])
 
 
 ;;;;; Limits

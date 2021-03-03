@@ -129,7 +129,7 @@
                                  id
                             wasm.bin/section-id-type     wasm.bin.wat/typesec'
                             wasm.bin/section-id-import   wasm.bin.wat/importsec'
-                            ;wasm.bin/section-id-function wasm.bin.wat/funcsec'
+                            wasm.bin/section-id-function wasm.bin.wat/funcsec'
                             ;wasm.bin/section-id-table    wasm.bin.wat/tablesec'
                             ;wasm.bin/section-id-memory   wasm.bin.wat/memsec'
                             ;wasm.bin/section-id-global   wasm.bin.wat/globalsec'
