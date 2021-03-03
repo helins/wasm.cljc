@@ -531,8 +531,8 @@
 
   [_opsym view]
 
-  (cons br_table'
-        (cons (vec' labelidx'
+  (cons 'br_table
+        (conj (vec' labelidx'
                     view)
               (labelidx' view))))
 

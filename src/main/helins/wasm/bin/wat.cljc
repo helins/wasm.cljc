@@ -388,11 +388,49 @@
   [{:as                          ctx
     {funcidx :wasm.bin/startsec} :wasm/bin}]
 
-  (update ctx
-          :wasm/wat
-          (fn [wat]
-            (assoc wat
-                   :wasm.wat/start
-                   (get-in wat
-                           [:wasm.wat.func/idx-resolve
-                            funcidx])))))
+  (cond->
+    ctx
+    funcidx
+    (update :wasm/wat
+            (fn [wat]
+              (assoc wat
+                     :wasm.wat/start
+                     (get-in wat
+                             [:wasm.wat.func/idx-resolve
+                              funcidx]))))))
+
+
+;;;;;;;;;; Data section
+
+
+(defn datasec'
+
+  ""
+
+  [{:as                             ctx
+    {bin-datasec :wasm.bin/datasec} :wasm/bin}]
+
+  (cond->
+    ctx
+    (not-empty bin-datasec)
+    (update :wasm/wat
+            (fn [{:as                   wat
+                  :wasm.wat.memory/keys [idx-resolve]}]
+              (update wat
+                      :wasm/data
+                      (fn [wat-datasec]
+                        (reduce (fn [wat-datasec-2 [memidx & rs]]
+                                  (let [mem-id (or (get idx-resolve
+                                                        memidx)
+                                                   (throw (ex-info (str "Memory index overflow in data segment: "
+                                                                        memidx)
+                                                                   {})))]
+                                    (update wat-datasec-2
+                                            mem-id
+                                            (fnil conj
+                                                  [])
+                                            (list* 'data
+                                                   mem-id
+                                                   rs))))
+                                wat-datasec
+                                bin-datasec)))))))

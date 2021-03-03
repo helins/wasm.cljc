@@ -120,7 +120,8 @@
       wasm.bin.wat/tablesec'
       wasm.bin.wat/memsec'
       wasm.bin.wat/globalsec'
-      wasm.bin.wat/startsec'))
+      wasm.bin.wat/startsec'
+      wasm.bin.wat/datasec'))
 
 
 ;;;;;;;;;;
