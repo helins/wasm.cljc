@@ -118,7 +118,8 @@
       wasm.bin.wat/exportsec'
       wasm.bin.wat/funcsec'
       wasm.bin.wat/tablesec'
-      wasm.bin.wat/memsec'))
+      wasm.bin.wat/memsec'
+      wasm.bin.wat/globalsec'))
 
 
 ;;;;;;;;;;

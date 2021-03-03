@@ -358,3 +358,21 @@
             :wasm.wat/memory
             :wasm.wat.memory/idx
             :wasm.wat.memory/idx-resolve))
+
+
+;;;;;;;;;; Global section
+
+
+(defn globalsec'
+
+  ""
+
+  [{:as                                 ctx
+    {bin-globalsec :wasm.bin/globalsec} :wasm/bin}]
+
+  (resource ctx
+            bin-globalsec
+            'global
+            :wasm.wat/global
+            :wasm.wat.global/idx
+            :wasm.wat.global/idx-resolve))
