@@ -376,3 +376,23 @@
             :wasm.wat/global
             :wasm.wat.global/idx
             :wasm.wat.global/idx-resolve))
+
+
+;;;;;;;;;; Start section
+
+
+(defn startsec'
+
+  ""
+
+  [{:as                          ctx
+    {funcidx :wasm.bin/startsec} :wasm/bin}]
+
+  (update ctx
+          :wasm/wat
+          (fn [wat]
+            (assoc wat
+                   :wasm.wat/start
+                   (get-in wat
+                           [:wasm.wat.func/idx-resolve
+                            funcidx])))))
