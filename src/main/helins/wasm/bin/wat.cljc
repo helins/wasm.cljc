@@ -258,6 +258,44 @@
                     exportsec)))
 
 
+;;;;;;;;;;
+
+
+(defn resource
+
+  ""
+
+  [ctx resource+ resource-type k-section k-idx k-idx-resolve f-entry]
+
+  (update ctx
+          :wasm/wat
+          (fn [{:as            wat
+                wat-exportsec :wasm.wat/exportsec}]
+            (reduce (fn [wat-2 resource]
+                      (let [idx (or (get wat-2
+                                         k-idx)
+                                    0)
+                            id  (or (export-id wat-exportsec
+                                               resource-type
+                                               idx)
+                                    (symbol (str "$"
+                                                 resource-type
+                                                 "-"
+                                                 idx)))]
+                        (-> wat-2
+                            (assoc-in [k-section
+                                       id]
+                                      (f-entry id
+                                               resource))
+                            (assoc k-idx
+                                   (inc idx))
+                            (assoc-in [k-idx-resolve
+                                       idx]
+                                      id))))
+                    wat
+                    resource+))))
+
+
 ;;;;;;;;;; Function section
 
 
@@ -269,39 +307,24 @@
     {bin-funcsec :wasm.bin/funcsec
      bin-typesec :wasm.bin/typesec} :wasm/bin}]
 
-  (update ctx
-          :wasm/wat
-          (fn [{:as           wat
-                wat-exportsec :wasm.wat/exportsec}]
-            (reduce (fn [{:as                 wat-2
-                          :wasm.wat.func/keys [idx]}
-                         typeidx]
-                      (when (> typeidx
-                               (count bin-typesec))
-                        (throw (ex-info (str "Function type index overflow: "
-                                             typeidx)
-                                        {})))
-                      (let [idx-2   (or idx
-                                        0)
-                            func-id (or (export-id wat-exportsec
-                                                   'func
-                                                   idx-2)
-                                        (symbol (str "$func-"
-                                                     idx-2)))]
-                        (-> wat-2
-                            (assoc-in [:wasm.wat/func
-                                       func-id]
-                                      (list* 'func
-                                             func-id
-                                             (funcsign (get bin-typesec
-                                                            typeidx))))
-                            (assoc :wasm.wat.func/idx
-                                   (inc idx-2))
-                            (assoc-in [:wasm.wat.func/idx-resolve
-                                       idx-2]
-                                      func-id))))
-                    wat
-                    bin-funcsec))))
+  (resource ctx
+            (map (fn [typeidx]
+                   (when (> typeidx
+                            (count bin-typesec))
+                     (throw (ex-info (str "Function type index overflow: "
+                                          typeidx)
+                                     {})))
+                   (get bin-typesec
+                        typeidx))
+                 bin-funcsec)
+            'func
+            :wasm.wat/func
+            :wasm.wat.func/idx
+            :wasm.wat.func/idx-resolve
+            (fn [func-id type-]
+              (list* 'func
+                     func-id
+                     (funcsign type-)))))
 
 
 ;;;;;;;;;; Table section
@@ -314,57 +337,13 @@
   [{:as                               ctx
     {bin-tablesec :wasm.bin/tablesec} :wasm/bin}]
 
-  (update ctx
-          :wasm/wat
-          (fn [{:as           wat
-                wat-exportsec :wasm.wat/exportsec}]
-            (reduce (fn [{:as                  wat-2
-                          :wasm.wat.table/keys [idx]}
-                         table]
-                      (let [idx-2    (or idx
-                                         0)
-                            table-id (or (export-id wat-exportsec
-                                                    'table
-                                                    idx-2)
-                                         (symbol (str "$table-"
-                                                      idx-2)))]
-                        (-> wat-2
-                            (assoc-in [:wasm.wat/table
-                                       table-id]
-                                      (list* 'table
-                                             table-id
-                                             table))
-                            (assoc :wasm.wat.func/idx
-                                   (inc idx-2))
-                            (assoc-in [:wasm.wat.table/idx-resolve
-                                       idx-2]
-                                      table-id))))
-                    wat
-                    bin-tablesec))))
-
-
-
-#_(defn tablesec'
-
-  ""
-
-  [ctx view]
-
-  (assoc-in ctx
-            [:wasm/wat
-             :wasm.wat/tabelsec]
-            (wasm.bin.read/vec' table
-                                view)))
-
-
-
-#_(defn table
-
-  ""
-
-  [view]
-
-  (let [elemtype (wasm.bin.read/elemtype' view)
-        limits   (wasm.bin.read/limits' view)]
-    (conj limits
-          elemtype)))
+  (resource ctx
+            bin-tablesec
+            'table
+            :wasm.wat/table
+            :wasm.wat.table/idx
+            :wasm.wat.table/idx-resolve
+            (fn [table-id table]
+              (list* 'table
+                     table-id
+                     table))))
