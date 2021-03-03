@@ -113,7 +113,9 @@
 
   [ctx]
 
-  (wasm.bin.wat/importsec' ctx))
+  (-> ctx
+      wasm.bin.wat/importsec'
+      wasm.bin.wat/exportsec'))
 
 
 ;;;;;;;;;;

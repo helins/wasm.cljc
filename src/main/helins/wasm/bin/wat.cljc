@@ -223,6 +223,27 @@
                          (rest importdesc))))
 
 
+;;;;;;;;;; Export section
+
+
+(defn exportsec'
+
+  ""
+
+  [{:as                          ctx
+    {:wasm.bin/keys [exportsec]} :wasm/bin}]
+
+  (assoc-in ctx
+            [:wasm/bin
+             :wasm.wat/exportsec]
+            (reduce (fn [acc [string exportdesc]]
+                      (assoc-in acc
+                                exportdesc
+                                string))
+                    {}
+                    exportsec)))
+
+
 ;;;;;;;;;; Function section
 
 
