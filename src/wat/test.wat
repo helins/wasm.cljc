@@ -4,9 +4,25 @@
   (memory 1)
 
 
+  (data 0
+        (offset (i32.const 0))
+        "Hello"
+        " "
+        "world!")
+
+  (data 0
+        (offset (i32.const 100))
+        "\42\43\44")
+
+
   (global $global-1
           (mut i64)
-          (i64.const 0))
+          (i64.const -42))
+
+
+  (global $global-2
+          f32
+          (f32.const 1.0))
 
 
   ;; Modifying and returning args

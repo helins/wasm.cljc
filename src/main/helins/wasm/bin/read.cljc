@@ -70,17 +70,6 @@
       v)))
 
 
-
-(defn vec-byte
-
-  ""
-
-  [view]
-
-  (binf/rr-buffer view
-                  (u32' view)))
-
-
 ;;;;;;;;;; Values
 
 
@@ -308,7 +297,7 @@
       wasm.bin/limits-min    [(u32' view)]
       wasm.bin/limits-minmax [(u32' view)
                               (u32' view)]
-      (throw (ex-info (str "Unknown limite type: "
+      (throw (ex-info (str "Unknown limit type: "
                            flag)
                       {})))))
 
@@ -334,8 +323,9 @@
 
   [view]
 
-  [(elemtype' view)
-   (limits' view)])
+  (let [t (elemtype' view)]
+    (conj (limits' view)
+          t)))
 
 
 
@@ -363,8 +353,11 @@
 
   [view]
 
-  [(valtype' view)
-   (mut' view)])
+  (let [vt (valtype' view)]
+    (if (mut' view)
+      (list 'mut
+            vt)
+      vt)))
 
 
 
@@ -377,8 +370,8 @@
   (let [flag (byte' view)]
     (condp =
            flag
-      wasm.bin/mut-const 'const
-      wasm.bin/mut-var   'var
+      wasm.bin/mut-const false
+      wasm.bin/mut-var   true
       (throw (ex-info (str "Unknown mutability flag for global: "
                            flag)
                       {})))))
@@ -669,7 +662,7 @@
         (recur (conj instr+
                      (if-some [fread (opcode-const->f opcode)]
                        (fread view)
-                       (throw (ex-info (str "Given instruction is illegal in constant expression: "
+                       (throw (ex-info (str "Given opcode is illegal in constant expression: "
                                             opcode)
                                        {})))))))))
 
@@ -989,8 +982,8 @@
 
   [view]
 
-  [(globaltype' view)
-   (expr-const view)])
+  (cons (globaltype' view)
+        (expr-const view)))
 
 
 ;;;;; Export section
@@ -1124,10 +1117,11 @@
 
   [view]
 
-  [(tableidx' view)
-   (expr-const view)
-   (vec' funcidx'
-         view)])
+  (list* (concat [(tableidx' view)
+                  (cons 'offset
+                        (expr-const view))]
+                 (vec' funcidx'
+                       view))))
 
 
 ;;;;; Code section
@@ -1150,9 +1144,13 @@
 
   [view]
 
-  [{:wasm/n-byte (u32' view)
-    :wasm/start  (binf/position view)}
-   (func' view)])
+  (let [start  (binf/position view)
+        n-byte (u32' view)]
+    (binf/skip view
+               n-byte)
+    (binf/view view
+               start
+               n-byte)))
 
 
 
@@ -1200,8 +1198,10 @@
   [view]
 
   [(memidx' view)
-   (expr-const view)
-   (vec-byte view)])
+   (cons 'offset
+         (expr-const view))
+   (binf/rr-buffer view
+                   (u32' view))])
 
 
 ;;;;; Module
