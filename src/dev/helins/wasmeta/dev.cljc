@@ -88,7 +88,7 @@
       ;    (wasmer.module/load-source "src/wasm/simple.wasm")
       ;    (wasmer.module/load-source "src/wasm/export.wasm")
            (wasm.decompile/main))
-      :wasm/tablesec
+      :wasm/memsec
       ;wasm.decompile/to-wat
       ;:wasm/wat
       ;:wasm.bin/codesec

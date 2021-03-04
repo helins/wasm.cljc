@@ -1416,9 +1416,10 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (vec' data'
+  (vec' ctx
+        data'
         view))
 
 
@@ -1427,13 +1428,24 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  [(memidx' view)
-   (cons 'offset
-         (expr-const view))
-   (binf/rr-buffer view
-                   (u32' view))])
+  (let [memidx (memidx' view)]
+    (update-in ctx
+               [:wasm/memsec
+                memidx]
+               (fn [mem]
+                 (when-not mem
+                   (throw (ex-info (str "In data segment, memory index out of bounds: "
+                                        memidx)
+                                   {})))
+                 (update-in mem
+                            [:wasm/datasec
+                             (expr-idx view)]
+                            (fnil conj
+                                  [])
+                            (binf/rr-buffer view
+                                            (u32' view)))))))
 
 
 ;;;;; Module
