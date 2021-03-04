@@ -95,8 +95,7 @@
                              wasm.bin/section-id-memory    wasm.bin.read/memsec'
                              wasm.bin/section-id-global    wasm.bin.read/globalsec'
                              wasm.bin/section-id-export    wasm.bin.read/exportsec'
-                            ; wasm.bin/section-id-start    [:wasm.bin/startsec
-                            ;                               wasm.bin.read/startsec']
+                             wasm.bin/section-id-start     wasm.bin.read/startsec'
                             ; wasm.bin/section-id-element  [:wasm.bin/elemsec
                             ;                               wasm.bin.read/elemsec']
                             ; wasm.bin/section-id-code     [:wasm.bin/codesec

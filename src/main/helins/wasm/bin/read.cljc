@@ -1243,9 +1243,11 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (start' view))
+  (assoc ctx
+         :wasm/startsec
+         (start' view)))
 
 
 
