@@ -31,18 +31,30 @@
 
   [[param+ result+ :as type-func]]
 
-  (with-meta (cond->
-               (mapv (fn [valtype i-param]
-                       (list 'param
-                             (symbol (str "$param-"
-                                          i-param))
-                             valtype))
-                     param+
-                     (range))
-               result+
-               (conj (cons 'result
-                           result+)))
-             {:wasm.func/type type-func}))
+  (loop [i-param     0
+         id->idx     {}
+         param-sign+ []
+         param-2+    param+]
+    (if (seq param-2+)
+      (let [valtype  (first param-2+)
+            param-id (symbol (str "$param-"
+                                  i-param))]
+        (recur (inc i-param)
+               (assoc id->idx
+                      param-id
+                      i-param)
+               (conj param-sign+
+                     (list 'param
+                           param-id
+                           valtype))
+               (rest param-2+)))
+      (with-meta (cond->
+                   param-sign+
+                   result+
+                   (conj (cons 'result
+                               result+)))
+                 {:wasm.func/type     type-func
+                  :wasm.local/id->idx id->idx}))))
 
 
 

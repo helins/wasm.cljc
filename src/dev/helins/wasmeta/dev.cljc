@@ -92,9 +92,8 @@
       ;:wasm/bin
       ;:wasm.bin/codesec
 
-      ;:wasm.wat/func
-      ;first
-      ;second
+      :wasm.wat/func
+      (get '$args)
       ;meta
 
       ;wasm.decompile/codesec
