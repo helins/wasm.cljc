@@ -1084,9 +1084,10 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (vec' global'
+  (vec' ctx
+        global'
         view))
 
 
@@ -1095,10 +1096,13 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (cons (globaltype' view)
-        (expr-const view)))
+  (wasm.ir/assoc-global ctx
+                        (-> {}
+                            (globaltype' view)
+                            (assoc :wasm/expr
+                                   (expr-const view)))))
 
 
 ;;;;; Export section
