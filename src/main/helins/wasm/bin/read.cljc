@@ -1112,9 +1112,10 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (vec' export'
+  (vec' ctx
+        export'
         view))
 
 
@@ -1123,30 +1124,59 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  [(name' view)
-   (exportdesc' view)])
+  (exportdesc' ctx
+               (name' view)
+               view))
 
-  
+
 
 (defn exportdesc'
 
   ""
 
-  [view]
+  [ctx export-name view]
 
-  (let [type (byte' view)
-        f    (condp =
-                    type
-               wasm.bin/exportdesc-func   exportdesc-func'
-               wasm.bin/exportdesc-table  exportdesc-table'
-               wasm.bin/exportdesc-mem    exportdesc-mem'
-               wasm.bin/exportdesc-global exportdesc-global'
-               (throw (ex-info (str "Unknown type in export description: "
-                                    type)
-                               {})))]
-    (f view)))
+  (let [export-type (byte' view)
+        f           (condp =
+                           export-type
+                      wasm.bin/exportdesc-func   exportdesc-func'
+                      wasm.bin/exportdesc-table  exportdesc-table'
+                      wasm.bin/exportdesc-mem    exportdesc-mem'
+                      wasm.bin/exportdesc-global exportdesc-global'
+                      (throw (ex-info (str "Unknown type in export description: "
+                                           type)
+                                      {})))]
+    (f ctx
+       export-name
+       view)))
+
+
+
+(defn exportdesc-any
+
+  ""
+
+  [ctx export-name k-section idx]
+
+  (let [path-externval [k-section
+                        idx]]
+    (-> ctx
+        (update-in path-externval
+                   (fn [externval]
+                     (when-not externval
+                       (throw (ex-info (str "Exporting missing externval at: "
+                                            path-externval)
+                                       {})))
+                     (update externval
+                             :wasm/export
+                             (fnil conj
+                                   #{})
+                             export-name)))
+        (assoc-in [:wasm/exportsec
+                   export-name]
+                  path-externval))))
 
 
 
@@ -1154,11 +1184,12 @@
 
   ""
 
-  [view]
+  [ctx export-name view]
 
-  (list 'func
-        (typeidx' view)))
-
+  (exportdesc-any ctx
+                  export-name
+                  :wasm/funcsec
+                  (funcidx' view)))
 
 
 
@@ -1166,10 +1197,12 @@
 
   ""
 
-  [view]
+  [ctx export-name view]
 
-  (list 'table
-        (tableidx' view)))
+  (exportdesc-any ctx
+                  export-name
+                  :wasm/tablesec
+                  (tableidx' view)))
 
 
 
@@ -1177,10 +1210,12 @@
 
   ""
 
-  [view]
+  [ctx export-name view]
 
-  (list 'memory
-        (memidx' view)))
+  (exportdesc-any ctx
+                  export-name
+                  :wasm/memsec
+                  (memidx' view)))
 
 
 
@@ -1188,10 +1223,12 @@
 
   ""
 
-  [view]
+  [ctx export-name view]
 
-  (list 'global
-        (globalidx' view)))
+  (exportdesc-any ctx
+                  export-name
+                  :wasm/globalsec
+                  (globalidx' view)))
 
 
 ;;;;; Start section
