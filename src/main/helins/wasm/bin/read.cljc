@@ -1058,9 +1058,10 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (vec' mem'
+  (vec' ctx
+        mem'
         view))
 
 
@@ -1069,9 +1070,11 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (memtype' view))
+  (wasm.ir/assoc-mem ctx
+                     (memtype' {}
+                               view)))
 
 
 ;;;;; Global section

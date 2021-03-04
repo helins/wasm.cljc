@@ -24,15 +24,14 @@
   {
    :wasm/funcidx   0
    :wasm/globalidx 0
-   :wasm/memoryidx 0
+   :wasm/memidx    0
    :wasm/tableidx  0
    :wasm/funcsec   (sorted-map)
    :wasm/globalsec (sorted-map)
-   :wasm/memorysec (sorted-map)
+   :wasm/memsec    (sorted-map)
    :wasm/tablesec  (sorted-map)
    :wasm/typesec   []
-   }
-  )
+   })
 
 
 ;;;;;;;;;; Start of a WASM file
@@ -93,8 +92,7 @@
                              wasm.bin/section-id-import    wasm.bin.read/importsec'
                              wasm.bin/section-id-function  wasm.bin.read/funcsec'
                              wasm.bin/section-id-table     wasm.bin.read/tablesec'
-                            ; wasm.bin/section-id-memory   [:wasm.bin/memsec
-                            ;                               wasm.bin.read/memsec']
+                             wasm.bin/section-id-memory    wasm.bin.read/memsec'
                             ; wasm.bin/section-id-global   [:wasm.bin/globalsec
                             ;                               wasm.bin.read/globalsec']
                             ; wasm.bin/section-id-export   [:wasm.bin/exportsec
