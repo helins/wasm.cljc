@@ -33,7 +33,7 @@
   [[param+ result+ :as type-func]]
 
   (loop [i-param     0
-         id->idx     {}
+         idx->id     []
          param-sign+ []
          param-2+    param+]
     (if (seq param-2+)
@@ -41,9 +41,9 @@
             param-id (symbol (str "$param-"
                                   i-param))]
         (recur (inc i-param)
-               (assoc id->idx
-                      param-id
-                      i-param)
+               (conj idx->id
+                     param-id)
+               
                (conj param-sign+
                      (list 'param
                            param-id
@@ -55,7 +55,7 @@
                    (conj (cons 'result
                                result+)))
                  {:wasm.func/type     type-func
-                  :wasm.local/id->idx id->idx}))))
+                  :wasm.local/idx->id idx->id}))))
 
 
 
@@ -543,11 +543,10 @@
 
   [func view]
 
-  (let [meta-        (meta func)
-        id->idx      (meta- :wasm.local/id->idx)
-        local-offset (count id->idx)]
+  (let [meta-   (meta func)
+        idx->id (meta- :wasm.local/idx->id)]
     (loop [i-local   0
-           id->idx-2 id->idx
+           idx->id-2 idx->id
            local+    []
            valtype+  (mapcat identity
                              (wasm.bin.read/vec' (fn [view]
@@ -558,10 +557,8 @@
         (let [local-id (symbol (str "$local-"
                                     i-local))]
           (recur (inc i-local)
-                 (assoc id->idx-2
-                        (+ local-offset
-                           i-local)
-                        local-id)
+                 (conj idx->id-2
+                       local-id)
                  (conj local+
                        (list 'local
                              local-id
@@ -570,5 +567,5 @@
         (with-meta (concat func
                            local+)
                    (assoc meta-
-                          :wasm.local/id->idx
-                          id->idx-2))))))
+                          :wasm.local/idx->id
+                          idx->id-2))))))

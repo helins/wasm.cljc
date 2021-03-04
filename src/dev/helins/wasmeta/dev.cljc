@@ -94,8 +94,8 @@
       ;:wasm.wat.codesec/offset
 
       :wasm.wat/func
-      ;(get '$args)
-      ;meta
+      (get '$params+locals)
+      meta
 
       ;wasm.decompile/codesec
       ;:wasm.bin/globalsec
