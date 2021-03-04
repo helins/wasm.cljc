@@ -9,7 +9,8 @@
 
   {:author "Adam Helinski"}
 
-  (:require [helins.wasm.bin.read :as wasm.bin.read]))
+  (:require [helins.wasm.bin      :as wasm.bin]
+            [helins.wasm.bin.read :as wasm.bin.read]))
 
 
 (declare functype'
@@ -505,6 +506,39 @@
                                 bin-datasec)))))))
 
 
+;;;;;;;;;; Instructions
+
+
+(def opcode->f
+
+  ""
+
+  {})
+
+
+
+(defn expr'
+
+  ""
+
+  [ctx meta-func view]
+
+  (loop [instr+ []]
+    (let [opcode (wasm.bin.read/byte' view)]
+      (if (= opcode
+             (wasm.bin/opcode* 'end))
+        instr+
+        (recur (conj instr+
+                     (if-some [wat-fread (opcode->f opcode)]
+                       (wat-fread view)
+                       (if-some [bin-fread (wasm.bin.read/opcode->f opcode)]
+                         (bin-fread view)
+                         (or (wasm.bin/opcode->opsym opcode)
+                             (throw (ex-info (str "Opcode is not a recognized instruction: "
+                                                  opcode)
+                                             {})))))))))))
+
+
 ;;;;;;;;;; Code section
 
 
@@ -529,8 +563,15 @@
                                              (+ offset
                                                 i))
                                         (fn [func]
-                                          (locals' func
-                                                   view))))
+                                          (let [[meta-func-2
+                                                 local+]     (locals' (meta func)
+                                                                      view)]
+                                            (with-meta (list* (concat func
+                                                                      local+
+                                                                      (expr' nil
+                                                                             nil
+                                                                             view)))
+                                                       meta-func-2)))))
                               wat-funcsec
                               (map vector
                                    (range)
@@ -541,10 +582,10 @@
 
   ""
 
-  [func view]
+  [meta-func view]
 
-  (let [meta-   (meta func)
-        idx->id (meta- :wasm.local/idx->id)]
+  (let [idx->id (get meta-func
+                     :wasm.local/idx->id)]
     (loop [i-local   0
            idx->id-2 idx->id
            local+    []
@@ -564,8 +605,7 @@
                              local-id
                              (first valtype+)))
                  (rest valtype+)))
-        (with-meta (concat func
-                           local+)
-                   (assoc meta-
-                          :wasm.local/idx->id
-                          idx->id-2))))))
+        [(assoc meta-func
+                :wasm.local/idx->id
+                idx->id-2)
+         local+]))))
