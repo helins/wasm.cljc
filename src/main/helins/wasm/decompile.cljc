@@ -176,4 +176,5 @@
    (let [view (source->view source)]
      (-> (init ctx
                view)
-         (section-read+ view)))))
+         (section-read+ view)
+         wasm.bin.read/codesec'-2))))

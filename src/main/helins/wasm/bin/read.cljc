@@ -1442,9 +1442,32 @@
         (mapcat identity)
         (vec' (fn [view]
                 (repeat (u32' view)
-                        (list 'local
-                              (valtype' view))))
+                        (valtype' view)))
               view)))
+
+
+
+(defn codesec'-2
+
+  ""
+
+  [{:as                ctx
+    :wasm.funcsec/keys [offset]}]
+
+  (update ctx
+          :wasm/funcsec
+          (fn [funcsec]
+            (reduce (fn [funcsec-2 [funcidx {:as  func
+                                             view :wasm/code}]]
+                      (assoc funcsec-2
+                             funcidx
+                             (assoc func
+                                    :wasm/local+
+                                    (locals' view))))
+                    funcsec
+                    (subseq funcsec
+                            >=
+                            offset)))))
 
 
 ;;;;; Data section
