@@ -1,6 +1,10 @@
 (module
 
 
+  ;; (import "foo" "bar" (func $foo/bar (param i32)))
+  ;; (export "foo/bar" (func $foo/bar))
+
+
   (memory 1)
 
 
@@ -163,6 +167,8 @@
   (func (export "params+locals")
         (param i32)
         (local i64))
+
+
 
 
 )

@@ -509,11 +509,61 @@
 ;;;;;;;;;; Instructions
 
 
+;;;;; Variables
+
+
+(defn op-var-local
+
+  ""
+
+  [opsym _ctx meta-func view]
+
+  (let [idx (wasm.bin.read/localidx' view)
+        id  (or (get-in meta-func
+                        [:wasm.local/idx->id
+                         idx])
+                (throw (ex-info (str "Local index is out of bound: "
+                                     idx)
+                                {})))]
+    (list opsym
+          id)))
+
+
+;;;;;
+
+
 (def opcode->f
 
   ""
 
-  {})
+  (reduce-kv (fn [opcode->f opsym f]
+               (let [opcode (wasm.bin/opsym->opcode opsym)]
+                 (when-not opcode
+                   (throw (ex-info (str "Opcode not found for: "
+                                        opsym)
+                                   {})))
+                 (assoc opcode->f
+                        opcode
+                        (partial f
+                                 opsym))))
+             {}
+             {; 'block         block'
+              ; 'loop          loop'
+              ; 'if            if'
+              ; 'br            (op-1 labelidx')
+              ; 'br_if         (op-1 labelidx')
+              ; 'br_table      (op-1 (partial vec'
+              ;                               labelidx'))
+              ; 'call          (op-1 funcidx')
+              ; 'call_indirect (op-2 typeidx'
+              ;                      byte')
+
+              'local.get     op-var-local
+              'local.set     op-var-local
+              'local.tee     op-var-local
+              ; 'global.get    op-var-global
+              ; 'global.set    op-var-global
+              }))
 
 
 
@@ -530,7 +580,9 @@
         instr+
         (recur (conj instr+
                      (if-some [wat-fread (opcode->f opcode)]
-                       (wat-fread view)
+                       (wat-fread ctx
+                                  meta-func
+                                  view)
                        (if-some [bin-fread (wasm.bin.read/opcode->f opcode)]
                          (bin-fread view)
                          (or (wasm.bin/opcode->opsym opcode)
@@ -568,8 +620,8 @@
                                                                       view)]
                                             (with-meta (list* (concat func
                                                                       local+
-                                                                      (expr' nil
-                                                                             nil
+                                                                      (expr' ctx
+                                                                             meta-func-2
                                                                              view)))
                                                        meta-func-2)))))
                               wat-funcsec
