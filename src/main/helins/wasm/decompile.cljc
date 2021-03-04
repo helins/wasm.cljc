@@ -22,15 +22,16 @@
   ""
 
   {
-   :wasm/funcidx   0
-   :wasm/globalidx 0
-   :wasm/memidx    0
-   :wasm/tableidx  0
-   :wasm/funcsec   (sorted-map)
-   :wasm/globalsec (sorted-map)
-   :wasm/memsec    (sorted-map)
-   :wasm/tablesec  (sorted-map)
-   :wasm/typesec   []
+   :wasm.customsec/bin wasm.bin.read/custom-default
+   :wasm/funcidx       0
+   :wasm/funcsec       (sorted-map)
+   :wasm/globalidx     0
+   :wasm/globalsec     (sorted-map)
+   :wasm/memidx        0
+   :wasm/memsec        (sorted-map)
+   :wasm/tableidx      0
+   :wasm/tablesec      (sorted-map)
+   :wasm/typesec       []
    })
 
 
@@ -88,6 +89,7 @@
                                                            n-byte)))
               ((condp =
                       id
+                  wasm.bin/section-id-custom    wasm.bin.read/customsec'
                   wasm.bin/section-id-type      wasm.bin.read/typesec'
                   wasm.bin/section-id-import    wasm.bin.read/importsec'
                   wasm.bin/section-id-function  wasm.bin.read/funcsec'

@@ -862,9 +862,10 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (custom' view))
+  (custom' ctx
+           view))
 
 
 
@@ -872,12 +873,30 @@
 
   ""
 
-  [view]
+  [{:as                  ctx
+    :wasm.customsec/keys [bin]}
+   view]
 
-  [(name' view)
-   (binf/view view
-              (binf/position view)
-              (binf/remaining view))])
+  (bin ctx
+       (name' view)
+       (binf/view view
+                  (binf/position view)
+                  (binf/remaining view))))
+
+
+
+(defn custom-default
+
+  ""
+
+  [ctx custom-name view]
+
+  (update-in ctx
+             [:wasm/customsec
+              custom-name]
+             (fnil conj
+                   [])
+             view))
 
 
 ;;;;; Type section
