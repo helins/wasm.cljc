@@ -234,8 +234,8 @@
 
   [view]
 
-  (vec' valtype'
-        view))
+  (not-empty (vec' valtype'
+             view)))
 
 
 
@@ -276,10 +276,8 @@
   [view]
 
   (funcref' view)
-  [(resulttype 'param
-               view)
-   (resulttype 'result
-               view)])
+  [(resulttype' view)
+   (resulttype' view)])
 
 
 ;;;;; Limits

@@ -29,18 +29,20 @@
 
   ""
 
-  [[param+ result+]]
+  [[param+ result+ :as type-func]]
 
-  (cond->
-    (mapv (fn [valtype i-param]
-            (list 'param
-                  (symbol (str "$param-"
-                               i-param))
-                  valtype))
-          (rest param+)
-          (range))
-    result+
-    (conj result+)))
+  (with-meta (cond->
+               (mapv (fn [valtype i-param]
+                       (list 'param
+                             (symbol (str "$param-"
+                                          i-param))
+                             valtype))
+                     param+
+                     (range))
+               result+
+               (conj (cons 'result
+                           result+)))
+             {:wasm.func/type type-func}))
 
 
 
@@ -160,13 +162,15 @@
                   :wasm.wat/func
                   :wasm.wat.func/idx
                   :wasm.wat.func/idx-resolve
-                  (list* 'func
-                         import-id
-                         import-abbr
-                         (funcsign (get-in ctx
-                                           [:wasm/bin
-                                            :wasm.bin/typesec
-                                            (second importdesc)])))))
+                  (let [funcsign- (funcsign (get-in ctx
+                                                    [:wasm/bin
+                                                     :wasm.bin/typesec
+                                                     (second importdesc)]))]
+                    (with-meta (list* 'func
+                                      import-id
+                                      import-abbr
+                                      funcsign-)
+                               (meta funcsign-)))))
 
 
 
@@ -285,9 +289,10 @@
                         (-> wat-2
                             (assoc-in [k-section
                                        id]
-                                      (list* resource-type
-                                             id
-                                             resource))
+                                      (with-meta (list* resource-type
+                                                        id
+                                                        resource)
+                                                 (meta resource)))
                             (assoc k-idx
                                    (inc idx))
                             (assoc-in [k-idx-resolve
