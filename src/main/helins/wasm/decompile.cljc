@@ -86,26 +86,23 @@
                       (wasm.bin.read/customsec' (binf/view view
                                                            start
                                                            n-byte)))
-              (if-some [f (condp =
-                                 id
-                             wasm.bin/section-id-type      wasm.bin.read/typesec'
-                             wasm.bin/section-id-import    wasm.bin.read/importsec'
-                             wasm.bin/section-id-function  wasm.bin.read/funcsec'
-                             wasm.bin/section-id-table     wasm.bin.read/tablesec'
-                             wasm.bin/section-id-memory    wasm.bin.read/memsec'
-                             wasm.bin/section-id-global    wasm.bin.read/globalsec'
-                             wasm.bin/section-id-export    wasm.bin.read/exportsec'
-                             wasm.bin/section-id-start     wasm.bin.read/startsec'
-                             wasm.bin/section-id-element   wasm.bin.read/elemsec'
-                            ; wasm.bin/section-id-code     [:wasm.bin/codesec
-                            ;                               wasm.bin.read/codesec']
-                             wasm.bin/section-id-data      wasm.bin.read/datasec'
-                             nil)]
-                (f ctx-2
-                   (binf/view view
-                              start
-                              n-byte))
-                ctx-2)))
+              ((condp =
+                      id
+                  wasm.bin/section-id-type      wasm.bin.read/typesec'
+                  wasm.bin/section-id-import    wasm.bin.read/importsec'
+                  wasm.bin/section-id-function  wasm.bin.read/funcsec'
+                  wasm.bin/section-id-table     wasm.bin.read/tablesec'
+                  wasm.bin/section-id-memory    wasm.bin.read/memsec'
+                  wasm.bin/section-id-global    wasm.bin.read/globalsec'
+                  wasm.bin/section-id-export    wasm.bin.read/exportsec'
+                  wasm.bin/section-id-start     wasm.bin.read/startsec'
+                  wasm.bin/section-id-element   wasm.bin.read/elemsec'
+                  wasm.bin/section-id-code      wasm.bin.read/codesec'
+                  wasm.bin/section-id-data      wasm.bin.read/datasec')
+               ctx-2
+               (binf/view view
+                          start
+                          n-byte))))
           ctx
           (get-in ctx
                   [:wasm/source

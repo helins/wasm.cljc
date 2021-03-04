@@ -1047,7 +1047,9 @@
     :wasm/keys [typesec]}
    view]
 
-  (vec' ctx
+  (vec' (assoc ctx
+               :wasm.funcsec/offset
+               (ctx :wasm/funcidx))
         (fn [ctx-2 view]
           (wasm.ir/assoc-func ctx-2
                               (func typesec
@@ -1360,10 +1362,27 @@
 
   ""
 
-  [view]
+  [{:as                ctx
+    :wasm/keys         [funcsec]
+    :wasm.funcsec/keys [offset]}
+   view]
 
-  (vec' code'
-        view))
+
+  (let [n-func (u32' view)]
+    (loop [funcsec-2 funcsec
+           i         0]
+      (if (< i
+             n-func)
+        (recur (update funcsec-2
+                       (+ offset
+                          i)
+                       assoc
+                       :wasm/code
+                       (code' view))
+               (inc i))
+        (assoc ctx
+               :wasm/funcsec
+               funcsec-2)))))
 
 
 
