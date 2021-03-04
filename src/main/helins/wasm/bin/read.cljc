@@ -703,6 +703,31 @@
 
 
 
+(defn expr-idx
+
+  ""
+
+  [view]
+
+  (let [opcode (byte' view)
+        instr  (cond
+                 (= opcode
+                    (wasm.bin/opcode* 'i32.const))  (list 'i32.const
+                                                          (i32' view))
+                 (= opcode
+                    (wasm.bin/opcode* 'global.get)) (list 'global.get
+                                                          (globalidx' view))
+                 :else                              (throw (ex-info (str "Illegal opcode for index constant expression: "
+                                                                         opcode)
+                                                                    {})))]
+    (when-not (= (byte' view)
+                 wasm.bin/end)
+      (throw (ex-info "Constant expression for index should not contain more than 1 instruction"
+                      {})))
+    instr))
+
+
+
 (defn expr-const
 
   ""
@@ -1267,9 +1292,10 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (vec' elem'
+  (vec' ctx
+        elem'
         view))
  
 
@@ -1278,13 +1304,53 @@
 
   ""
 
-  [view]
+  [{:as        ctx
+    :wasm/keys [funcsec]}
+   view]
 
-  (list* (concat [(tableidx' view)
-                  (cons 'offset
-                        (expr-const view))]
-                 (vec' funcidx'
-                       view))))
+  (let [tableidx (tableidx' view)]
+    (update-in ctx
+               [:wasm/tablesec
+                tableidx]
+               (fn [table]
+                 (when-not table
+                   (throw (ex-info (str "In element segment, table index out of bounds: "
+                                        tableidx)
+                                   {})))
+                 (let [expr (expr-idx view)]
+                   (when (= (first expr)
+                            'global.get)
+                     (let [globalidx (second expr)
+                           global    (get-in ctx
+                                             [:wasm/globalsec
+                                              globalidx])]
+                       (when-not global
+                         (throw (ex-info (str "In element, global required for index does not exist: "
+                                              globalidx)
+                                         {})))
+                       (when (not= (global :wasm/valtype)
+                                   'i32)
+                         (throw (ex-info (str "In element, global required for index is not u32: "
+                                              globalidx)
+                                         {})))
+                       (when (global :wasm/mutable?)
+                         (throw (ex-info (str "In element, global required for index is mutable: "
+                                              globalidx)
+                                         {})))))
+                   (update-in table
+                              [:wasm/elemsec
+                               expr]
+                              (fnil conj
+                                    [])
+                              (vec' []
+                                    (fn [func+ view]
+                                      (conj func+
+                                            (let [funcidx (funcidx' view)]
+                                              (or funcidx
+                                                  (throw (ex-info (str "In element segment, function index out of bounds: "
+                                                                       funcidx)
+                                                                  {}))))))
+                                    view)))))))
 
 
 ;;;;; Code section

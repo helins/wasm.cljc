@@ -3,8 +3,33 @@
 
   (import "foo" "bar" (func $foo/bar (param i32)))
   ;; (export "foo/bar" (func $foo/bar))
-  (import "some" "table" (table 1 15 funcref))
+  (import "some" "table" (table 1 15000 funcref))
   (import "some" "global" (global (mut f64)))
+
+
+
+  (global $global-4
+          (import "foo" "global")
+          i32)
+
+  (global $global-1
+          (mut i64)
+          (i64.const -42))
+
+
+  (global $global-2
+          f32
+          (f32.const 1.0))
+
+
+  (global $global-3
+          i32
+          (i32.const 100))
+
+
+  (elem 0
+        (offset (i32.const 10))
+        $my-block)
 
 
   (memory 1)
@@ -17,18 +42,11 @@
         "world!")
 
   (data 0
-        (offset (i32.const 100))
+        (offset (global.get $global-4))
+        ;; (offset (i32.const 0))
         "\42\43\44")
 
 
-  (global $global-1
-          (mut i64)
-          (i64.const -42))
-
-
-  (global $global-2
-          f32
-          (f32.const 1.0))
 
 
   ;; Modifying and returning args
@@ -64,7 +82,8 @@
      nop)
 
 
-  (func (export "block")
+  (func $my-block
+        (export "block")
         (result i32)
     (block (result i32)
       (i32.const 42)))
@@ -79,7 +98,8 @@
       (br_if $iter)))
 
 
-  (func (export "loop")
+  (func $my-loop
+        (export "loop")
         (result i32)
         (local $a i32)
     (local.set $a

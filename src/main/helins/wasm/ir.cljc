@@ -327,3 +327,14 @@
                    :wasm/globalsec
                    :wasm/globalidx
                    global))
+
+
+;;;;;;;;;;
+
+
+(defn assoc-elemm
+
+  ""
+
+  [ctx ]
+  )
