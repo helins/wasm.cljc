@@ -1,8 +1,10 @@
 (module
 
 
-  ;; (import "foo" "bar" (func $foo/bar (param i32)))
+  (import "foo" "bar" (func $foo/bar (param i32)))
   ;; (export "foo/bar" (func $foo/bar))
+  (import "some" "table" (table 1 15 funcref))
+  (import "some" "global" (global (mut f64)))
 
 
   (memory 1)

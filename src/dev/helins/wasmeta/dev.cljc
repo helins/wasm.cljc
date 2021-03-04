@@ -82,14 +82,13 @@
 
 
   (-> 
-      (wasmer.module/load-source "src/wasm/test.wasm")
-      ;(wasmer.module/load-source "src/wasm/import.wasm")
-      ;(wasmer.module/load-source "src/wasm/simple.wasm")
-      ;(wasmer.module/load-source "src/wasm/export.wasm")
-      wasm.decompile/main
-      wasm.decompile/to-wat
+      (->> (wasmer.module/load-source "src/wasm/test.wasm")
+      ;    (wasmer.module/load-source "src/wasm/import.wasm")
+      ;    (wasmer.module/load-source "src/wasm/simple.wasm")
+      ;    (wasmer.module/load-source "src/wasm/export.wasm")
+           (wasm.decompile/main))
+      ;wasm.decompile/to-wat
       ;:wasm/wat
-      :wasm/bin
       ;:wasm.bin/codesec
       ;:wasm.wat.codesec/offset
 

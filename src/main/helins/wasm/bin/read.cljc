@@ -59,15 +59,27 @@
 
   ""
 
-  [f view]
 
-  (loop [i (u32' view)
-         v []]
-    (if (pos? i)
-      (recur (dec i)
-             (conj v
-                   (f view)))
-      v)))
+  ([f view]
+
+   (loop [i (u32' view)
+          v []]
+     (if (pos? i)
+       (recur (dec i)
+              (conj v
+                    (f view)))
+       v)))
+
+
+  ([ctx f view]
+
+   (loop [ctx-2 ctx
+          i     (u32' view)]
+     (if (pos? i)
+       (recur (f ctx-2
+                 view)
+              (dec i))
+       ctx-2))))
 
 
 ;;;;;;;;;; Values
@@ -283,21 +295,47 @@
 ;;;;; Limits
 
 
+(defn limits-min
+
+  ""
+
+  [hmap view]
+
+  (assoc hmap
+         :wasm.limit/min
+         (u32' view)))
+
+
+
+(defn limits-minmax
+
+  ""
+
+  [hmap view]
+
+  (assoc (limits-min hmap
+                     view)
+         :wasm.limit/max
+         (u32' view)))
+
+
+
 (defn limits'
 
   ""
 
-  [view]
+  [hmap view]
 
-  (let [flag (byte' view)]
-    (condp =
-           flag
-      wasm.bin/limits-min    [(u32' view)]
-      wasm.bin/limits-minmax [(u32' view)
-                              (u32' view)]
-      (throw (ex-info (str "Unknown limit type: "
-                           flag)
-                      {})))))
+  (let [flag (byte' view)
+        f    (condp =
+               flag
+          wasm.bin/limits-min    limits-min
+          wasm.bin/limits-minmax limits-minmax
+          (throw (ex-info (str "Unknown limit type: "
+                               flag)
+                          {})))]
+    (f hmap
+       view)))
 
 
 ;;;;; Memory types
@@ -307,9 +345,10 @@
 
   ""
 
-  [view]
+  [hmap view]
 
-  (limits' view))
+  (limits' hmap
+           view))
 
 
 ;;;;; Table types
@@ -319,11 +358,12 @@
 
   ""
 
-  [view]
+  [hmap view]
 
-  (let [t (elemtype' view)]
-    (conj (limits' view)
-          t)))
+  (-> hmap
+      (assoc :wasm/elemtype
+             (elemtype' view))
+      (limits' view)))
 
 
 
@@ -349,13 +389,11 @@
 
   ""
 
-  [view]
+  [hmap view]
 
-  (let [vt (valtype' view)]
-    (if (mut' view)
-      (list 'mut
-            vt)
-      vt)))
+  (assoc hmap
+         :wasm/valtype  (valtype' view)
+         :wasm/mutable? (mut' view)))
 
 
 
@@ -805,9 +843,14 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (vec' functype'
+  (vec' ctx
+        (fn [ctx-2 view]
+          (update ctx-2
+                  :wasm/typesec
+                  conj
+                  (functype' view)))
         view))
 
 
@@ -818,9 +861,10 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (vec' import'
+  (vec' ctx
+        import'
         view))
 
 
@@ -829,11 +873,12 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  [(name' view)
-   (name' view)
-   (importdesc' view)])
+  (importdesc' ctx
+               [(name' view)
+                (name' view)]
+               view))
 
 
 
@@ -841,7 +886,7 @@
 
   ""
 
-  [view]
+  [ctx import-path view]
 
   (let [type (byte' view)
         f    (condp =
@@ -853,7 +898,33 @@
                (throw (ex-info (str "Unknown type in import description: "
                                     type)
                                {})))]
-    (f view)))
+
+    (f ctx
+       import-path
+       view)))
+
+
+
+(defn importdesc-any
+
+  ""
+
+  [ctx import-path k-sec k-idx hmap]
+
+  (let [idx (get ctx
+                 k-idx)]
+    (-> ctx
+        (assoc-in [k-sec
+                   idx]
+                  (assoc hmap
+                         :wasm/import
+                         import-path))
+        (assoc-in (concat [:wasm/importsec
+                           k-sec]
+                          import-path)
+                  idx)
+        (assoc k-idx
+               (inc idx)))))
 
 
 
@@ -861,11 +932,23 @@
 
   ""
 
-  [view]
+  [{:as        ctx
+    :wasm/keys [typesec]}
+   import-path
+   view]
 
-  (list 'func
-        (typeidx' view)))
-
+  (let [typeidx (typeidx' view)]
+    (when (>= typeidx
+              (count typesec))
+      (throw (ex-info (str "Imported function type index out of bounds: "
+                           typeidx)
+                      {})))
+    (importdesc-any ctx
+                    import-path
+                    :wasm/funcsec
+                    :wasm/funcidx
+                    {:wasm/type (get typesec
+                                     typeidx)})))
 
 
 
@@ -873,10 +956,14 @@
 
   ""
 
-  [view]
+  [ctx import-path view]
 
-  (list 'table
-        (tabletype' view)))
+  (importdesc-any ctx
+                  import-path
+                  :wasm/tablesec
+                  :wasm/tableidx
+                  (tabletype' {}
+                              view)))
 
 
 
@@ -884,10 +971,14 @@
 
   ""
 
-  [view]
+  [ctx import-path view]
 
-  (list 'memory
-        (memtype' view)))
+  (importdesc-any ctx
+                  import-path
+                  :wasm/memsec
+                  :wasm/memidx
+                  (memtype' {}
+                            view)))
 
 
 
@@ -895,11 +986,15 @@
 
   ""
 
-  [view]
+  [ctx import-path view]
 
-  (list 'global
-        (globaltype' view)))
-  
+  (importdesc-any ctx
+                  import-path
+                  :wasm/globalsec
+                  :wasm/globalidx
+                  (globaltype' {}
+                               view)))
+
 
 ;;;;; Function section
 
