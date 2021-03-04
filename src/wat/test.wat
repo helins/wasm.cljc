@@ -157,5 +157,12 @@
     (global.get $global-1))
 
 
+  ;; With params and locals
+  ;;
+
+  (func (export "params+locals")
+        (param i32)
+        (local i64))
+
 
 )

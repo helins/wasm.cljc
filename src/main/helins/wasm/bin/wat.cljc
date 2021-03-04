@@ -19,6 +19,7 @@
          importdesc-global'
          importdesc-mem'
          importdesc-table'
+         locals'
          table)
 
 
@@ -325,20 +326,27 @@
     {bin-funcsec :wasm.bin/funcsec
      bin-typesec :wasm.bin/typesec} :wasm/bin}]
 
-  (resource ctx
-            (map (fn [typeidx]
-                   (when (> typeidx
-                            (count bin-typesec))
-                     (throw (ex-info (str "Function type index out of bounds: "
-                                          typeidx)
-                                     {})))
-                   (funcsign (get bin-typesec
-                                  typeidx)))
-                 bin-funcsec)
-            'func
-            :wasm.wat/func
-            :wasm.wat.func/idx
-            :wasm.wat.func/idx-resolve))
+  (-> ctx
+      (update :wasm/wat
+              (fn [wat]
+                (assoc wat
+                       :wasm.wat.codesec/offset
+                       (or (get wat
+                                :wasm.wat.func/idx)
+                           0))))
+      (resource (map (fn [typeidx]
+                       (when (> typeidx
+                                (count bin-typesec))
+                         (throw (ex-info (str "Function type index out of bounds: "
+                                              typeidx)
+                                         {})))
+                       (funcsign (get bin-typesec
+                                      typeidx)))
+                     bin-funcsec)
+                'func
+                :wasm.wat/func
+                :wasm.wat.func/idx
+                :wasm.wat.func/idx-resolve)))
 
 
 ;;;;;;;;;; Table section
@@ -495,3 +503,72 @@
                                                    rs))))
                                 wat-datasec
                                 bin-datasec)))))))
+
+
+;;;;;;;;;; Code section
+
+
+(defn codesec'
+
+  ""
+
+  [{:as                             ctx
+    {bin-codesec :wasm.bin/codesec} :wasm/bin}]
+
+  (update ctx
+          :wasm/wat
+          (fn [{:as                    wat
+                :wasm.wat.codesec/keys [offset]
+                :wasm.wat.func/keys    [idx-resolve]}]
+            (update wat
+                    :wasm.wat/func
+                    (fn [wat-funcsec]
+                      (reduce (fn [wat-funcsec-2 [i view]]
+                                (update wat-funcsec-2
+                                        (get idx-resolve
+                                             (+ offset
+                                                i))
+                                        (fn [func]
+                                          (locals' func
+                                                   view))))
+                              wat-funcsec
+                              (map vector
+                                   (range)
+                                   bin-codesec)))))))
+
+
+(defn locals'
+
+  ""
+
+  [func view]
+
+  (let [meta-        (meta func)
+        id->idx      (meta- :wasm.local/id->idx)
+        local-offset (count id->idx)]
+    (loop [i-local   0
+           id->idx-2 id->idx
+           local+    []
+           valtype+  (mapcat identity
+                             (wasm.bin.read/vec' (fn [view]
+                                                   (repeat (wasm.bin.read/u32' view)
+                                                           (wasm.bin.read/valtype' view)))
+                                                 view))]
+      (if (seq valtype+)
+        (let [local-id (symbol (str "$local-"
+                                    i-local))]
+          (recur (inc i-local)
+                 (assoc id->idx-2
+                        (+ local-offset
+                           i-local)
+                        local-id)
+                 (conj local+
+                       (list 'local
+                             local-id
+                             (first valtype+)))
+                 (rest valtype+)))
+        (with-meta (concat func
+                           local+)
+                   (assoc meta-
+                          :wasm.local/id->idx
+                          id->idx-2))))))
