@@ -91,8 +91,7 @@
                                  id
                              wasm.bin/section-id-type      wasm.bin.read/typesec'
                              wasm.bin/section-id-import    wasm.bin.read/importsec'
-                            ; wasm.bin/section-id-function [:wasm.bin/funcsec
-                            ;                               wasm.bin.read/funcsec']
+                             wasm.bin/section-id-function  wasm.bin.read/funcsec'
                             ; wasm.bin/section-id-table    [:wasm.bin/tablesec
                             ;                               wasm.bin.read/tablesec']
                             ; wasm.bin/section-id-memory   [:wasm.bin/memsec

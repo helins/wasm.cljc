@@ -266,6 +266,24 @@
 ;;;;; Funtion types
 
 
+(defn func
+
+  ""
+
+  [typesec view]
+
+
+  (let [typeidx (typeidx' view)]
+    (when (>= typeidx
+              (count typesec))
+      (throw (ex-info (str "Imported function type index out of bounds: "
+                           typeidx)
+                      {})))
+    {:wasm/type (get typesec
+                     typeidx)}))
+
+
+
 (defn funcref'
 
   ""
@@ -928,24 +946,16 @@
 
   ""
 
-  [{:as        ctx
-    :wasm/keys [typesec]}
-   import-path
-   view]
+  [ctx import-path view]
 
-  (let [typeidx (typeidx' view)]
-    (when (>= typeidx
-              (count typesec))
-      (throw (ex-info (str "Imported function type index out of bounds: "
-                           typeidx)
-                      {})))
-    (importdesc-any ctx
-                    import-path
-                    wasm.ir/assoc-func
-                    :wasm/funcsec
-                    :wasm/funcidx
-                    {:wasm/type (get typesec
-                                     typeidx)})))
+  (importdesc-any ctx
+                  import-path
+                  wasm.ir/assoc-func
+                  :wasm/funcsec
+                  :wasm/funcidx
+                  (func (get ctx
+                             :wasm/typesec)
+                        view)))
 
 
 
@@ -1003,10 +1013,15 @@
 
   ""
 
-  [ctx view]
+  [{:as        ctx
+    :wasm/keys [typesec]}
+   view]
 
   (vec' ctx
-        typeidx'
+        (fn [ctx-2 view]
+          (wasm.ir/assoc-func ctx-2
+                              (func typesec
+                                    view)))
         view))
 
 
