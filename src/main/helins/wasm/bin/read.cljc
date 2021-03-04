@@ -12,7 +12,8 @@
   (:require [helins.binf        :as binf]
             [helins.binf.int64  :as binf.int64]
             [helins.binf.leb128 :as binf.leb128]
-            [helins.wasm.bin    :as wasm.bin]))
+            [helins.wasm.bin    :as wasm.bin]
+            [helins.wasm.ir     :as wasm.ir]))
 
 
 (declare code'
@@ -909,22 +910,17 @@
 
   ""
 
-  [ctx import-path k-sec k-idx hmap]
+  [ctx import-path assoc-externval k-section k-id hmap]
 
-  (let [idx (get ctx
-                 k-idx)]
-    (-> ctx
-        (assoc-in [k-sec
-                   idx]
-                  (assoc hmap
-                         :wasm/import
-                         import-path))
-        (assoc-in (concat [:wasm/importsec
-                           k-sec]
-                          import-path)
-                  idx)
-        (assoc k-idx
-               (inc idx)))))
+  (-> ctx
+      (assoc-externval (assoc hmap
+                              :wasm/import
+                              import-path))
+      (assoc-in (concat [:wasm/importsec
+                         k-section]
+                        import-path)
+                (get ctx
+                     k-id))))
 
 
 
@@ -945,6 +941,7 @@
                       {})))
     (importdesc-any ctx
                     import-path
+                    wasm.ir/assoc-func
                     :wasm/funcsec
                     :wasm/funcidx
                     {:wasm/type (get typesec
@@ -960,6 +957,7 @@
 
   (importdesc-any ctx
                   import-path
+                  wasm.ir/assoc-table
                   :wasm/tablesec
                   :wasm/tableidx
                   (tabletype' {}
@@ -975,6 +973,7 @@
 
   (importdesc-any ctx
                   import-path
+                  wasm.ir/assoc-mem
                   :wasm/memsec
                   :wasm/memidx
                   (memtype' {}
@@ -990,6 +989,7 @@
 
   (importdesc-any ctx
                   import-path
+                  wasm.ir/assoc-global
                   :wasm/globalsec
                   :wasm/globalidx
                   (globaltype' {}
@@ -1003,9 +1003,10 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (vec' typeidx'
+  (vec' ctx
+        typeidx'
         view))
 
 
