@@ -1032,9 +1032,10 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (vec' table'
+  (vec' ctx
+        table'
         view))
 
 
@@ -1043,9 +1044,11 @@
 
   ""
 
-  [view]
+  [ctx view]
 
-  (tabletype' view))
+  (wasm.ir/assoc-table ctx
+                       (tabletype' {}
+                                   view)))
 
 
 ;;;;; Memory section

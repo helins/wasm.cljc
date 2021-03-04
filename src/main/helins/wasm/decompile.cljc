@@ -92,8 +92,7 @@
                              wasm.bin/section-id-type      wasm.bin.read/typesec'
                              wasm.bin/section-id-import    wasm.bin.read/importsec'
                              wasm.bin/section-id-function  wasm.bin.read/funcsec'
-                            ; wasm.bin/section-id-table    [:wasm.bin/tablesec
-                            ;                               wasm.bin.read/tablesec']
+                             wasm.bin/section-id-table     wasm.bin.read/tablesec'
                             ; wasm.bin/section-id-memory   [:wasm.bin/memsec
                             ;                               wasm.bin.read/memsec']
                             ; wasm.bin/section-id-global   [:wasm.bin/globalsec

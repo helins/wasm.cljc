@@ -82,8 +82,9 @@
 
 
   (-> 
-      (->> (wasmer.module/load-source "src/wasm/test.wasm")
-      ;    (wasmer.module/load-source "src/wasm/import.wasm")
+      (->> 
+      ;    (wasmer.module/load-source "src/wasm/test.wasm")
+          (wasmer.module/load-source "src/wasm/import.wasm")
       ;    (wasmer.module/load-source "src/wasm/simple.wasm")
       ;    (wasmer.module/load-source "src/wasm/export.wasm")
            (wasm.decompile/main))
