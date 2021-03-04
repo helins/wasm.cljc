@@ -934,11 +934,16 @@
       (assoc-externval (assoc hmap
                               :wasm/import
                               import-path))
-      (assoc-in (concat [:wasm/importsec
-                         k-section]
-                        import-path)
-                (get ctx
-                     k-id))))
+      (update-in (cons :wasm/importsec
+                       import-path)
+                 (fn [nothing]
+                   (when nothing
+                     (throw (ex-info (str "Double import for: "
+                                          import-path)
+                                     {})))
+                   [k-section
+                    (get ctx
+                         k-id)]))))
 
 
 
