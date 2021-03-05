@@ -11,8 +11,8 @@
 
   (:require [helins.binf          :as binf]
             [helins.wasm.bin      :as wasm.bin]
-            [helins.wasm.bin.read :as wasm.bin.read]
-            [helins.wasm.bin.wat  :as wasm.bin.wat]))
+            [helins.wasm.bin.read :as wasm.bin.read]))
+
 
 ;;;;;;;;;
 
@@ -21,8 +21,7 @@
 
   ""
 
-  {
-   :wasm.customsec/bin wasm.bin.read/custom-default
+  {:wasm.customsec/bin wasm.bin.read/custom-default
    :wasm/funcidx       0
    :wasm/funcsec       (sorted-map)
    :wasm/globalidx     0
@@ -31,8 +30,7 @@
    :wasm/memsec        (sorted-map)
    :wasm/tableidx      0
    :wasm/tablesec      (sorted-map)
-   :wasm/typesec       []
-   })
+   :wasm/typesec       []})
 
 
 ;;;;;;;;;; Start of a WASM file
@@ -109,26 +107,6 @@
           (get-in ctx
                   [:wasm/source
                    :wasm.source/section+])))
-
-
-
-(defn to-wat
-
-  ""
-
-  [ctx]
-
-  (-> ctx
-      wasm.bin.wat/importsec'
-      wasm.bin.wat/exportsec'
-      wasm.bin.wat/funcsec'
-      wasm.bin.wat/tablesec'
-      wasm.bin.wat/memsec'
-      wasm.bin.wat/globalsec'
-      wasm.bin.wat/elemsec'
-      wasm.bin.wat/startsec'
-      wasm.bin.wat/datasec'
-      wasm.bin.wat/codesec'))
 
 
 ;;;;;;;;;;

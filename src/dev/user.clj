@@ -10,7 +10,6 @@
   {:author "Adam Helinski"}
 
   (:require [kaocha.repl]
-            [helins.wasmeta     :as wasmeta]
             [helins.wasmeta.dev :as wasmeta.dev]))
 
 
