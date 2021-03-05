@@ -38,10 +38,12 @@
          importdesc-global'
          importdesc-mem'
          importdesc-table'
+         instr'+
          labelidx'
          localidx'
          locals'
          mem'
+         memidx'
          mut'
          opcode->f
          opcode-const->f
@@ -251,18 +253,6 @@
              view)))
 
 
-
-(defn resulttype
-
-  ""
-
-  [sym view]
-
-  (when-some [valtype+ (not-empty (resulttype' view))]
-    (cons sym
-          valtype+)))
-
-
 ;;;;; Funtion types
 
 
@@ -432,149 +422,88 @@
                       {})))))
 
 
-;;;;;;;;;; Instructions
-
-
-(defn op-1
-
-  ""
-
-
-  ([fread]
-
-   (partial op-1
-            fread))
-
-
-  ([fread opsym view]
-
-   (list opsym
-         (fread view))))
-
-
-
-(defn op-2
-
-  ""
-
-
-  ([fread]
-
-   (op-2 fread
-         fread))
-
-
-  ([fread-1 fread-2]
-
-   (partial op-2
-            fread-1
-            fread-2))
-
-
-  ([fread opsym view]
-
-   (op-2 fread
-         fread
-         opsym
-         view))
-
-
-  ([fread-1 fread-2 opsym view]
-
-   (list opsym
-         (fread-1 view)
-         (fread-2 view))))
-
-
 ;;;;; Control instructions
 
 
 (defn blocktype'
 
-  [view]
+  [ctx view]
 
   (let [x (s33' view)]
     (if (< x
            (binf.int64/i* 0))
       (let [x-2 (bit-and 0x7F
                          (binf.int64/u8 x))]
-        (if (= x-2
-               0x40)
-          nil
-          (list 'result
-                (-valtype x-2))))
-      (binf.int64/u32 x))))
-
-
-
-(defn block-expr
-
-  ""
-
-
-  ([view]
-
-   (block-expr (blocktype' view)
-               (expr' view)))
-
-
-  ([blocktype expr]
-
-   (if blocktype
-     (cons blocktype
-           expr)
-     expr)))
+        [nil
+         (if (= x-2
+                0x40)
+           nil
+           [(-valtype x-2)])])
+      (get-in ctx
+              [:wasm/typsec
+               (binf.int64/u32 x)]))))
 
 
 
 (defn block'
 
-  [_opsym view]
+  [hmap ctx view]
 
-  (list* 'block
-         (block-expr view)))
+  (assoc hmap
+         :wasm/type   (blocktype' ctx
+                                  view)
+         :wasm/instr+ (instr'+ ctx
+                               view)))
 
 
 
 (defn loop'
 
-  [_opsym view]
+  [hmap ctx view]
 
-  (list* 'loop
-         (block-expr view)))
+  (assoc hmap
+         :wasm/type   (blocktype' ctx
+                                  view)
+         :wasm/instr+ (instr'+ ctx
+                               view)))
 
 
 
 (defn else'
 
-  [view]
+  [hmap ctx view]
 
-  (list* 'else
-         (expr' view)))
+  (assoc hmap
+         :wasm/else
+         (instr'+ ctx
+                  view)))
 
 
 
 (defn if'
 
-  [_opsym view]
+  [hmap ctx view]
 
-  (let [blocktype (blocktype' view)]
+  (let [hmap-2 (assoc hmap
+                      :wasm/type
+                      (blocktype' ctx
+                                  view))]
     (loop [instr+ []]
       (let [opcode (byte' view)]
         (condp =
                opcode
-          (wasm.bin/opcode* 'else) (cons 'if
-                                         (block-expr blocktype
-                                                     [(list* 'then
-                                                              instr+)
-                                                       (else' view)]))
-          (wasm.bin/opcode* 'end)  (cons 'if
-                                         (block-expr blocktype
-                                                     [(list* 'then
-                                                             instr+)]))
+          (wasm.bin/opcode* 'else) (-> hmap-2
+                                       (assoc :wasm/instr+
+                                              instr+)
+                                       (else' ctx
+                                              view))
+          (wasm.bin/opcode* 'end)  (assoc hmap-2
+                                          :wasm/instr+
+                                          instr+)
           (recur (conj instr+
                        (if-some [fread (opcode->f opcode)]
-                         (fread view)
+                         (fread ctx
+                                view)
                          (or (wasm.bin/opcode->opsym opcode)
                              (throw (ex-info (str "Opcode is not a recognized instruction: "
                                                   opcode)
@@ -582,14 +511,56 @@
 
 
 
+(defn br'
+
+  [hmap _ctx view]
+
+  (assoc hmap
+         :wasm/labelidx
+         (labelidx' view)))
+
+
+
+(defn br_if'
+
+  [hmap _ctx view]
+
+  (br' hmap
+       _ctx
+       view))
+
+
+
 (defn br_table'
 
-  [_opsym view]
+  [hmap _ctx view]
 
-  (cons 'br_table
-        (conj (vec' labelidx'
-                    view)
-              (labelidx' view))))
+  (assoc hmap
+         :wasm.labelidx/table   (vec' labelidx'
+                                      view)
+         :wasm.labelidx/default (labelidx' view)))
+
+
+
+(defn call'
+
+  [hmap _ctx view]
+
+  (assoc hmap
+         :wasm/funcidx
+         (funcidx' view)))
+
+
+
+(defn call_indirect'
+
+  [hmap ctx view]
+
+  (assoc hmap
+         :wasm/type     (get-in ctx
+                                [:wasm/typesec
+                                 (typeidx' view)])
+         :wasm/tableidx (byte' view)))
 
 
 ;;;;; Variable instructions
@@ -599,11 +570,11 @@
 
   ""
 
-  [opsym view]
+  [hmap _ctx view]
 
-  (op-1 localidx'
-        opsym
-        view))
+  (assoc hmap
+         :wasm/localidx
+         (localidx' view)))
 
 
 
@@ -611,11 +582,11 @@
 
   ""
 
-  [opsym view]
+  [hmap _ctx view]
 
-  (op-1 globalidx'
-        opsym
-        view))
+  (assoc hmap
+         :wasm/globalidx
+         (globalidx' view)))
 
 
 ;;;;;; Memory instructions
@@ -625,12 +596,11 @@
 
   ""
 
-  [view]
+  [hmap view]
 
-  [(symbol (str "align="
-                (u32' view)))
-   (symbol (str "offset="
-                (u32' view)))])
+  (assoc hmap
+         :wasm.mem/align  (u32' view)
+         :wasm.mem/offset (u32' view)))
 
 
 
@@ -638,10 +608,10 @@
 
   ""
 
-  [opsym view]
+  [hmap _ctx view]
 
-  (list* opsym
-         (memarg' view)))
+  (memarg' hmap
+           view))
 
 
 
@@ -649,11 +619,11 @@
 
   ""
 
-  [opsym view]
+  [hmap _ctx view]
 
-  (op-1 byte'
-        opsym
-        view))
+  (assoc hmap
+         :wasm/memidx
+         (memidx' view)))
 
 
 ;;;;; Numeric instructions
@@ -667,26 +637,38 @@
   ""
 
 
-  ([fread]
+  ([const k-const]
 
    (partial op-constval
-            fread))
+            const
+            k-const))
 
 
-  ([fread opsym view]
+  ([const k-const hmap _ctx view]
 
-   (list opsym
-         (fread view))))
+   (assoc hmap
+          k-const
+          (const view))))
 
 
 ;;;;;
+
+
+(defn instr'+
+
+  ""
+
+  [ctx view]
+
+  (expr' ctx view))
+
 
 
 (defn expr'
 
   ""
 
-  [view]
+  [ctx view]
 
   (loop [instr+ []]
     (let [opcode (byte' view)]
@@ -695,8 +677,9 @@
         instr+
         (recur (conj instr+
                      (if-some [fread (opcode->f opcode)]
-                       (fread view)
-                       (or (wasm.bin/opcode->opsym opcode)
+                       (fread ctx
+                              view)
+                       (or {:wasm.op/sym (wasm.bin/opcode->opsym opcode)}
                            (throw (ex-info (str "Opcode is not a recognized instruction: "
                                                 opcode)
                                            {}))))))))))
@@ -707,7 +690,7 @@
 
   ""
 
-  [view]
+  [_ctx view]
 
   (let [opcode (byte' view)
         instr  (cond
@@ -732,7 +715,7 @@
 
   ""
 
-  [view]
+  [ctx view]
 
   (loop [instr+ []]
     (let [opcode (byte' view)]
@@ -741,7 +724,8 @@
         instr+
         (recur (conj instr+
                      (if-some [fread (opcode-const->f opcode)]
-                       (fread view)
+                       (fread ctx
+                              view)
                        (throw (ex-info (str "Given opcode is illegal in constant expression: "
                                             opcode)
                                        {})))))))))
@@ -1153,7 +1137,8 @@
                         (-> {}
                             (globaltype' view)
                             (assoc :wasm/expr
-                                   (expr-const view)))))
+                                   (expr-const ctx
+                                               view)))))
 
 
 ;;;;; Export section
@@ -1338,7 +1323,8 @@
                    (throw (ex-info (str "In element segment, table index out of bounds: "
                                         tableidx)
                                    {})))
-                 (let [expr (expr-idx view)]
+                 (let [expr (expr-idx ctx
+                                      view)]
                    (when (= (first expr)
                             'global.get)
                      (let [globalidx (second expr)
@@ -1425,7 +1411,7 @@
 
   ""
 
-  [func view]
+  [func ctx view]
 
   (-> func
       (assoc :wasm/local+ (locals' (or (get-in func
@@ -1433,7 +1419,8 @@
                                                 0])
                                        [])
                                    view)
-             :wasm/expr   (expr' view))
+             :wasm/expr   (expr' ctx
+                                 view))
       (dissoc :wasm/code)))
 
 
@@ -1475,6 +1462,7 @@
                       (assoc funcsec-2
                              funcidx
                              (func' func
+                                    ctx
                                     view)))
                     funcsec
                     (subseq funcsec
@@ -1514,7 +1502,8 @@
                                    {})))
                  (update-in mem
                             [:wasm/datasec
-                             (expr-idx view)]
+                             (expr-idx ctx
+                                       view)]
                             (fnil conj
                                   [])
                             (binf/rr-buffer view
@@ -1563,19 +1552,19 @@
                                    {})))
                  (assoc opcode->f
                         opcode
-                        (partial f
-                                 opsym))))
+                        (fn [ctx view]
+                          (f {:wasm.op/sym opsym}
+                             ctx
+                             view)))))
              {}
              {'block         block'
               'loop          loop'
               'if            if'
-              'br            (op-1 labelidx')
-              'br_if         (op-1 labelidx')
-              'br_table      (op-1 (partial vec'
-                                            labelidx'))
-              'call          (op-1 funcidx')
-              'call_indirect (op-2 typeidx'
-                                   byte')
+              'br            br'
+              'br_if         br_if'
+              'br_table      br_table'
+              'call          call'
+              'call_indirect call_indirect'
 
               'local.get     op-var-local
               'local.set     op-var-local
@@ -1609,10 +1598,14 @@
               'memory.size   op-memory
               'memory.grow   op-memory
 
-              'i32.const     (op-constval i32')
-              'i64.const     (op-constval i64')
-              'f32.const     (op-constval f32')
-              'f64.const     (op-constval f64')}))
+              'i32.const     (op-constval i32'
+                                          :wasm.i32/const)
+              'i64.const     (op-constval i64'
+                                          :wasm.i64/const)
+              'f32.const     (op-constval f32'
+                                          :wasm.f32/const)
+              'f64.const     (op-constval f64'
+                                          :wasm.f64/const)}))
 
 
 
