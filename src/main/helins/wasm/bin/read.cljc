@@ -1425,10 +1425,16 @@
 
   ""
 
-  [view]
+  [func view]
 
-  (into (locals' view)
-        (expr' view)))
+  (-> func
+      (assoc :wasm/local+ (locals' (or (get-in func
+                                               [:wasm/type
+                                                0])
+                                       [])
+                                   view)
+             :wasm/expr   (expr' view))
+      (dissoc :wasm/code)))
 
 
 
@@ -1436,14 +1442,21 @@
 
   ""
 
-  [view]
 
-  (into []
-        (mapcat identity)
-        (vec' (fn [view]
-                (repeat (u32' view)
-                        (valtype' view)))
-              view)))
+  ([view]
+
+   (locals' []
+            view))
+
+
+  ([vect view]
+
+   (into vect
+         (mapcat identity)
+         (vec' (fn [view]
+                 (repeat (u32' view)
+                         (valtype' view)))
+               view))))
 
 
 
@@ -1461,9 +1474,8 @@
                                              view :wasm/code}]]
                       (assoc funcsec-2
                              funcidx
-                             (assoc func
-                                    :wasm/local+
-                                    (locals' view))))
+                             (func' func
+                                    view)))
                     funcsec
                     (subseq funcsec
                             >=
