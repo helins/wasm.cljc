@@ -887,6 +887,41 @@
      0xC4)
 
 
+;;;; Saturated trunction
+
+
+(def trunc_sat
+
+  ""
+
+  0xFC)
+
+
+(def i32-trunc_sat_f32_s
+     0)
+
+(def i32-trunc_sat_f32_u
+     1)
+
+(def i32-trunc_sat_f64_s
+     2)
+
+(def i32-trunc_sat_f64_u
+     3)
+
+(def i64-trunc_sat_f32_s
+     4)
+
+(def i64-trunc_sat_f32_u
+     5)
+
+(def i64-trunc_sat_f64_s
+     6)
+
+(def i64-trunc_sat_f64_u
+     7)
+
+
 ;;;;;;;;; Sections
 
 

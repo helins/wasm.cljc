@@ -648,6 +648,19 @@
           (const view))))
 
 
+
+(defn trunc_sat
+
+  ""
+
+  [hmap _ctx view]
+
+  (assoc hmap
+         :wasm.trunc_sat/type
+         (u32' view)))
+
+  
+
 ;;;;;
 
 
@@ -1583,7 +1596,8 @@
    wasm.bin/f32-const     (op-constval f32'
                                        :wasm.f32/const)
    wasm.bin/f64-const     (op-constval f64'
-                                       :wasm.f64/const)})
+                                       :wasm.f64/const)
+   wasm.bin/trunc_sat     trunc_sat})
 
 
 
