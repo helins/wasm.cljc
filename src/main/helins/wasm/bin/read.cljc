@@ -38,6 +38,7 @@
          importdesc-global'
          importdesc-mem'
          importdesc-table'
+         instr
          instr'+
          labelidx'
          localidx'
@@ -501,13 +502,9 @@
                                           :wasm/instr+
                                           instr+)
           (recur (conj instr+
-                       (if-some [fread (opcode->f opcode)]
-                         (fread ctx
-                                view)
-                         (or (wasm.bin/opcode->opsym opcode)
-                             (throw (ex-info (str "Opcode is not a recognized instruction: "
-                                                  opcode)
-                                             {})))))))))))
+                       (instr ctx
+                              opcode
+                              view))))))))
 
 
 
@@ -676,13 +673,9 @@
              (wasm.bin/opcode* 'end))
         instr+
         (recur (conj instr+
-                     (if-some [fread (opcode->f opcode)]
-                       (fread ctx
-                              view)
-                       (or {:wasm.op/sym (wasm.bin/opcode->opsym opcode)}
-                           (throw (ex-info (str "Opcode is not a recognized instruction: "
-                                                opcode)
-                                           {}))))))))))
+                     (instr ctx
+                            opcode
+                            view)))))))
 
 
 
@@ -724,7 +717,8 @@
         instr+
         (recur (conj instr+
                      (if-some [fread (opcode-const->f opcode)]
-                       (fread ctx
+                       (fread {:wasm.op/code opcode}
+                              ctx
                               view)
                        (throw (ex-info (str "Given opcode is illegal in constant expression: "
                                             opcode)
@@ -1552,10 +1546,7 @@
                                    {})))
                  (assoc opcode->f
                         opcode
-                        (fn [ctx view]
-                          (f {:wasm.op/sym opsym}
-                             ctx
-                             view)))))
+                        f)))
              {}
              {'block         block'
               'loop          loop'
@@ -1565,13 +1556,11 @@
               'br_table      br_table'
               'call          call'
               'call_indirect call_indirect'
-
               'local.get     op-var-local
               'local.set     op-var-local
               'local.tee     op-var-local
               'global.get    op-var-global
               'global.set    op-var-global
-
               'i32.load      op-memarg 
               'i64.load      op-memarg
               'f32.load      op-memarg
@@ -1597,7 +1586,6 @@
               'i64.store32   op-memarg
               'memory.size   op-memory
               'memory.grow   op-memory
-
               'i32.const     (op-constval i32'
                                           :wasm.i32/const)
               'i64.const     (op-constval i64'
@@ -1620,3 +1608,23 @@
                 (wasm.bin/opcode* 'i32.const)
                 (wasm.bin/opcode* 'i64.const)]))
 
+
+
+(defn instr
+
+  ""
+
+  [ctx opcode view]
+
+  (let [hmap {:wasm.op/code opcode}]
+    (if-some [f (opcode->f opcode)]
+      (f hmap
+         ctx
+         view)
+      (do
+        (when-not (contains? wasm.bin/opcode->opsym
+                             opcode)
+          (throw (ex-info (str "Opcode is not a recognized instruction: "
+                               opcode)
+                          {})))
+        hmap))))
