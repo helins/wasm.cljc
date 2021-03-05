@@ -493,14 +493,14 @@
       (let [opcode (byte' view)]
         (condp =
                opcode
-          (wasm.bin/opcode* 'else) (-> hmap-2
-                                       (assoc :wasm/instr+
-                                              instr+)
-                                       (else' ctx
-                                              view))
-          (wasm.bin/opcode* 'end)  (assoc hmap-2
-                                          :wasm/instr+
-                                          instr+)
+          wasm.bin/else (-> hmap-2
+                            (assoc :wasm/instr+
+                                   instr+)
+                            (else' ctx
+                                   view))
+          wasm.bin/end  (assoc hmap-2
+                               :wasm/instr+
+                               instr+)
           (recur (conj instr+
                        (instr ctx
                               opcode
@@ -670,7 +670,7 @@
   (loop [instr+ []]
     (let [opcode (byte' view)]
       (if (= opcode
-             (wasm.bin/opcode* 'end))
+             wasm.bin/end)
         instr+
         (recur (conj instr+
                      (instr ctx
@@ -688,14 +688,14 @@
   (let [opcode (byte' view)
         instr  (cond
                  (= opcode
-                    (wasm.bin/opcode* 'i32.const))  (list 'i32.const
-                                                          (i32' view))
+                    wasm.bin/i32-const)  (list 'i32.const
+                                               (i32' view))
                  (= opcode
-                    (wasm.bin/opcode* 'global.get)) (list 'global.get
-                                                          (globalidx' view))
-                 :else                              (throw (ex-info (str "Illegal opcode for index constant expression: "
-                                                                         opcode)
-                                                                    {})))]
+                    wasm.bin/global-get) (list 'global.get
+                                               (globalidx' view))
+                 :else                   (throw (ex-info (str "Illegal opcode for index constant expression: "
+                                                              opcode)
+                                                         {})))]
     (when-not (= (byte' view)
                  wasm.bin/end)
       (throw (ex-info "Constant expression for index should not contain more than 1 instruction"
@@ -1538,62 +1538,52 @@
 
   ""
 
-  (reduce-kv (fn [opcode->f opsym f]
-               (let [opcode (wasm.bin/opsym->opcode opsym)]
-                 (when-not opcode
-                   (throw (ex-info (str "Opcode not found for: "
-                                        opsym)
-                                   {})))
-                 (assoc opcode->f
-                        opcode
-                        f)))
-             {}
-             {'block         block'
-              'loop          loop'
-              'if            if'
-              'br            br'
-              'br_if         br_if'
-              'br_table      br_table'
-              'call          call'
-              'call_indirect call_indirect'
-              'local.get     op-var-local
-              'local.set     op-var-local
-              'local.tee     op-var-local
-              'global.get    op-var-global
-              'global.set    op-var-global
-              'i32.load      op-memarg 
-              'i64.load      op-memarg
-              'f32.load      op-memarg
-              'f64.load      op-memarg
-              'i32.load8_s   op-memarg
-              'i32.load8_u   op-memarg
-              'i32.load16_s  op-memarg
-              'i32.load16_u  op-memarg
-              'i64.load8_s   op-memarg
-              'i64.load8_u   op-memarg
-              'i64.load16_s  op-memarg
-              'i64.load16_u  op-memarg
-              'i64.load32_s  op-memarg
-              'i64.load32_u  op-memarg
-              'i32.store     op-memarg
-              'i64.store     op-memarg
-              'f32.store     op-memarg
-              'f64.store     op-memarg
-              'i32.store8    op-memarg
-              'i32.store16   op-memarg
-              'i64.store8    op-memarg
-              'i64.store16   op-memarg
-              'i64.store32   op-memarg
-              'memory.size   op-memory
-              'memory.grow   op-memory
-              'i32.const     (op-constval i32'
-                                          :wasm.i32/const)
-              'i64.const     (op-constval i64'
-                                          :wasm.i64/const)
-              'f32.const     (op-constval f32'
-                                          :wasm.f32/const)
-              'f64.const     (op-constval f64'
-                                          :wasm.f64/const)}))
+  {wasm.bin/block         block'
+   wasm.bin/loop-         loop'
+   wasm.bin/if-           if'
+   wasm.bin/br            br'
+   wasm.bin/br_if         br_if'
+   wasm.bin/br_table      br_table'
+   wasm.bin/call          call'
+   wasm.bin/call_indirect call_indirect'
+   wasm.bin/local-get     op-var-local
+   wasm.bin/local-set     op-var-local
+   wasm.bin/local-tee     op-var-local
+   wasm.bin/global-get    op-var-global
+   wasm.bin/global-set    op-var-global
+   wasm.bin/i32-load      op-memarg 
+   wasm.bin/i64-load      op-memarg
+   wasm.bin/f32-load      op-memarg
+   wasm.bin/f64-load      op-memarg
+   wasm.bin/i32-load8_s   op-memarg
+   wasm.bin/i32-load8_u   op-memarg
+   wasm.bin/i32-load16_s  op-memarg
+   wasm.bin/i32-load16_u  op-memarg
+   wasm.bin/i64-load8_s   op-memarg
+   wasm.bin/i64-load8_u   op-memarg
+   wasm.bin/i64-load16_s  op-memarg
+   wasm.bin/i64-load16_u  op-memarg
+   wasm.bin/i64-load32_s  op-memarg
+   wasm.bin/i64-load32_u  op-memarg
+   wasm.bin/i32-store     op-memarg
+   wasm.bin/i64-store     op-memarg
+   wasm.bin/f32-store     op-memarg
+   wasm.bin/f64-store     op-memarg
+   wasm.bin/i32-store8    op-memarg
+   wasm.bin/i32-store16   op-memarg
+   wasm.bin/i64-store8    op-memarg
+   wasm.bin/i64-store16   op-memarg
+   wasm.bin/i64-store32   op-memarg
+   wasm.bin/memory-size   op-memory
+   wasm.bin/memory-grow   op-memory
+   wasm.bin/i32-const     (op-constval i32'
+                                       :wasm.i32/const)
+   wasm.bin/i64-const     (op-constval i64'
+                                       :wasm.i64/const)
+   wasm.bin/f32-const     (op-constval f32'
+                                       :wasm.f32/const)
+   wasm.bin/f64-const     (op-constval f64'
+                                       :wasm.f64/const)})
 
 
 
@@ -1602,11 +1592,11 @@
   ""
 
   (select-keys opcode->f
-               [(wasm.bin/opcode* 'f32.const)
-                (wasm.bin/opcode* 'f64.const)
-                (wasm.bin/opcode* 'global.get)
-                (wasm.bin/opcode* 'i32.const)
-                (wasm.bin/opcode* 'i64.const)]))
+               [wasm.bin/f32-const
+                wasm.bin/f64-const
+                wasm.bin/global-get
+                wasm.bin/i32-const
+                wasm.bin/i64-const]))
 
 
 

@@ -10,7 +10,8 @@
   {:author "Adam Helinski"}
 
   #?(:cljs (:require-macros [helins.wasm.bin :refer [opcode*
-                                                     opsym*]])))
+                                                     opsym*]]))
+  (:refer-clojure :exclude [drop]))
 
 
 ;;;;;;;;;;
@@ -20,6 +21,7 @@
 
   ""
 
+  
   {0x00 'unreachable
    0x01 'nop
    0x02 'block
@@ -244,60 +246,6 @@
 
 
 
-(def opsym->opcode
-
-  ""
-
-  ;; 0xFC is saturated truncation, a "weird" opcode that is actually split by type.
-
-  (as-> {}
-        table
-    (reduce-kv (fn [opsym->opcode opcode opsym]
-                 (assoc opsym->opcode
-                        opsym
-                        opcode))
-               table
-               (dissoc opcode->opsym
-                       0xFC))
-    (reduce-kv (fn [opsym->opcode arg opsym]
-                 (assoc opsym->opcode
-                        opsym
-                        [0xFC arg]))
-               table
-               (opcode->opsym 0xFC))))
-
-
-
-(defmacro opcode*
-
-  ""
-
-  [opsym]
-
-  (get opsym->opcode
-       (cond
-         (symbol? opsym)       opsym
-         (and (coll? opsym)
-              (= (first opsym)
-                 'quote))      (second opsym)
-         :else                 (throw (ex-info (str "Opsym must be a symbol: "
-                                                    opsym)
-                                               {})))))
-
-
-
-(defmacro opsym*
-
-  ""
-
-  [opcode & arg+]
-
-  `(quote ~(get-in opcode->opsym
-                   (cons opcode
-                         arg+))))
-
-
-
 (defn -trunc_sat?
 
   ""
@@ -343,6 +291,59 @@
 
 
 ;;;;;;;;;; Instructions
+
+
+;;;;;; Control instructions
+
+
+(def unreachable
+     0x00)
+
+(def nop
+     0x01)
+
+(def block
+     0x02)
+
+(def loop-
+     0x03)
+
+(def if-
+     0x04)
+
+(def else
+     0x05)
+
+(def end
+     0x0b)
+
+(def br
+     0x0c)
+
+(def br_if
+     0x0d)
+
+(def br_table
+     0x0e)
+
+(def return
+     0x0f)
+
+(def call
+     0x10)
+
+(def call_indirect
+     0x11)
+
+
+;;;;; Parametric instructions
+
+
+(def drop
+     0x1a)
+
+(def select
+     0x1b)
 
 
 ;;;;; Variable instructions
@@ -446,7 +447,18 @@
 ;;;;; Numeric instructions
 
 
-;;; Constants
+(def i32-const
+     0x41)
+
+(def i64-const
+     0x42)
+
+(def f32-const
+     0x43)
+
+(def f64-const
+     0x44)
+
 
 
 (def i32-const
@@ -462,11 +474,417 @@
      0x44)
 
 
-;;;;;
 
 
-(def end
-     0x0b)
+(def i32-eqz
+     0x45)
+
+(def i32-eq
+     0x46)
+
+(def i32-ne
+     0x47)
+
+(def i32-lt_s
+     0x48)
+
+(def i32-lt_u
+     0x49)
+
+(def i32-gt_s
+     0x4a)
+
+(def i32-gt_u
+     0x4b)
+
+(def i32-le_s
+     0x4c)
+
+(def i32-le_u
+     0x4d)
+
+(def i32-ge_s
+     0x4e)
+
+(def i32-ge_u
+     0x4f)
+
+
+
+(def i64-eqz
+     0x50)
+
+(def i64-eq
+     0x51)
+
+(def i64-ne
+     0x52)
+
+(def i64-lt_s
+     0x53)
+
+(def i64-lt_u
+     0x54)
+
+(def i64-gt_s
+     0x55)
+
+(def i64-gt_u
+     0x56)
+
+(def i64-le_s
+     0x57)
+
+(def i64-le_u
+     0x58)
+
+(def i64-ge_s
+     0x59)
+
+(def i64-ge_u
+     0x5a)
+
+
+
+(def f32-eq
+     0x5b)
+
+(def f32-be
+     0x5c)
+
+(def f32-lt
+     0x5d)
+
+(def f32-gt
+     0x5e)
+
+(def f32-le
+     0x5f)
+
+(def f32-ge
+     0x60)
+
+
+
+(def f64-eq
+     0x61)
+
+(def f64-be
+     0x62)
+
+(def f64-lt
+     0x63)
+
+(def f64-gt
+     0x64)
+
+(def f64-le
+     0x65)
+
+(def f64-ge
+     0x66)
+
+
+
+(def i32-clz
+     0x67)
+
+(def i32-ctz
+     0x68)
+
+(def i32-popcnt
+     0x69)
+
+(def i32-and
+     0x6a)
+
+(def i32-sub
+     0x6b)
+
+(def i32-mul
+     0x6c)
+
+(def i32-div_s
+     0x6d)
+
+(def i32-div_u
+     0x6e)
+
+(def i32-rem_s
+     0x6f)
+
+(def i32-rem_u
+     0x70)
+
+(def i32-and
+     0x71)
+
+(def i32-or
+     0x72)
+
+(def i32-xor
+     0x73)
+
+(def i32-shl
+     0x74)
+
+(def i32-shr_s
+     0x75)
+
+(def i32-shr_u
+     0x76)
+
+(def i32-rotl
+     0x77)
+
+(def i32-rotr
+     0x78)
+
+
+
+(def i64-clz
+     0x79)
+
+(def i64-ctz
+     0x7a)
+
+(def i64-popcnt
+     0x7b)
+
+(def i64-and
+     0x7c)
+
+(def i64-sub
+     0x7d)
+
+(def i64-mul
+     0x7e)
+
+(def i64-div_s
+     0x7f)
+
+(def i64-div_u
+     0x80)
+
+(def i64-rem_s
+     0x81)
+
+(def i64-rem_u
+     0x82)
+
+(def i64-and
+     0x83)
+
+(def i64-or
+     0x84)
+
+(def i64-xor
+     0x85)
+
+(def i64-shl
+     0x86)
+
+(def i64-shr_s
+     0x87)
+
+(def i64-shr_u
+     0x88)
+
+(def i64-rotl
+     0x89)
+
+(def i64-rotr
+     0x8a)
+
+
+
+(def f32-abs
+     0x8B)
+
+(def f32-neg
+     0x8C)
+
+(def f32-ceil
+     0x8D)
+
+(def f32-floor
+     0x8E)
+
+(def f32-trunc
+     0x8F)
+
+(def f32-nearest
+     0x90)
+
+(def f32-sqrt
+     0x91)
+
+(def f32-add
+     0x92)
+
+(def f32-sub
+     0x93)
+
+(def f32-mul
+     0x94)
+
+(def f32-div
+     0x95)
+
+(def f32-min
+     0x96)
+
+(def f32-max
+     0x97)
+
+(def f32-copysign
+     0x98)
+
+
+
+(def f64-abs
+     0x99)
+
+(def f64-neg
+     0x9A)
+
+(def f64-ceil
+     0x9B)
+
+(def f64-floor
+     0x9C)
+
+(def f64-trunc
+     0x9D)
+
+(def f64-nearest
+     0x9E)
+
+(def f64-sqrt
+     0x9F)
+
+(def f64-add
+     0xA0)
+
+(def f64-sub
+     0xA1)
+
+(def f64-mul
+     0xA2)
+
+(def f64-div
+     0xA3)
+
+(def f64-min
+     0xA4)
+
+(def f64-max
+     0xA5)
+
+(def f64-copysign
+     0xA6)
+
+
+
+(def i32-wrap_i64
+     0xA7)
+
+(def i32-trunc_f32_s
+     0xA8)
+
+(def i32-trunc_f32_u
+     0xA9)
+
+(def i32-trunc_f64_s
+     0xAA)
+
+(def i32-trunc_f64_u
+     0xAB)
+
+
+
+(def i64-extend_i32_s
+     0xAC)
+
+(def i64-extend_i32_u
+     0xAD)
+
+(def i64-trunc_f32_s
+     0xAE)
+
+(def i64-trunc_f32_u
+     0xAF)
+
+(def i64-trunc_f64_s
+     0xB0)
+
+(def i64-trunc_f64_u
+     0xB1)
+
+
+
+(def f32-convert_i32_s
+     0xB2)
+
+(def f32-convert_i32_u
+     0xB3)
+
+(def f32-convert_i64_s
+     0xB4)
+
+(def f32-convert_i64_u
+     0xB5)
+
+(def f32-demote_f64
+     0xB6)
+
+
+
+(def f64-convert_i32_s
+     0xB7)
+
+(def f64-convert_i32_u
+     0xB8)
+
+(def f64-convert_i64_s
+     0xB9)
+
+(def f64-convert_i64_u
+     0xBA)
+
+(def f64-promote_f32
+     0xBB)
+
+
+
+(def i32-reinterpret_f32
+     0xBC)
+
+(def i64-reinterpret_f64
+     0xBD)
+
+(def f32-reinterpret_i32
+     0xBE)
+
+(def f32-reinterpret_i64
+     0xBF)
+
+
+
+(def i32-extend8_s
+     0xC0)
+
+(def i32-extend16_s
+     0xC1)
+
+(def i64-extend8_s
+     0xC2)
+
+(def i64-extend16_s
+     0xC3)
+
+(def i64-extend32_s
+     0xC4)
 
 
 ;;;;;;;;; Sections
