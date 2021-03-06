@@ -424,7 +424,7 @@
 
 (defn blocktype'
 
-  [_ctx view]
+  [view]
 
   (let [x (s33' view)]
     (if (< x
@@ -442,59 +442,52 @@
 
 (defn block'
 
-  [hmap ctx view]
+  [opvec ctx view]
 
-  (assoc hmap
-         :wasm/type   (blocktype' ctx
-                                  view)
-         :wasm/instr+ (instr'+ ctx
-                               view)))
+  (conj opvec
+        (blocktype' view)
+        (instr'+ ctx
+                 view)))
 
 
 
 (defn loop'
 
-  [hmap ctx view]
+  [opvec ctx view]
 
-  (assoc hmap
-         :wasm/type   (blocktype' ctx
-                                  view)
-         :wasm/instr+ (instr'+ ctx
-                               view)))
+  (conj opvec
+        (blocktype' view)
+        (instr'+ ctx
+                 view)))
 
 
 
 (defn else'
 
-  [hmap ctx view]
+  [ctx view]
 
-  (assoc hmap
-         :wasm/else
-         (instr'+ ctx
-                  view)))
+  (instr'+ ctx
+           view))
 
 
 
 (defn if'
 
-  [hmap ctx view]
+  [opvec ctx view]
 
-  (let [hmap-2 (assoc hmap
-                      :wasm/type
-                      (blocktype' ctx
-                                  view))]
+  (let [opvec-2 (conj opvec
+                      (blocktype' view))]
     (loop [instr+ []]
       (let [opcode (byte' view)]
         (condp =
                opcode
-          wasm.bin/else (-> hmap-2
-                            (assoc :wasm/instr+
-                                   instr+)
-                            (else' ctx
-                                   view))
-          wasm.bin/end  (assoc hmap-2
-                               :wasm/instr+
-                               instr+)
+          wasm.bin/else (conj opvec-2
+                              instr+
+                              (else' ctx
+                                     view))
+          wasm.bin/end  (conj opvec-2
+                              instr+
+                              [])
           (recur (conj instr+
                        (instr ctx
                               opcode
@@ -504,19 +497,18 @@
 
 (defn br'
 
-  [hmap _ctx view]
+  [opvec _ctx view]
 
-  (assoc hmap
-         :wasm/labelidx
-         (labelidx' view)))
+  (conj opvec
+        (labelidx' view)))
 
 
 
 (defn br_if'
 
-  [hmap _ctx view]
+  [opvec _ctx view]
 
-  (br' hmap
+  (br' opvec
        _ctx
        view))
 
@@ -524,34 +516,31 @@
 
 (defn br_table'
 
-  [hmap _ctx view]
+  [opvec _ctx view]
 
-  (assoc hmap
-         :wasm.labelidx/table   (vec' labelidx'
-                                      view)
-         :wasm.labelidx/default (labelidx' view)))
+  (conj opvec
+        (vec' labelidx'
+              view)
+        (labelidx' view)))
 
 
 
 (defn call'
 
-  [hmap _ctx view]
+  [opvec _ctx view]
 
-  (assoc hmap
-         :wasm/funcidx
-         (funcidx' view)))
+  (conj opvec
+        (funcidx' view)))
 
 
 
 (defn call_indirect'
 
-  [hmap ctx view]
+  [opvec _ctx view]
 
-  (assoc hmap
-         :wasm/type     (get-in ctx
-                                [:wasm/typesec
-                                 (typeidx' view)])
-         :wasm/tableidx (byte' view)))
+  (conj opvec
+        (typeidx' view)
+        (byte' view)))
 
 
 ;;;;; Variable instructions
@@ -561,11 +550,10 @@
 
   ""
 
-  [hmap _ctx view]
+  [opvec _ctx view]
 
-  (assoc hmap
-         :wasm/localidx
-         (localidx' view)))
+  (conj opvec
+        (localidx' view)))
 
 
 
@@ -573,11 +561,10 @@
 
   ""
 
-  [hmap _ctx view]
+  [opvec _ctx view]
 
-  (assoc hmap
-         :wasm/globalidx
-         (globalidx' view)))
+  (conj opvec
+        (globalidx' view)))
 
 
 ;;;;;; Memory instructions
@@ -587,11 +574,11 @@
 
   ""
 
-  [hmap view]
+  [vect view]
 
-  (assoc hmap
-         :wasm.mem/align  (u32' view)
-         :wasm.mem/offset (u32' view)))
+  (conj vect
+        (u32' view)
+        (u32' view)))
 
 
 
@@ -599,9 +586,9 @@
 
   ""
 
-  [hmap _ctx view]
+  [opvec _ctx view]
 
-  (memarg' hmap
+  (memarg' opvec
            view))
 
 
@@ -610,11 +597,10 @@
 
   ""
 
-  [hmap _ctx view]
+  [opvec _ctx view]
 
-  (assoc hmap
-         :wasm/memidx
-         (memidx' view)))
+  (conj opvec
+        (memidx' view)))
 
 
 ;;;;; Numeric instructions
@@ -628,18 +614,17 @@
   ""
 
 
-  ([const k-const]
+  ([const]
 
    (partial op-constval
-            const
-            k-const))
+            const))
 
 
-  ([const k-const hmap _ctx view]
+  ([const opvec _ctx view]
 
-   (assoc hmap
-          k-const
-          (const view))))
+   (println :opvec opvec)
+   (conj opvec
+         (const view))))
 
 
 
@@ -647,12 +632,10 @@
 
   ""
 
-  [hmap _ctx view]
+  [opvec _ctx view]
 
-  (assoc hmap
-         :wasm.trunc_sat/type
-         (u32' view)))
-
+  (conj opvec
+        (u32' view)))
   
 
 ;;;;;
@@ -664,7 +647,8 @@
 
   [ctx view]
 
-  (expr' ctx view))
+  (expr' ctx
+         view))
 
 
 
@@ -724,7 +708,7 @@
         instr+
         (recur (conj instr+
                      (if-some [fread (opcode-const->f opcode)]
-                       (fread {:wasm.op/code opcode}
+                       (fread [opcode]
                               ctx
                               view)
                        (throw (ex-info (str "Given opcode is illegal in constant expression: "
@@ -1570,14 +1554,10 @@
    wasm.bin/i64-store32   op-memarg
    wasm.bin/memory-size   op-memory
    wasm.bin/memory-grow   op-memory
-   wasm.bin/i32-const     (op-constval i32'
-                                       :wasm.i32/const)
-   wasm.bin/i64-const     (op-constval i64'
-                                       :wasm.i64/const)
-   wasm.bin/f32-const     (op-constval f32'
-                                       :wasm.f32/const)
-   wasm.bin/f64-const     (op-constval f64'
-                                       :wasm.f64/const)
+   wasm.bin/i32-const     (op-constval i32')
+   wasm.bin/i64-const     (op-constval i64')
+   wasm.bin/f32-const     (op-constval f32')
+   wasm.bin/f64-const     (op-constval f64')
    wasm.bin/trunc_sat     trunc_sat})
 
 
@@ -1601,15 +1581,15 @@
 
   [ctx opcode view]
 
-  (let [hmap {:wasm.op/code opcode}]
+  (let [opvec [opcode]]
     (if-some [f (opcode->f opcode)]
-      (f hmap
+      (f opvec
          ctx
          view)
       (do
         (when-not (contains? wasm.bin/opcode->opsym
                              opcode)
-          (throw (ex-info (str "Opcode is not a recognized instruction: "
+          (throw (ex-info (str "This opcode is not a recognized instruction: "
                                opcode)
                           {})))
-        hmap))))
+        opvec))))
