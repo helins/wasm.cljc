@@ -14,6 +14,7 @@
             [helins.binf.int64  :as binf.int64]
             [helins.binf.leb128 :as binf.leb128]
             [helins.wasm.bin    :as wasm.bin]
+            [helins.wasm.count  :as wasm.count]
             [helins.wasm.ir     :as wasm.ir]))
 
 
@@ -62,29 +63,128 @@
 ;;;;;;;;;;
 
 
-(defn magic'
+(defn u32
+
+  [view u32]
+
+  (binf.leb128/wr-u32 view
+                      u32))
+
+
+;;;;;;;;;;
+
+
+(defn magic
 
   ""
 
-  [ctx w]
+  [ctx view]
 
-  (binf/wr-b32 (at-least w
-                         4)
+  (binf/wr-b32 view
                wasm.bin/magic)
   ctx)
                
 
 
-(defn version'
+(defn version
 
   ""
 
-  [ctx w]
+  [ctx view]
 
-  (binf/wr-b32 (at-least w
-                         4)
+  (binf/wr-b32 view
                wasm.bin/version-1)
   ctx)
+
+
+;;;;;;;;;;
+
+
+(defn n-byte
+
+  ""
+
+  [view n-byte]
+
+  (u32 view
+       n-byte))
+
+
+
+(defn section-id
+
+  [view section-id]
+
+  (binf/wr-b8 view
+              section-id))
+
+
+;;;;;;;;;; Types
+
+
+(defn valtype
+
+  ""
+
+  [ctx view vt]
+
+  (binf/wr-b8 view
+              vt)
+  ctx)
+
+
+
+(defn resulttype
+
+  ""
+
+  [ctx view valtype+]
+
+  (binf.leb128/wr-u32 view
+                      (count valtype+))
+  (reduce #(valtype %1
+                    view
+                    %2)
+          ctx
+          valtype+))
+
+
+
+(defn functype
+
+  [ctx view [param+ result+]]
+
+  (binf/wr-b8 view
+              0x60)
+  (-> ctx
+      (resulttype view
+                  param+)
+      (resulttype view
+                  result+)))
+
+
+;;;;;;;;;; Type section
+
+
+(defn typesec
+
+  ""
+
+  [{:as        ctx
+    :wasm/keys [typesec]}
+   view]
+
+  (-> view
+      (section-id wasm.bin/section-id-type)
+      (n-byte (get-in ctx
+                      [:wasm/write
+                       :wasm.count/typesec]))
+      (u32 (count typesec)))
+  (reduce #(functype %1
+                     view
+                     (%2 :wasm/signature))
+          ctx
+          (vals typesec)))
 
 
 ;;;;;;;;;;
@@ -96,14 +196,17 @@
 
   [ctx]
 
-  (let [w (writer)]
+  (let [view (-> (get-in ctx
+                         [:wasm/write
+                          :wasm.count/module])
+                 binf.buffer/alloc
+                 binf/view
+                 (binf/endian-set :little-endian))]
     (-> ctx
-        (magic' w)
-        (version' w))
-    (let [view @w]
-      (binf/view view
-                 0
-                 (binf/position view)))))
+        (magic view)
+        (version view)
+        (typesec view))
+    view))
 
 
 ;;;;;;;;;;

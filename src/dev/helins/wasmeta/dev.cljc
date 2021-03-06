@@ -74,22 +74,26 @@
       )
 
 
-  (take 39
-        (seq (wasmer.module/load-source "src/wasm/test.wasm")))
+  (->
+      (take 42
+            (seq (wasmer.module/load-source "src/wasm/test.wasm")))
+      clojure.pprint/pprint)
 
 
   (-> (wasmer.module/load-source "src/wasm/test.wasm")
       wasm.decompile/main
-      ;wasm.write/main
+      wasm.count/module
+      wasm.write/main
       ;wasm.decompile/main
 
-      wasm.count/typesec
-      wasm.count/module
-      ;:wasm/write
+      ;wasm.count/typesec
+      ;wasm.count/module
 
       ;(binf/rr-buffer 39)
       ;seq
 
+      binf/backing-buffer
+      wasm.decompile/main
       clojure.pprint/pprint
       )
 

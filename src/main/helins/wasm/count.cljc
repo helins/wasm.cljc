@@ -64,7 +64,7 @@
 
   [{{:wasm.count/keys [typesec]} :wasm/write}]
 
-  typesec)
+  (section typesec))
   
 
 ;;;;;;;;;; Types
@@ -128,8 +128,8 @@
             (update ctx
                     :wasm/write
                     #(assoc %
-                            :wasm.count/typesec (section (+ (u32 n)
-                                                            n-byte-2))
+                            :wasm.count/typesec (+ (u32 n)
+                                                   n-byte-2)
                             :wasm.symid/typesec idx-resolve-2)))))
       ctx)))
 
@@ -143,6 +143,12 @@
 
   [ctx]
 
-  (+ magic
-     version
-     (section+ ctx)))
+  (let [ctx-2 (-> ctx
+                  typesec
+                  )]
+    (assoc-in ctx-2
+              [:wasm/write
+               :wasm.count/module]
+              (+ magic
+                 version
+                 (section+ ctx-2)))))
