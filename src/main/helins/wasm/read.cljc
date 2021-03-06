@@ -622,7 +622,6 @@
 
   ([const opvec _ctx view]
 
-   (println :opvec opvec)
    (conj opvec
          (const view))))
 
@@ -969,7 +968,7 @@
                   wasm.ir/assoc-func
                   :wasm/funcsec
                   :wasm/funcidx
-                  (func {}
+                  (func {:wasm/body [:import]}
                         view)))
 
 
@@ -1017,7 +1016,7 @@
                   wasm.ir/assoc-global
                   :wasm/globalsec
                   :wasm/globalidx
-                  (globaltype' {}
+                  (globaltype' {:wasm/body [:import]}
                                view)))
 
 
@@ -1116,9 +1115,10 @@
   (wasm.ir/assoc-global ctx
                         (-> {}
                             (globaltype' view)
-                            (assoc :wasm/expr
-                                   (expr-const ctx
-                                               view)))))
+                            (assoc :wasm/body
+                                   [:expr
+                                    (expr-const ctx
+                                                view)]))))
 
 
 ;;;;; Export section
@@ -1398,8 +1398,9 @@
 
   (-> func
       (assoc :wasm/local+ (locals' view)
-             :wasm/expr   (expr' ctx
-                                 view))
+             :wasm/body   [:expr
+                           (expr' ctx
+                                  view)])
       (dissoc :wasm/code)))
 
 
