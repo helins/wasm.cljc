@@ -379,13 +379,7 @@
 
   [view]
 
-  (let [type (byte' view)]
-    (when (not= type
-                wasm.bin/elemtype)
-      (throw (ex-info (str "Unknown element type: "
-                           type)
-                      {})))
-    'funcref))
+  (byte' view))
 
 
 ;;;;; Global types
@@ -1246,54 +1240,18 @@
 
   ""
 
-  [{:as        ctx
-    :wasm/keys [funcsec]}
-   view]
+  [ctx view]
 
-  (let [tableidx (tableidx' view)]
-    (update-in ctx
-               [:wasm/tablesec
-                tableidx]
-               (fn [table]
-                 (when-not table
-                   (throw (ex-info (str "In element segment, table index out of bounds: "
-                                        tableidx)
-                                   {})))
-                 (let [expr (expr' ctx
-                                   view)]
-                   (when (= (first expr)
-                            'global.get)
-                     (let [globalidx (second expr)
-                           global    (get-in ctx
-                                             [:wasm/globalsec
-                                              globalidx])]
-                       (when-not global
-                         (throw (ex-info (str "In element, global required for index does not exist: "
-                                              globalidx)
-                                         {})))
-                       (when (not= (global :wasm/valtype)
-                                   'i32)
-                         (throw (ex-info (str "In element, global required for index is not u32: "
-                                              globalidx)
-                                         {})))
-                       (when (global :wasm/mutable?)
-                         (throw (ex-info (str "In element, global required for index is mutable: "
-                                              globalidx)
-                                         {})))))
-                   (update-in table
-                              [:wasm/elemsec
-                               expr]
-                              (fnil conj
-                                    [])
-                              (vec' []
-                                    (fn [func+ view]
-                                      (conj func+
-                                            (let [funcidx (funcidx' view)]
-                                              (or funcidx
-                                                  (throw (ex-info (str "In element segment, function index out of bounds: "
-                                                                       funcidx)
-                                                                  {}))))))
-                                    view)))))))
+  (update-in ctx
+             [:wasm/elemsec
+              (tableidx' view)]
+             (fnil conj
+                   [])
+             {:wasm/offset   (expr' ctx
+                                    view)
+              :wasm/funcidx+ (vec' funcidx'
+                                   view)}))
+             
 
 
 ;;;;; Code section
@@ -1422,10 +1380,10 @@
               (memidx' view)]
              (fnil conj
                    [])
-             {:wasm/expr (expr' ctx
-                                view)
-              :wasm/data (binf/rr-buffer view
-                                         (u32' view))}))
+             {:wasm/offset (expr' ctx
+                                  view)
+              :wasm/data   (binf/rr-buffer view
+                                           (u32' view))}))
 
 
 ;;;;; Module
