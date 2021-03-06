@@ -3,7 +3,7 @@
 ;; file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
-(ns helins.wasm.bin.read
+(ns helins.wasm.read
 
   ""
 
@@ -220,15 +220,17 @@
   ""
 
   [b8]
-  (condp =
-         b8
-    wasm.bin/valtype-i32 'i32
-    wasm.bin/valtype-i64 'i64
-    wasm.bin/valtype-f32 'f32
-    wasm.bin/valtype-f64 'f64
-    (throw (ex-info (str "Unknown value type: "
+
+  ;; Leveraging the fact that valtypes are contiguous.
+  ;;
+  (when (or (< b8
+               wasm.bin/valtype-f64)
+            (> b8
+               wasm.bin/valtype-i32))
+    (throw (ex-info (str "Unknown valtype: "
                          b8)
-                    {}))))
+                    {})))
+  b8)
 
 
 
@@ -262,7 +264,6 @@
   ""
 
   [typesec view]
-
 
   (let [typeidx (typeidx' view)]
     (when (>= typeidx
@@ -901,10 +902,8 @@
 
   (vec' ctx
         (fn [ctx-2 view]
-          (update ctx-2
-                  :wasm/typesec
-                  conj
-                  (functype' view)))
+          (wasm.ir/assoc-type ctx-2
+                              {:wasm/signature (functype' view)}))
         view))
 
 
@@ -1529,7 +1528,7 @@
   [view]
 
   (when (not= (binf/rr-u32 view)
-              0x6d736100)
+              wasm.bin/magic)
     (throw (ex-info "WASM file does not start with magic word"
                     {}))))
 

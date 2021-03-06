@@ -9,9 +9,9 @@
 
   {:author "Adam Helinski"}
 
-  (:require [helins.binf          :as binf]
-            [helins.wasm.bin      :as wasm.bin]
-            [helins.wasm.bin.read :as wasm.bin.read]))
+  (:require [helins.binf      :as binf]
+            [helins.wasm.bin  :as wasm.bin]
+            [helins.wasm.read :as wasm.read]))
 
 
 ;;;;;;;;;
@@ -21,7 +21,7 @@
 
   ""
 
-  {:wasm.customsec/bin wasm.bin.read/custom-default
+  {:wasm.customsec/bin wasm.read/custom-default
    :wasm/funcidx       0
    :wasm/funcsec       (sorted-map)
    :wasm/globalidx     0
@@ -30,7 +30,8 @@
    :wasm/memsec        (sorted-map)
    :wasm/tableidx      0
    :wasm/tablesec      (sorted-map)
-   :wasm/typesec       []})
+   :wasm/typeidx       0
+   :wasm/typesec       (sorted-map)})
 
 
 ;;;;;;;;;; Start of a WASM file
@@ -62,7 +63,7 @@
             (loop [section+ []]
               (if (pos? (binf/remaining view))
                 (recur (conj section+
-                             (wasm.bin.read/section' view)))
+                             (wasm.read/section' view)))
                 section+))))
 
 
@@ -82,23 +83,26 @@
                       :wasm.bin/customsec
                       (fnil conj
                             [])
-                      (wasm.bin.read/customsec' (binf/view view
-                                                           start
-                                                           n-byte)))
+                      (wasm.read/customsec' (binf/view view
+                                                       start
+                                                       n-byte)))
               ((condp =
                       id
-                  wasm.bin/section-id-custom    wasm.bin.read/customsec'
-                  wasm.bin/section-id-type      wasm.bin.read/typesec'
-                  wasm.bin/section-id-import    wasm.bin.read/importsec'
-                  wasm.bin/section-id-function  wasm.bin.read/funcsec'
-                  wasm.bin/section-id-table     wasm.bin.read/tablesec'
-                  wasm.bin/section-id-memory    wasm.bin.read/memsec'
-                  wasm.bin/section-id-global    wasm.bin.read/globalsec'
-                  wasm.bin/section-id-export    wasm.bin.read/exportsec'
-                  wasm.bin/section-id-start     wasm.bin.read/startsec'
-                  wasm.bin/section-id-element   wasm.bin.read/elemsec'
-                  wasm.bin/section-id-code      wasm.bin.read/codesec'
-                  wasm.bin/section-id-data      wasm.bin.read/datasec')
+                  wasm.bin/section-id-custom    wasm.read/customsec'
+                  wasm.bin/section-id-type      wasm.read/typesec'
+                  ;wasm.bin/section-id-import    wasm.read/importsec'
+                  ;wasm.bin/section-id-function  wasm.read/funcsec'
+                  ;wasm.bin/section-id-table     wasm.read/tablesec'
+                  ;wasm.bin/section-id-memory    wasm.read/memsec'
+                  ;wasm.bin/section-id-global    wasm.read/globalsec'
+                  ;wasm.bin/section-id-export    wasm.read/exportsec'
+                  ;wasm.bin/section-id-start     wasm.read/startsec'
+                  ;wasm.bin/section-id-element   wasm.read/elemsec'
+                  ;wasm.bin/section-id-code      wasm.read/codesec'
+                  ;wasm.bin/section-id-data      wasm.read/datasec'
+                  (fn [ctx _view]
+                    ctx)
+                  )
                ctx-2
                (binf/view view
                           start
@@ -112,29 +116,16 @@
 ;;;;;;;;;;
 
 
-(defn codesec
-
-  ""
-
-  [view+]
-  
-  (mapv wasm.bin.read/func'
-        view+))
-
-
-;;;;;;;;;;
-
-
 (defn init
 
   ""
 
   [ctx view]
 
-  (wasm.bin.read/magic' view)
+  (wasm.read/magic' view)
   (section-find+ (assoc ctx
                         :wasm/version
-                        (wasm.bin.read/version' view))
+                        (wasm.read/version' view))
                  view))
 
 
@@ -155,4 +146,4 @@
      (-> (init ctx
                view)
          (section-read+ view)
-         wasm.bin.read/codesec'-2))))
+         wasm.read/codesec'-2))))

@@ -1006,3 +1006,21 @@
   (<= 0
       section-id
       12))
+
+
+;;;;;;;;;; Miscellaneous
+
+
+(def magic
+
+  ""
+
+  0x6d736100)
+
+
+
+(def version-1
+
+  ""
+
+  1)

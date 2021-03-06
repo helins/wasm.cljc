@@ -13,7 +13,7 @@
 ;;;;;;;;;;
 
 
-(defn assoc-externval
+(defn assoc-resource
 
   ""
 
@@ -28,6 +28,7 @@
         (assoc k-idx
                (inc idx)))))
 
+;;;;;;
 
 
 (defn assoc-func
@@ -36,36 +37,10 @@
 
   [ctx func]
 
-  (assoc-externval ctx
-                   :wasm/funcsec
-                   :wasm/funcidx
-                   func))
-
-
-
-(defn assoc-table
-
-  ""
-
-  [ctx table]
-
-  (assoc-externval ctx
-                   :wasm/tablesec
-                   :wasm/tableidx
-                   table))
-
-
-
-(defn assoc-mem
-
-  ""
-
-  [ctx mem]
-
-  (assoc-externval ctx
-                   :wasm/memsec
-                   :wasm/memidx
-                   mem))
+  (assoc-resource ctx
+                  :wasm/funcsec
+                  :wasm/funcidx
+                  func))
 
 
 
@@ -75,7 +50,46 @@
 
   [ctx global]
 
-  (assoc-externval ctx
-                   :wasm/globalsec
-                   :wasm/globalidx
-                   global))
+  (assoc-resource ctx
+                  :wasm/globalsec
+                  :wasm/globalidx
+                  global))
+
+
+
+(defn assoc-mem
+
+  ""
+
+  [ctx mem]
+
+  (assoc-resource ctx
+                  :wasm/memsec
+                  :wasm/memidx
+                  mem))
+
+
+
+(defn assoc-table
+
+  ""
+
+  [ctx table]
+
+  (assoc-resource ctx
+                  :wasm/tablesec
+                  :wasm/tableidx
+                  table))
+
+
+
+(defn assoc-type
+
+  ""
+
+  [ctx type]
+
+  (assoc-resource ctx
+                  :wasm/typesec
+                  :wasm/typeidx
+                  type))
