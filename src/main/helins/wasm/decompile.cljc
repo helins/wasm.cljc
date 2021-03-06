@@ -90,18 +90,18 @@
                       id
                   wasm.bin/section-id-custom    wasm.read/customsec'
                   wasm.bin/section-id-type      wasm.read/typesec'
-                  ;wasm.bin/section-id-import    wasm.read/importsec'
-                  ;wasm.bin/section-id-function  wasm.read/funcsec'
-                  ;wasm.bin/section-id-table     wasm.read/tablesec'
-                  ;wasm.bin/section-id-memory    wasm.read/memsec'
-                  ;wasm.bin/section-id-global    wasm.read/globalsec'
-                  ;wasm.bin/section-id-export    wasm.read/exportsec'
-                  ;wasm.bin/section-id-start     wasm.read/startsec'
-                  ;wasm.bin/section-id-element   wasm.read/elemsec'
-                  ;wasm.bin/section-id-code      wasm.read/codesec'
-                  ;wasm.bin/section-id-data      wasm.read/datasec'
-                  (fn [ctx _view]
-                    ctx)
+                  wasm.bin/section-id-import    wasm.read/importsec'
+                  wasm.bin/section-id-function  wasm.read/funcsec'
+                  wasm.bin/section-id-table     wasm.read/tablesec'
+                  wasm.bin/section-id-memory    wasm.read/memsec'
+                  wasm.bin/section-id-global    wasm.read/globalsec'
+                  wasm.bin/section-id-export    wasm.read/exportsec'
+                  wasm.bin/section-id-start     wasm.read/startsec'
+                  wasm.bin/section-id-element   wasm.read/elemsec'
+                  wasm.bin/section-id-code      wasm.read/codesec'
+                  wasm.bin/section-id-data      wasm.read/datasec'
+                  ;(fn [ctx _view]
+                  ;  ctx)
                   )
                ctx-2
                (binf/view view

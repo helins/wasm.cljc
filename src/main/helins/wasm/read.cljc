@@ -263,16 +263,11 @@
 
   ""
 
-  [typesec view]
+  [hmap view]
 
-  (let [typeidx (typeidx' view)]
-    (when (>= typeidx
-              (count typesec))
-      (throw (ex-info (str "Imported function type index out of bounds: "
-                           typeidx)
-                      {})))
-    {:wasm/type (get typesec
-                     typeidx)}))
+  (assoc hmap
+         :wasm/typeidx
+         (typeidx' view)))
 
 
 
@@ -429,21 +424,19 @@
 
 (defn blocktype'
 
-  [ctx view]
+  [_ctx view]
 
   (let [x (s33' view)]
     (if (< x
            (binf.int64/i* 0))
       (let [x-2 (bit-and 0x7F
                          (binf.int64/u8 x))]
-        [nil
-         (if (= x-2
-                0x40)
-           nil
-           [(-valtype x-2)])])
-      (get-in ctx
-              [:wasm/typsec
-               (binf.int64/u32 x)]))))
+        (if (= x-2
+               0x40)
+          nil
+          [:wasm/valtype
+           (-valtype x-2)]))
+      [:wasm/typeidx (binf.int64/u32 x)])))
 
 
 
@@ -992,8 +985,7 @@
                   wasm.ir/assoc-func
                   :wasm/funcsec
                   :wasm/funcidx
-                  (func (get ctx
-                             :wasm/typesec)
+                  (func {}
                         view)))
 
 
@@ -1052,16 +1044,14 @@
 
   ""
 
-  [{:as        ctx
-    :wasm/keys [typesec]}
-   view]
+  [ctx view]
 
   (vec' (assoc ctx
                :wasm.funcsec/offset
                (ctx :wasm/funcidx))
         (fn [ctx-2 view]
           (wasm.ir/assoc-func ctx-2
-                              (func typesec
+                              (func {}
                                     view)))
         view))
 
@@ -1284,7 +1274,8 @@
 
   (assoc ctx
          :wasm/startsec
-         (start' view)))
+         (start' {}
+                 view)))
 
 
 
@@ -1292,9 +1283,11 @@
 
   ""
 
-  [view]
+  [hmap view]
 
-  (funcidx' view))
+  (assoc hmap
+         :wasm/funcidx
+         (funcidx' view)))
 
 
 ;;;;; Element section
@@ -1420,11 +1413,7 @@
   [func ctx view]
 
   (-> func
-      (assoc :wasm/local+ (locals' (or (get-in func
-                                               [:wasm/type
-                                                0])
-                                       [])
-                                   view)
+      (assoc :wasm/local+ (locals' view)
              :wasm/expr   (expr' ctx
                                  view))
       (dissoc :wasm/code)))
@@ -1435,21 +1424,14 @@
 
   ""
 
+  [view]
 
-  ([view]
-
-   (locals' []
-            view))
-
-
-  ([vect view]
-
-   (into vect
-         (mapcat identity)
-         (vec' (fn [view]
-                 (repeat (u32' view)
-                         (valtype' view)))
-               view))))
+  (into []
+        (mapcat identity)
+        (vec' (fn [view]
+                (repeat (u32' view)
+                        (valtype' view)))
+              view)))
 
 
 
