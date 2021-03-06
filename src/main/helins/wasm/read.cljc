@@ -668,53 +668,6 @@
                             view)))))))
 
 
-
-(defn expr-idx
-
-  ""
-
-  [_ctx view]
-
-  (let [opcode (byte' view)
-        instr  (cond
-                 (= opcode
-                    wasm.bin/i32-const)  (list 'i32.const
-                                               (i32' view))
-                 (= opcode
-                    wasm.bin/global-get) (list 'global.get
-                                               (globalidx' view))
-                 :else                   (throw (ex-info (str "Illegal opcode for index constant expression: "
-                                                              opcode)
-                                                         {})))]
-    (when-not (= (byte' view)
-                 wasm.bin/end)
-      (throw (ex-info "Constant expression for index should not contain more than 1 instruction"
-                      {})))
-    instr))
-
-
-
-(defn expr-const
-
-  ""
-
-  [ctx view]
-
-  (loop [instr+ []]
-    (let [opcode (byte' view)]
-      (if (= opcode
-             wasm.bin/end)
-        instr+
-        (recur (conj instr+
-                     (if-some [fread (opcode-const->f opcode)]
-                       (fread [opcode]
-                              ctx
-                              view)
-                       (throw (ex-info (str "Given opcode is illegal in constant expression: "
-                                            opcode)
-                                       {})))))))))
-
-
 ;;;;;;;;;; Modules
 
 
@@ -1117,8 +1070,8 @@
                             (globaltype' view)
                             (assoc :wasm/body
                                    [:expr
-                                    (expr-const ctx
-                                                view)]))))
+                                    (expr' ctx
+                                           view)]))))
 
 
 ;;;;; Export section
@@ -1306,8 +1259,8 @@
                    (throw (ex-info (str "In element segment, table index out of bounds: "
                                         tableidx)
                                    {})))
-                 (let [expr (expr-idx ctx
-                                      view)]
+                 (let [expr (expr' ctx
+                                   view)]
                    (when (= (first expr)
                             'global.get)
                      (let [globalidx (second expr)
@@ -1464,23 +1417,15 @@
 
   [ctx view]
 
-  (let [memidx (memidx' view)]
-    (update-in ctx
-               [:wasm/memsec
-                memidx]
-               (fn [mem]
-                 (when-not mem
-                   (throw (ex-info (str "In data segment, memory index out of bounds: "
-                                        memidx)
-                                   {})))
-                 (update-in mem
-                            [:wasm/datasec
-                             (expr-idx ctx
-                                       view)]
-                            (fnil conj
-                                  [])
-                            (binf/rr-buffer view
-                                            (u32' view)))))))
+  (update-in ctx
+             [:wasm/datasec
+              (memidx' view)]
+             (fnil conj
+                   [])
+             {:wasm/expr (expr' ctx
+                                view)
+              :wasm/data (binf/rr-buffer view
+                                         (u32' view))}))
 
 
 ;;;;; Module
