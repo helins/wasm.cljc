@@ -17,6 +17,7 @@
             [helins.binf.leb128     :as binf.leb128]
             [helins.binf.string     :as binf.string]
             [helins.wasm.bin        :as wasm.bin]
+            [helins.wasm.count      :as wasm.count]
             [helins.wasm.decompile  :as wasm.decompile]
             [helins.wasm.read       :as wasm.read]
             [helins.wasm.write      :as wasm.write]
@@ -68,23 +69,29 @@
       ;    (wasmer.module/load-source "src/wasm/simple.wasm")
       ;    (wasmer.module/load-source "src/wasm/export.wasm")
            (wasm.decompile/main))
-      ;wasm.decompile/to-wat
-      ;:wasm/wat
-      ;:wasm.bin/codesec
-      ;:wasm.wat.codesec/offset
-
-      ;:wasm.wat/func
-      ;(get '$params+locals)
-      ;meta
-
-      ;wasm.decompile/codesec
-      ;:wasm.bin/globalsec
-      ;:wasm.bin/elemsec
+      ;:wasm/typesec
       clojure.pprint/pprint
       )
 
 
+  (take 39
+        (seq (wasmer.module/load-source "src/wasm/test.wasm")))
 
+
+  (-> (wasmer.module/load-source "src/wasm/test.wasm")
+      wasm.decompile/main
+      ;wasm.write/main
+      ;wasm.decompile/main
+
+      wasm.count/typesec
+      wasm.count/module
+      ;:wasm/write
+
+      ;(binf/rr-buffer 39)
+      ;seq
+
+      clojure.pprint/pprint
+      )
 
 
   )

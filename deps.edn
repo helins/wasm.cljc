@@ -32,7 +32,7 @@
 
  :deps
  {io.helins/binf                    {:git/url "https://github.com/helins/binf.cljc"
-                                     :sha     "204f4f432afea2605ef04199bec4f3ef308c89c4"}
+                                     :sha     "f5abb1346216738191adab55c0dc2880876c4316"}
   org.wasmer/wasmer-jni-amd64-linux {:local/root "runtime/wasmer-jni-amd64-linux-0.3.0.jar"}}
 
  :paths
