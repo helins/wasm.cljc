@@ -11,6 +11,8 @@
 
   (:require #?(:clj [clojure.edn])
             [clojure.pprint]
+            [clojure.spec.alpha     :as s]
+            [clojure.spec.gen.alpha :as sgen]
             [helins.binf            :as binf]
             [helins.binf.buffer     :as binf.buffer]
             [helins.binf.int        :as binf.int]
@@ -19,9 +21,10 @@
             [helins.wasm.bin        :as wasm.bin]
             [helins.wasm.count      :as wasm.count]
             [helins.wasm.decompile  :as wasm.decompile]
-            [helins.wasm.read       :as wasm.read]
-            [helins.wasm.write      :as wasm.write]
             [helins.wasm.ir         :as wasm.ir]
+            [helins.wasm.read       :as wasm.read]
+            [helins.wasm.spec       :as wasm.spec]
+            [helins.wasm.write      :as wasm.write]
             [helins.wasmer.fn       :as wasmer.fn]
             [helins.wasmer.instance :as wasmer.instance]
             [helins.wasmer.mem      :as wasmer.mem]
@@ -69,8 +72,8 @@
       ;    (wasmer.module/load-source "src/wasm/simple.wasm")
       ;    (wasmer.module/load-source "src/wasm/export.wasm")
            (wasm.decompile/main))
-      ;:wasm/typesec
-      clojure.pprint/pprint
+      :wasm/typesec
+      ;clojure.pprint/pprint
       )
 
 
@@ -94,8 +97,13 @@
 
       binf/backing-buffer
       wasm.decompile/main
-      clojure.pprint/pprint
+      ;clojure.pprint/pprint
       )
 
+  (s/valid? :wasm/module
+            *1)
+
+
+  (sgen/generate (s/gen :wasm/module))
 
   )
