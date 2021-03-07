@@ -174,17 +174,20 @@
     :wasm/keys [typesec]}
    view]
 
-  (-> view
-      (section-id wasm.bin/section-id-type)
-      (n-byte (get-in ctx
-                      [:wasm/write
-                       :wasm.count/typesec]))
-      (u32 (count typesec)))
-  (reduce #(functype %1
-                     view
-                     (%2 :wasm/signature))
-          ctx
-          (vals typesec)))
+  (if (seq typesec)
+    (do
+      (-> view
+          (section-id wasm.bin/section-id-type)
+          (n-byte (get-in ctx
+                          [:wasm/write
+                           :wasm.count/typesec]))
+          (u32 (count typesec)))
+      (reduce #(functype %1
+                         view
+                         (%2 :wasm/signature))
+              ctx
+              (vals typesec)))
+    ctx))
 
 
 ;;;;;;;;;;

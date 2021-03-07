@@ -9,8 +9,10 @@
 
   {:author "Adam Helinski"}
   
-  (:require [clojure.spec.alpha :as s]
-            [helins.wasm.bin    :as wasm.bin]))
+  (:require [clojure.spec.alpha     :as s]
+            [clojure.spec.gen.alpha :as sgen]
+            [helins.wasm.bin        :as wasm.bin]
+            [helins.wasm.decompile  :as wasm.decompile]))
 
 
 ;;;;;;;;;;
@@ -120,15 +122,28 @@
 
 
 (s/def :wasm/module
-       (s/keys :req [
-                     :wasm/funcidx
-                     :wasm/funcsec
-                     :wasm/globalidx
-                     :wasm/globalsec
-                     :wasm/memidx
-                     :wasm/memidx
-                     :wasm/tableidx
-                     :wasm/typeidx
-                     :wasm/typesec
-                     :wasm/version
-                     ]))
+       (s/with-gen (s/keys :req [
+                                ;:wasm/funcidx
+                                ;:wasm/funcsec
+                                ;:wasm/globalidx
+                                ;:wasm/globalsec
+                                ;:wasm/memidx
+                                ;:wasm/memidx
+                                ;:wasm/tableidx
+                                :wasm/typeidx
+                                :wasm/typesec
+                                :wasm/version
+                                ])
+                   (fn []
+                     (sgen/fmap (fn [typesec]
+                                  (merge (assoc wasm.decompile/ctx-default
+                                                :wasm/version
+                                                1)
+                                         (when (not-empty typesec)
+                                           {:wasm/typeidx (count typesec)
+                                            :wasm/typesec (into (sorted-map)
+                                                                (map vec)
+                                                                (partition 2
+                                                                           (interleave (range)
+                                                                                       (vals typesec))))})))
+                                (s/gen :wasm/typesec)))))

@@ -64,7 +64,9 @@
 
   [{{:wasm.count/keys [typesec]} :wasm/write}]
 
-  (section typesec))
+  (or (some-> typesec
+              section)
+      0))
   
 
 ;;;;;;;;;; Types
