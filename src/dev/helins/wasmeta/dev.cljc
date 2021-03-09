@@ -67,12 +67,14 @@
 
   (-> 
       (->> 
-          (wasmer.module/load-source "src/wasm/test.wasm")
+          (wasmer.module/load-source "src/wasm/import.wasm")
       ;    (wasmer.module/load-source "src/wasm/import.wasm")
       ;    (wasmer.module/load-source "src/wasm/simple.wasm")
       ;    (wasmer.module/load-source "src/wasm/export.wasm")
+           (take 40)
+           byte-array
            (wasm.decompile/main))
-      ;:wasm/importsec
+      ;:wasm/tablesec
       ;wasm.count/importsec'
       ;:wasm/write
 
@@ -81,17 +83,21 @@
 
 
   (->
-      (take 42
-            (seq (wasmer.module/load-source "src/wasm/test.wasm")))
-      clojure.pprint/pprint)
+      (take 40
+            (seq (wasmer.module/load-source "src/wasm/import.wasm")))
+      byte-array
+      vec
+      ;wasm.decompile/main
+      ;clojure.pprint/pprint
+      )
 
 
-  (-> (wasmer.module/load-source "src/wasm/test.wasm")
+  (-> (wasmer.module/load-source "src/wasm/import.wasm")
       wasm.decompile/main
       wasm.count/module
       wasm.write/main
-      ;wasm.decompile/main
 
+      ;:wasm/write
       ;wasm.count/typesec
       ;wasm.count/module
 
@@ -100,7 +106,7 @@
 
       binf/backing-buffer
       wasm.decompile/main
-      ;clojure.pprint/pprint
+      clojure.pprint/pprint
       )
 
   (s/valid? :wasm/module

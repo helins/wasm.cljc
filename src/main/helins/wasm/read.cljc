@@ -839,9 +839,12 @@
 
   [ctx view]
 
-  (vec' ctx
-        import'
-        view))
+  (let [ctx-2 (vec' ctx
+                    import'
+                    view)]
+    (assoc ctx-2
+           :wasm.funcsec/offset
+           (ctx-2 :wasm/funcidx))))
 
 
 
@@ -976,9 +979,7 @@
 
   [ctx view]
 
-  (vec' (assoc ctx
-               :wasm.funcsec/offset
-               (ctx :wasm/funcidx))
+  (vec' ctx
         (fn [ctx-2 view]
           (wasm.ir/assoc-func ctx-2
                               (func {}

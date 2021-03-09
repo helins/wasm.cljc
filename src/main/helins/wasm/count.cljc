@@ -221,22 +221,28 @@
                                                 (let [buffer-name (binf.string/encode str-name)
                                                       externval   (get-in ctx
                                                                           path-externval)
-                                                      n-byte-name (count buffer-name)]
+                                                      n-byte-name (count buffer-name)
+                                                      [bin-type
+                                                       f-count]   (case k-section
+                                                                    :wasm/funcsec   [wasm.bin/importdesc-func
+                                                                                     func]
+                                                                    :wasm/globalsec [wasm.bin/importdesc-global
+                                                                                     globaltype']
+                                                                    :wasm/memsec    [wasm.bin/importdesc-mem
+                                                                                     memtype']
+                                                                    :wasm/tablesec  [wasm.bin/importdesc-table
+                                                                                     tabletype'])]
                                                   (var-set n-byte
                                                            (+ @n-byte
                                                               n-byte-vec-module
                                                               (+ (u32 n-byte-name)
                                                                  n-byte-name)
                                                               1                   ;; importdesc type
-                                                              (let [f (case k-section
-                                                                        :wasm/funcsec   func
-                                                                        :wasm/globalsec globaltype'
-                                                                        :wasm/memsec    memtype'
-                                                                        :wasm/tablesec  tabletype')]
-                                                                (f externval))))
+                                                              (f-count externval)))
                                                   (conj import-2+
                                                         [buffer-module
                                                          buffer-name
+                                                         bin-type
                                                          externval])))
                                               import+
                                               str-name->importdesc)))
@@ -297,6 +303,7 @@
 
   (let [ctx-2 (-> ctx
                   typesec
+                  importsec'
                   )]
     (assoc-in ctx-2
               [:wasm/write

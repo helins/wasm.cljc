@@ -122,7 +122,19 @@
 ;;;;;;;;;; Types
 
 
-(defn valtype
+(defn func
+
+  ""
+
+  [ctx view {:wasm/keys [typeidx]}]
+
+  (u32 view
+       typeidx)
+  ctx)
+
+
+
+(defn valtype'
 
   ""
 
@@ -142,9 +154,9 @@
 
   (binf.leb128/wr-u32 view
                       (count valtype+))
-  (reduce #(valtype %1
-                    view
-                    %2)
+  (reduce #(valtype' %1
+                     view
+                     %2)
           ctx
           valtype+))
 
@@ -163,7 +175,123 @@
                   result+)))
 
 
-;;;;;;;;;; Type section
+
+(defn mut'
+
+  [ctx view mutable?]
+
+  (binf/wr-b8 view
+              (if mutable?
+                wasm.bin/mut-var
+                wasm.bin/mut-const))
+  ctx)
+
+
+
+(defn globaltype'
+
+  [ctx view {:wasm/keys [mutable?
+                         valtype]}]
+
+  (-> ctx
+      (valtype' view
+                valtype)
+      (mut' view
+            mutable?)))
+
+
+
+(defn limits'
+
+  ""
+
+  [ctx view {min- :wasm.limit/min
+             max- :wasm.limit/max}]
+
+  (if max-
+    (-> view
+        (binf/wr-b8 wasm.bin/limits-minmax)
+        (u32 min-)
+        (u32 max-))
+    (-> view
+        (binf/wr-b8 wasm.bin/limits-min)
+        (u32 min-)))
+  ctx)
+
+
+
+(defn memtype'
+
+  [ctx view hmap]
+
+  (limits' ctx
+           view
+           hmap))
+
+
+
+(defn elemtype'
+
+  [ctx view elemtype]
+
+  (binf/wr-b8 view
+              elemtype)
+  ctx)
+
+
+
+(defn tabletype'
+
+  [ctx view hmap]
+
+  (-> ctx
+      (elemtype' view
+                 (hmap :wasm/elemtype))
+      (limits' view
+               hmap)))
+
+
+;;;;;;;;;; Sections / Import
+
+
+(defn importsec'
+
+  ""
+
+  [{:as                            ctx
+    {:wasm.write/keys [importsec]} :wasm/write}
+   view]
+
+  (let [n-import (count importsec)]
+   (when (pos? n-import)
+     (-> view
+         (section-id wasm.bin/section-id-import)
+         (n-byte (get-in ctx
+                         [:wasm/write
+                          :wasm.count/importsec]))
+         (u32 n-import))
+     (doseq [[buffer-module
+              buffer-name
+              bin-type
+              externval]    importsec]
+       (-> view
+           (u32 (count buffer-module))
+           (binf/wr-buffer buffer-module)
+           (u32 (count buffer-name))
+           (binf/wr-buffer buffer-name))
+       (let [f (condp =
+                      bin-type
+                 wasm.bin/importdesc-func   func
+                 wasm.bin/importdesc-global globaltype'
+                 wasm.bin/importdesc-mem    memtype'
+                 wasm.bin/importdesc-table  tabletype')]
+         (f ctx
+            view
+            externval)))))
+  ctx)
+
+
+;;;;;;;;;; Sections / Type
 
 
 (defn typesec
@@ -199,6 +327,10 @@
 
   [ctx]
 
+  (println :size (get-in ctx
+                         [:wasm/write
+                          :wasm.count/module]))
+
   (let [view (-> (get-in ctx
                          [:wasm/write
                           :wasm.count/module])
@@ -208,22 +340,6 @@
     (-> ctx
         (magic view)
         (version view)
-        (typesec view))
+        (typesec view)
+        (importsec' view))
     view))
-
-
-;;;;;;;;;;
-
-
-
-
-
-(comment
-
-
-
-  (binf/limit (main {}))
-
-
-
-  )
