@@ -1072,8 +1072,8 @@
   [ctx view]
 
   (exportdesc' ctx
-               (name' view)
-               view))
+               view
+               {:wasm/export (name' view)}))
 
 
 
@@ -1081,7 +1081,7 @@
 
   ""
 
-  [ctx export-name view]
+  [ctx view hmap]
 
   (let [export-type (byte' view)
         f           (condp =
@@ -1094,8 +1094,8 @@
                                            type)
                                       {})))]
     (f ctx
-       export-name
-       view)))
+       view
+       hmap)))
 
 
 
@@ -1103,25 +1103,15 @@
 
   ""
 
-  [ctx export-name k-section idx]
+  [ctx hmap k-space idx]
 
-  (let [path-externval [k-section
-                        idx]]
-    (-> ctx
-        (update-in path-externval
-                   (fn [externval]
-                     (when-not externval
-                       (throw (ex-info (str "Exporting missing externval at: "
-                                            path-externval)
-                                       {})))
-                     (update externval
-                             :wasm/export
-                             (fnil conj
-                                   #{})
-                             export-name)))
-        (assoc-in [:wasm/exportsec
-                   export-name]
-                  path-externval))))
+  (update-in ctx
+             [:wasm/export
+              k-space
+              idx]
+             (fnil conj
+                   [])
+             hmap))
 
 
 
@@ -1129,11 +1119,11 @@
 
   ""
 
-  [ctx export-name view]
+  [ctx view hmap]
 
   (exportdesc-any ctx
-                  export-name
-                  :wasm/funcsec
+                  hmap
+                  :wasm.export/func
                   (funcidx' view)))
 
 
@@ -1142,11 +1132,11 @@
 
   ""
 
-  [ctx export-name view]
+  [ctx view hmap]
 
   (exportdesc-any ctx
-                  export-name
-                  :wasm/tablesec
+                  hmap
+                  :wasm.export/table
                   (tableidx' view)))
 
 
@@ -1155,11 +1145,11 @@
 
   ""
 
-  [ctx export-name view]
+  [ctx view hmap]
 
   (exportdesc-any ctx
-                  export-name
-                  :wasm/memsec
+                  hmap
+                  :wasm.export/memsec
                   (memidx' view)))
 
 
@@ -1168,11 +1158,11 @@
 
   ""
 
-  [ctx export-name view]
+  [ctx view hmap]
 
   (exportdesc-any ctx
-                  export-name
-                  :wasm/globalsec
+                  hmap
+                  :wasm.export/globalsec
                   (globalidx' view)))
 
 
