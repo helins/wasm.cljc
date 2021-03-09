@@ -839,12 +839,9 @@
 
   [ctx view]
 
-  (let [ctx-2 (vec' ctx
-                    import'
-                    view)]
-    (assoc ctx-2
-           :wasm.funcsec/offset
-           (ctx-2 :wasm/funcidx))))
+  (vec' ctx
+        import'
+        view))
 
 
 
@@ -855,9 +852,9 @@
   [ctx view]
 
   (importdesc' ctx
-               [(name' view)
-                (name' view)]
-               view))
+               view
+               {:wasm/module (name' view)
+                :wasm/name   (name' view)}))
 
 
 
@@ -865,7 +862,7 @@
 
   ""
 
-  [ctx import-path view]
+  [ctx view hmap]
 
   (let [type (byte' view)
         f    (condp =
@@ -879,8 +876,8 @@
                                {})))]
 
     (f ctx
-       import-path
-       view)))
+       view
+       hmap)))
 
 
 
@@ -888,22 +885,15 @@
 
   ""
 
-  [ctx import-path assoc-externval k-section k-id hmap]
-
+  [ctx hmap k-import-type k-idx]
+  
   (-> ctx
-      (assoc-externval (assoc hmap
-                              :wasm/import
-                              import-path))
-      (update-in (cons :wasm/importsec
-                       import-path)
-                 (fn [nothing]
-                   (when nothing
-                     (throw (ex-info (str "Double import for: "
-                                          import-path)
-                                     {})))
-                   [k-section
-                    (get ctx
-                         k-id)]))))
+      (assoc-in [:wasm/importsec
+                k-import-type
+                (ctx k-idx)]
+               hmap)
+      (update k-idx
+              inc)))
 
 
 
@@ -911,15 +901,13 @@
 
   ""
 
-  [ctx import-path view]
+  [ctx view hmap]
 
   (importdesc-any ctx
-                  import-path
-                  wasm.ir/assoc-func
-                  :wasm/funcsec
-                  :wasm/funcidx
-                  (func {:wasm/body [:import]}
-                        view)))
+                  (func hmap
+                        view)
+                  :wasm.import/func
+                  :wasm/funcidx))
 
 
 
@@ -927,15 +915,13 @@
 
   ""
 
-  [ctx import-path view]
+  [ctx view hmap]
 
   (importdesc-any ctx
-                  import-path
-                  wasm.ir/assoc-table
-                  :wasm/tablesec
-                  :wasm/tableidx
-                  (tabletype' {}
-                              view)))
+                  (tabletype' hmap
+                              view)
+                  :wasm.import/table
+                  :wasm/tableidx))
 
 
 
@@ -943,15 +929,13 @@
 
   ""
 
-  [ctx import-path view]
+  [ctx view hmap]
 
   (importdesc-any ctx
-                  import-path
-                  wasm.ir/assoc-mem
-                  :wasm/memsec
-                  :wasm/memidx
-                  (memtype' {}
-                            view)))
+                  (memtype' hmap
+                            view)
+                  :wasm.import/mem
+                  :wasm/memidx))
 
 
 
@@ -959,15 +943,13 @@
 
   ""
 
-  [ctx import-path view]
+  [ctx view hmap]
 
   (importdesc-any ctx
-                  import-path
-                  wasm.ir/assoc-global
-                  :wasm/globalsec
-                  :wasm/globalidx
-                  (globaltype' {:wasm/body [:import]}
-                               view)))
+                  (globaltype' hmap
+                               view)
+                  :wasm.import/global
+                  :wasm/globalidx))
 
 
 ;;;;; Function section
@@ -1063,10 +1045,9 @@
   (wasm.ir/assoc-global ctx
                         (-> {}
                             (globaltype' view)
-                            (assoc :wasm/body
-                                   [:expr
-                                    (expr' ctx
-                                           view)]))))
+                            (assoc :wasm/expr
+                                   (expr' ctx
+                                          view)))))
 
 
 ;;;;; Export section
@@ -1262,27 +1243,22 @@
 
   ""
 
-  [{:as                ctx
-    :wasm/keys         [funcsec]
-    :wasm.funcsec/keys [offset]}
-   view]
+  [ctx view]
 
-
-  (let [n-func (u32' view)]
-    (loop [funcsec-2 funcsec
-           i         0]
-      (if (< i
-             n-func)
-        (recur (update funcsec-2
-                       (+ offset
-                          i)
-                       assoc
-                       :wasm/code
-                       (code' view))
-               (inc i))
-        (assoc ctx
-               :wasm/funcsec
-               funcsec-2)))))
+  (update ctx
+          :wasm/codesec
+          (fn [codesec]
+            (let [idx-offset (count (get-in ctx
+                                            [:wasm/importsec
+                                             :wasm.import/func]))]
+              (reduce (fn [codesec-2 idx]
+                        (assoc codesec-2
+                               (+ idx-offset
+                                  idx)
+                               (code' {}
+                                      view)))
+                      codesec
+                      (range (u32' view)))))))
 
 
 
@@ -1290,15 +1266,17 @@
 
   ""
 
-  [view]
+  [hmap view]
 
   (let [n-byte (u32' view)
         start  (binf/position view)]
     (binf/skip view
                n-byte)
-    (binf/view view
-               start
-               n-byte)))
+    (assoc hmap
+           :wasm/code
+           (binf/view view
+                      start
+                      n-byte))))
 
 
 
@@ -1310,9 +1288,8 @@
 
   (-> func
       (assoc :wasm/local+ (locals' view)
-             :wasm/body   [:expr
-                           (expr' ctx
-                                  view)])
+             :wasm/expr   (expr' ctx
+                                 view))
       (dissoc :wasm/code)))
 
 
@@ -1336,23 +1313,20 @@
 
   ""
 
-  [{:as                ctx
-    :wasm.funcsec/keys [offset]}]
+  [ctx]
 
   (update ctx
-          :wasm/funcsec
-          (fn [funcsec]
-            (reduce (fn [funcsec-2 [funcidx {:as  func
-                                             view :wasm/code}]]
-                      (assoc funcsec-2
-                             funcidx
-                             (func' func
-                                    ctx
-                                    view)))
-                    funcsec
-                    (subseq funcsec
-                            >=
-                            offset)))))
+          :wasm/codesec
+          (fn [codesec]
+            (reduce-kv (fn [codesec-2 funcidx {:as        hmap
+                                               :wasm/keys [code]}]
+                         (assoc codesec-2
+                                funcidx
+                                (func' hmap
+                                       ctx
+                                       code)))
+                       {}
+                       codesec))))
 
 
 ;;;;; Data section

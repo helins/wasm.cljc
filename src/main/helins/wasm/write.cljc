@@ -327,10 +327,6 @@
 
   [ctx]
 
-  (println :size (get-in ctx
-                         [:wasm/write
-                          :wasm.count/module]))
-
   (let [view (-> (get-in ctx
                          [:wasm/write
                           :wasm.count/module])

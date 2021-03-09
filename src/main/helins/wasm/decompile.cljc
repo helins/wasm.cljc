@@ -22,6 +22,7 @@
   ""
 
   {:wasm.customsec/bin wasm.read/custom-default
+   :wasm/codesec       (sorted-map)
    :wasm/funcidx       0
    :wasm/funcsec       (sorted-map)
    :wasm/globalidx     0
