@@ -232,7 +232,6 @@
   [{:as        ctx
     :wasm/keys [importsec]}]
 
-
   (if (seq importsec)
     (let [ctx-write    (ctx :wasm/write)
           ctx-write-2  (-> ctx-write
