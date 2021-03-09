@@ -72,8 +72,11 @@
       ;    (wasmer.module/load-source "src/wasm/simple.wasm")
       ;    (wasmer.module/load-source "src/wasm/export.wasm")
            (wasm.decompile/main))
-      :wasm/typesec
-      ;clojure.pprint/pprint
+      ;:wasm/importsec
+      ;wasm.count/importsec'
+      ;:wasm/write
+
+      clojure.pprint/pprint
       )
 
 

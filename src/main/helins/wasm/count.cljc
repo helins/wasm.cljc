@@ -13,6 +13,7 @@
             [helins.binf.buffer :as binf.buffer]
             [helins.binf.int64  :as binf.int64]
             [helins.binf.leb128 :as binf.leb128]
+            [helins.binf.string :as binf.string]
             [helins.wasm.bin    :as wasm.bin]
             [helins.wasm.ir     :as wasm.ir]))
 
@@ -25,6 +26,24 @@
   [u32]
 
   (binf.leb128/n-byte-u32 u32))
+
+
+;;;;;;;;;;
+
+
+(defn idx
+
+  [idx]
+
+  (u32 idx))
+
+
+
+(def typeidx'
+  
+  ""
+
+  idx)
 
 
 ;;;;;;;;;;
@@ -46,15 +65,17 @@
 
 
 
-(defn section
+(defn section'
 
   ""
 
   [n-byte]
 
-  (+ section-id
-     (u32 n-byte)
-     n-byte))
+  (if n-byte
+    (+ section-id
+       (u32 n-byte)
+       n-byte)
+    0))
 
 
 
@@ -62,11 +83,15 @@
 
   ""
 
-  [{{:wasm.count/keys [typesec]} :wasm/write}]
+  [{{:wasm.count/keys [importsec
+                       typesec]} :wasm/write}]
 
-  (or (some-> typesec
-              section)
-      0))
+  (reduce (fn [n-byte section]
+            (+ n-byte
+               (section' section)))
+          0
+          [importsec
+           typesec]))
   
 
 ;;;;;;;;;; Types
@@ -101,7 +126,132 @@
      (resulttype result+)))
 
 
-;;;;;;;;;;
+
+(defn func
+
+  ""
+
+  [{:wasm/keys [typeidx]}]
+  
+  (typeidx' typeidx))
+
+
+
+(def elemtype'
+     1)
+
+
+
+(defn globaltype'
+
+  [_global]
+
+  2)
+
+
+
+(defn limits
+
+  ""
+
+  [{min- :wasm.limit/min
+    max- :wasm.limit/max}]
+
+  (let [n-byte (+ 1             ;; Byte specifying if there is a maximum or not
+                  (u32 min-))]
+    (if max-
+      (+ n-byte
+         (u32 max-))
+      n-byte)))
+
+
+
+(defn memtype'
+
+  ""
+
+  [mem]
+
+  (limits mem))
+
+
+
+(defn tabletype'
+
+  ""
+
+  [table]
+
+  (+ elemtype'
+     (limits table)))
+
+
+;;;;;;;;;; Import section
+
+
+; (defn importdesc
+; 
+;   [ctx [k-section idx :as externval]]
+; 
+;   (let [f (case k-section
+;             :wasm/funcsec   importdesc-func
+;             :wasm/globalsec importdesc-global
+;             :wasm/memsec    importdesc-mem
+;             :wasm/tablesec  importdesc-table)]
+;     (f (get-in ctx
+;                externval)
+;        )))
+
+
+
+(defn importsec'
+
+  [{:as        ctx
+    :wasm/keys [importsec]}]
+
+
+  (if (seq importsec)
+    (with-local-vars [n-byte 0]
+      (let [import+ (reduce-kv (fn [import+ str-module str-name->importdesc]
+                                 (let [buffer-module     (binf.string/encode str-module)
+                                       n-byte-module     (count buffer-module)
+                                       n-byte-vec-module (+ (u32 n-byte-module)
+                                                            n-byte-module)]
+                                   (reduce-kv (fn [import-2+ str-name [k-section :as path-externval]]
+                                                (let [buffer-name (binf.string/encode str-name)
+                                                      externval   (get-in ctx
+                                                                          path-externval)
+                                                      n-byte-name (count buffer-name)]
+                                                  (var-set n-byte
+                                                           (+ @n-byte
+                                                              n-byte-vec-module
+                                                              (+ (u32 n-byte-name)
+                                                                 n-byte-name)
+                                                              1                   ;; importdesc type
+                                                              (let [f (case k-section
+                                                                        :wasm/funcsec   func
+                                                                        :wasm/globalsec globaltype'
+                                                                        :wasm/memsec    memtype'
+                                                                        :wasm/tablesec  tabletype')]
+                                                                (f externval))))
+                                                  (conj import-2+
+                                                        [buffer-module
+                                                         buffer-name
+                                                         externval])))
+                                              import+
+                                              str-name->importdesc)))
+                               []
+                               importsec)]
+        (update ctx
+                :wasm/write
+                #(assoc %
+                        :wasm.count/importsec (+ (u32 (count import+))
+                                                 @n-byte)
+                        :wasm.write/importsec import+))))
+    ctx))
+
+
+;;;;;;;;;; Type section
 
 
 (defn typesec
