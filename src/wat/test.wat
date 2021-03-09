@@ -190,8 +190,7 @@
         (local i64))
 
 
-  (func $foo
-        (export "trunc_sat")
+  (func (export "trunc_sat")
         (param f32)
         (result i32)
     (local.get 0)

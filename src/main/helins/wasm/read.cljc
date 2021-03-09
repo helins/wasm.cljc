@@ -205,7 +205,7 @@
 
   [view]
 
-  (binf/rr-string view
+  (binf/rr-buffer view
                   (u32' view)))
 
 
