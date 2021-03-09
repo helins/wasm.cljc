@@ -27,6 +27,17 @@
 
   (binf.leb128/n-byte-u32 u32))
 
+;;;;;;;;;;
+
+
+(defn name'
+
+  [buffer]
+
+  (let [n-byte (count buffer)]
+    (+ (u32 n-byte)
+       n-byte)))
+
 
 ;;;;;;;;;;
 
@@ -131,10 +142,10 @@
 
   ""
 
-  [{:wasm/keys [typeidx]}]
-  
-  (typeidx' typeidx))
+  [flatten-idx {:wasm/keys [typeidx]}]
 
+  (typeidx' (flatten-idx typeidx)))
+  
 
 
 (def elemtype'
@@ -189,18 +200,30 @@
 ;;;;;;;;;; Import section
 
 
-; (defn importdesc
-; 
-;   [ctx [k-section idx :as externval]]
-; 
-;   (let [f (case k-section
-;             :wasm/funcsec   importdesc-func
-;             :wasm/globalsec importdesc-global
-;             :wasm/memsec    importdesc-mem
-;             :wasm/tablesec  importdesc-table)]
-;     (f (get-in ctx
-;                externval)
-;        )))
+(defn importdesc
+
+  ""
+
+  [ctx-write space k-flatidx f-item]
+
+  (-> (reduce-kv (fn [ctx-write-2 idx hmap]
+                   (-> ctx-write-2
+                       (update k-flatidx
+                               (fn [flatidx]
+                                 (assoc flatidx
+                                        (count flatidx)
+                                        idx)))
+                       (update :wasm.count/importsec
+                               #(+ %
+                                   (name' (hmap :wasm/module))
+                                   (name' (hmap :wasm/name))
+                                   1  ;; byte specifying importdesc type
+                                   (f-item hmap)))))
+                 ctx-write
+                 space)
+      (update :wasm.import/n
+              #(+ %
+                  (count space)))))
 
 
 
@@ -211,49 +234,30 @@
 
 
   (if (seq importsec)
-    (with-local-vars [n-byte 0]
-      (let [import+ (reduce-kv (fn [import+ str-module str-name->importdesc]
-                                 (let [buffer-module     (binf.string/encode str-module)
-                                       n-byte-module     (count buffer-module)
-                                       n-byte-vec-module (+ (u32 n-byte-module)
-                                                            n-byte-module)]
-                                   (reduce-kv (fn [import-2+ str-name [k-section :as path-externval]]
-                                                (let [buffer-name (binf.string/encode str-name)
-                                                      externval   (get-in ctx
-                                                                          path-externval)
-                                                      n-byte-name (count buffer-name)
-                                                      [bin-type
-                                                       f-count]   (case k-section
-                                                                    :wasm/funcsec   [wasm.bin/importdesc-func
-                                                                                     func]
-                                                                    :wasm/globalsec [wasm.bin/importdesc-global
-                                                                                     globaltype']
-                                                                    :wasm/memsec    [wasm.bin/importdesc-mem
-                                                                                     memtype']
-                                                                    :wasm/tablesec  [wasm.bin/importdesc-table
-                                                                                     tabletype'])]
-                                                  (var-set n-byte
-                                                           (+ @n-byte
-                                                              n-byte-vec-module
-                                                              (+ (u32 n-byte-name)
-                                                                 n-byte-name)
-                                                              1                   ;; importdesc type
-                                                              (f-count externval)))
-                                                  (conj import-2+
-                                                        [buffer-module
-                                                         buffer-name
-                                                         bin-type
-                                                         externval])))
-                                              import+
-                                              str-name->importdesc)))
-                               []
-                               importsec)]
-        (update ctx
-                :wasm/write
-                #(assoc %
-                        :wasm.count/importsec (+ (u32 (count import+))
-                                                 @n-byte)
-                        :wasm.write/importsec import+))))
+    (let [ctx-write    (ctx :wasm/write)
+          ctx-write-2  (-> ctx-write
+                           (assoc :wasm.count/importsec 0
+                                  :wasm.import/n        0)
+                           (importdesc (importsec :wasm.import/func)
+                                       :wasm.flatidx/func
+                                       (partial func
+                                                (ctx-write :wasm.flatidx/type)))
+                           (importdesc (importsec :wasm.import/global)
+                                       :wasm.flatidx/global
+                                       globaltype')
+                           (importdesc (importsec :wasm.import/mem)
+                                       :wasm.flatidx/mem
+                                       memtype')
+                           (importdesc (importsec :wasm.import/table)
+                                       :wasm.flatidx/table
+                                       tabletype'))]
+      (assoc ctx
+             :wasm/write
+             (update ctx-write-2
+                     :wasm.count/importsec
+                     (fn [n-byte]
+                       (+ (u32 (ctx-write-2 :wasm.import/n))
+                          n-byte)))))
     ctx))
 
 
@@ -288,7 +292,7 @@
                     #(assoc %
                             :wasm.count/typesec (+ (u32 n)
                                                    n-byte-2)
-                            :wasm.symid/typesec idx-resolve-2)))))
+                            :wasm.flatidx/type  idx-resolve-2)))))
       ctx)))
 
 
