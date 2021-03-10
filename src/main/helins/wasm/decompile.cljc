@@ -25,6 +25,10 @@
    :wasm/codesec       (sorted-map)
    :wasm/funcidx       0
    :wasm/funcsec       (sorted-map)
+   :wasm/importsec     {:wasm.import/func   (sorted-map)
+                        :wasm.import/global (sorted-map)
+                        :wasm.import/mem    (sorted-map)
+                        :wasm.import/table  (sorted-map)}
    :wasm/globalidx     0
    :wasm/globalsec     (sorted-map)
    :wasm/memidx        0

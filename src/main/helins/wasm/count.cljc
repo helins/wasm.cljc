@@ -94,14 +94,16 @@
 
   ""
 
-  [{{:wasm.count/keys [importsec
+  [{{:wasm.count/keys [funcsec
+                       importsec
                        typesec]} :wasm/write}]
 
   (reduce (fn [n-byte section]
             (+ n-byte
                (section' section)))
           0
-          [importsec
+          [funcsec
+           importsec
            typesec]))
   
 
@@ -142,9 +144,9 @@
 
   ""
 
-  [flatten-idx {:wasm/keys [typeidx]}]
+  [flatidx-type {:wasm/keys [typeidx]}]
 
-  (typeidx' (flatten-idx typeidx)))
+  (typeidx' (flatidx-type typeidx)))
   
 
 
@@ -197,6 +199,45 @@
      (limits table)))
 
 
+;;;;;;;;;; Function section
+
+
+(defn funcsec'
+
+  ""
+
+  [{:as        ctx
+    :wasm/keys [funcsec]}]
+
+  (if (seq funcsec)
+    (update ctx
+            :wasm/write
+            (fn [{:as          ctx-write
+                  flatidx-type :wasm.flatidx/type}]
+              (as-> ctx-write
+                    ctx-write-2
+                (assoc ctx-write-2
+                       :wasm.count/funcsec
+                       0)
+                (reduce-kv (fn [ctx-write-2 idx func-]
+                             (-> ctx-write-2
+                                 (update :wasm.flatidx/func
+                                         #(assoc %
+                                                 idx
+                                                 (count %)))
+                                 (update :wasm.count/funcsec
+                                         #(+ %
+                                             (func flatidx-type
+                                                   func-)))))
+                           ctx-write-2
+                           funcsec)
+                (update ctx-write-2
+                        :wasm.count/funcsec
+                        #(+ %
+                            (u32 (count funcsec)))))))
+    ctx))
+
+
 ;;;;;;;;;; Import section
 
 
@@ -206,24 +247,26 @@
 
   [ctx-write space k-flatidx f-item]
 
-  (-> (reduce-kv (fn [ctx-write-2 idx hmap]
-                   (-> ctx-write-2
-                       (update k-flatidx
-                               (fn [flatidx]
-                                 (assoc flatidx
-                                        (count flatidx)
-                                        idx)))
-                       (update :wasm.count/importsec
-                               #(+ %
-                                   (name' (hmap :wasm/module))
-                                   (name' (hmap :wasm/name))
-                                   1  ;; byte specifying importdesc type
-                                   (f-item hmap)))))
-                 ctx-write
-                 space)
-      (update :wasm.import/n
-              #(+ %
-                  (count space)))))
+  (if (seq space)
+    (-> (reduce-kv (fn [ctx-write-2 idx hmap]
+                     (-> ctx-write-2
+                         (update k-flatidx
+                                 (fn [flatidx]
+                                   (assoc flatidx
+                                          idx
+                                          (count flatidx))))
+                         (update :wasm.count/importsec
+                                 #(+ %
+                                     (name' (hmap :wasm.import/module))
+                                     (name' (hmap :wasm.import/name))
+                                     1  ;; byte specifying importdesc type
+                                     (f-item hmap)))))
+                   ctx-write
+                   space)
+        (update :wasm.import/n
+                #(+ %
+                    (count space))))
+    ctx-write))
 
 
 
@@ -232,32 +275,32 @@
   [{:as        ctx
     :wasm/keys [importsec]}]
 
-  (if (seq importsec)
-    (let [ctx-write    (ctx :wasm/write)
-          ctx-write-2  (-> ctx-write
-                           (assoc :wasm.count/importsec 0
-                                  :wasm.import/n        0)
-                           (importdesc (importsec :wasm.import/func)
-                                       :wasm.flatidx/func
-                                       (partial func
-                                                (ctx-write :wasm.flatidx/type)))
-                           (importdesc (importsec :wasm.import/global)
-                                       :wasm.flatidx/global
-                                       globaltype')
-                           (importdesc (importsec :wasm.import/mem)
-                                       :wasm.flatidx/mem
-                                       memtype')
-                           (importdesc (importsec :wasm.import/table)
-                                       :wasm.flatidx/table
-                                       tabletype'))]
-      (assoc ctx
-             :wasm/write
-             (update ctx-write-2
-                     :wasm.count/importsec
-                     (fn [n-byte]
+  (let [ctx-write    (ctx :wasm/write)
+        ctx-write-2  (-> ctx-write
+                         (assoc :wasm.count/importsec 0
+                                :wasm.import/n        0)
+                         (importdesc (importsec :wasm.import/func)
+                                     :wasm.flatidx/func
+                                     (partial func
+                                              (ctx-write :wasm.flatidx/type)))
+                         (importdesc (importsec :wasm.import/global)
+                                     :wasm.flatidx/global
+                                     globaltype')
+                         (importdesc (importsec :wasm.import/mem)
+                                     :wasm.flatidx/mem
+                                     memtype')
+                         (importdesc (importsec :wasm.import/table)
+                                     :wasm.flatidx/table
+                                     tabletype'))]
+    (assoc ctx
+           :wasm/write
+           (update ctx-write-2
+                   :wasm.count/importsec
+                   (fn [n-byte]
+                     (if (zero? n-byte)
+                       0
                        (+ (u32 (ctx-write-2 :wasm.import/n))
-                          n-byte)))))
-    ctx))
+                          n-byte)))))))
 
 
 ;;;;;;;;;; Type section
@@ -307,6 +350,7 @@
   (let [ctx-2 (-> ctx
                   typesec
                   importsec'
+                  funcsec'
                   )]
     (assoc-in ctx-2
               [:wasm/write

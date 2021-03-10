@@ -28,7 +28,12 @@
             [helins.wasmer.fn       :as wasmer.fn]
             [helins.wasmer.instance :as wasmer.instance]
             [helins.wasmer.mem      :as wasmer.mem]
-            [helins.wasmer.module   :as wasmer.module]))
+            [helins.wasmer.module   :as wasmer.module]
+            [malli.core             :as malli]
+            [malli.generator        :as malli.gen]
+            [malli.provider]
+            [malli.registry]
+            [malli.util]))
 
 
 ;;;;;;;;;;
@@ -67,8 +72,8 @@
 
   (-> 
       (->> 
-      ;    (wasmer.module/load-source "src/wasm/test.wasm")
-          (wasmer.module/load-source "src/wasm/import.wasm")
+          (wasmer.module/load-source "src/wasm/test.wasm")
+      ;    (wasmer.module/load-source "src/wasm/import.wasm")
       ;    (wasmer.module/load-source "src/wasm/simple.wasm")
       ;    (wasmer.module/load-source "src/wasm/export.wasm")
            (wasm.decompile/main))
@@ -91,12 +96,12 @@
 
 
   (-> 
-      ;(wasmer.module/load-source "src/wasm/test.wasm")
-      (wasmer.module/load-source "src/wasm/import.wasm")
+      (wasmer.module/load-source "src/wasm/test.wasm")
+      ;(wasmer.module/load-source "src/wasm/import.wasm")
       wasm.decompile/main
       wasm.count/module
-      ;:wasm/write
-      wasm.write/main
+      :wasm/write
+      ;wasm.write/main
 
       ;:wasm/write
       ;wasm.count/typesec
@@ -105,10 +110,19 @@
       ;(binf/rr-buffer 39)
       ;seq
 
-      binf/backing-buffer
-      wasm.decompile/main
+      ;binf/backing-buffer
+      ;wasm.decompile/main
       clojure.pprint/pprint
       )
+
+
+
+
+
+
+
+
+
 
   (s/valid? :wasm/module
             *1)
@@ -116,4 +130,48 @@
 
   (sgen/generate (s/gen :wasm/module))
 
+
+
+
+
+  (def *reg
+       (atom {:ok (malli/-string-schema)}))
+
+  (def sch
+       [:map
+        ;{:registry malli/default-registry
+        ;           ;(malli.registry/mutable-registry *reg)
+        ;           }
+        [:a 
+         #_{:gen/gen (sgen/fmap (fn [x]
+                                (println :x x)
+                                (str x))
+                              (s/gen int?))}
+         :int]
+        [:b :int]])
+       
+
+  (malli/validate [:maybe string?] "kikka" {:registry malli/default-registry})
+
+  (malli/validate sch
+                 {:a 42
+                  :b 24}
+                 {:registry (malli.registry/mutable-registry *reg)
+                  
+                  #_malli/default-registry})
+
+
+  (malli.util/get-in sch
+                     [:a
+                      :registry])
+
+
+  (malli.provider/provide [{:a 32}
+                           {:b "ok"}
+                           [:ok 'ok]])
+
+
+  (malli.gen/generate sch
+                      {:registry (malli.registry/mutable-registry *reg)})
+  
   )

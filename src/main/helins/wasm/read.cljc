@@ -853,8 +853,8 @@
 
   (importdesc' ctx
                view
-               {:wasm/module (name' view)
-                :wasm/name   (name' view)}))
+               {:wasm.import/module (name' view)
+                :wasm.import/name   (name' view)}))
 
 
 

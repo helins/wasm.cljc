@@ -250,8 +250,8 @@
   [view space import-type f]
 
   (doseq [{:as           hmap
-           buffer-module :wasm/module
-           buffer-name   :wasm/name}   (vals space)]
+           buffer-module :wasm.import/module
+           buffer-name   :wasm.import/name}  (vals space)]
     (-> view
         (u32 (count buffer-module))
         (binf/wr-buffer buffer-module)
@@ -269,12 +269,13 @@
 
   [view {:as        ctx
          :wasm/keys [importsec]
-         ctx-write  :wasm/write}]
+         {:as     ctx-write
+          n-byte- :wasm.count/importsec} :wasm/write}]
 
-  (when (seq importsec)
+  (when (pos? n-byte-)
     (-> view
         (section-id wasm.bin/section-id-import)
-        (n-byte (ctx-write :wasm.count/importsec))
+        (n-byte n-byte-)
         (u32 (ctx-write :wasm.import/n))
         (import'+ (importsec :wasm.import/func)
                   wasm.bin/importdesc-func

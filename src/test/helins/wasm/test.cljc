@@ -41,8 +41,9 @@
 ;;;;;;;;;;
 
 
-(tc.ct/defspec module
+#_(tc.ct/defspec module
   
   (tc.prop/for-all [m (s/gen :wasm/module)]
-    (= m
+    (wasm.count/module m)
+    #_(= m
        (compile-cycle m))))
