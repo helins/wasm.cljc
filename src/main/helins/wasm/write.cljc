@@ -335,7 +335,22 @@
   view)
 
 
-;;;;;;;;;; sections / Table
+;;;;;;;;;; Sections / mem
+
+
+(defn memsec'
+
+  [view ctx]
+
+  (section-externval view
+                     ctx
+                     :wasm/memsec
+                     wasm.bin/section-id-mem
+                     :wasm.count/memsec
+                     memtype'))
+
+
+;;;;;;;;;; Sections / Table
 
 
 (defn tablesec'
@@ -395,4 +410,5 @@
       (importsec' ctx)
       (funcsec' ctx)
       (tablesec' ctx)
+      (memsec' ctx)
       ))
