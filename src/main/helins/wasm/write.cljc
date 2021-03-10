@@ -126,13 +126,10 @@
 
   ""
 
-  [view ctx {:wasm/keys [typeidx]}]
+  [view flatidx-type {:wasm/keys [typeidx]}]
 
   (u32 view
-       (get-in ctx
-               [:wasm/write
-                :wasm.flatidx/type
-                typeidx])))
+       (flatidx-type typeidx)))
 
 
 
@@ -240,6 +237,27 @@
       (limits' hmap)))
 
 
+;;;;;;;;;; Sections / Func
+
+
+(defn funcsec'
+
+  [view {:wasm/keys                         [funcsec]
+         {flatidx-type :wasm.flatidx/type
+          n-byte-      :wasm.count/funcsec} :wasm/write}]
+
+  (when (seq funcsec)
+    (-> view
+        (section-id wasm.bin/section-id-func)
+        (n-byte n-byte-)
+        (u32 (count funcsec)))
+    (doseq [func- (vals funcsec)]
+      (func view
+            flatidx-type
+            func-)))
+  view)
+
+
 ;;;;;;;;;; Sections / Import
 
 
@@ -267,21 +285,21 @@
 
   ""
 
-  [view {:as        ctx
-         :wasm/keys [importsec]
-         {:as     ctx-write
-          n-byte- :wasm.count/importsec} :wasm/write}]
+  [view {:wasm/keys                          [importsec]
+         {flatidx-type :wasm.flatidx/type
+          n-byte-      :wasm.count/importsec
+          n-import     :wasm.import/n}       :wasm/write}]
 
   (when (pos? n-byte-)
     (-> view
         (section-id wasm.bin/section-id-import)
         (n-byte n-byte-)
-        (u32 (ctx-write :wasm.import/n))
+        (u32 n-import)
         (import'+ (importsec :wasm.import/func)
                   wasm.bin/importdesc-func
                   (fn [view hmap]
                     (func view
-                          ctx
+                          flatidx-type
                           hmap)))
         (import'+ (importsec :wasm.import/global)
                   wasm.bin/importdesc-global
@@ -337,4 +355,5 @@
       magic
       (version ctx)
       (typesec ctx)
-      (importsec' ctx)))
+      (importsec' ctx)
+      (funcsec' ctx)))

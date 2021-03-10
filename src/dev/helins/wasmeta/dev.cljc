@@ -100,8 +100,8 @@
       ;(wasmer.module/load-source "src/wasm/import.wasm")
       wasm.decompile/main
       wasm.count/module
-      :wasm/write
-      ;wasm.write/main
+      ;:wasm/write
+      wasm.write/main
 
       ;:wasm/write
       ;wasm.count/typesec
@@ -110,8 +110,8 @@
       ;(binf/rr-buffer 39)
       ;seq
 
-      ;binf/backing-buffer
-      ;wasm.decompile/main
+      binf/backing-buffer
+      wasm.decompile/main
       clojure.pprint/pprint
       )
 

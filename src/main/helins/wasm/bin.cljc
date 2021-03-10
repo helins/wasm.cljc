@@ -934,13 +934,13 @@
 (def section-id-import
      2)
      
-(def section-id-function
+(def section-id-func
      3)
      
 (def section-id-table
      4)
      
-(def section-id-memory
+(def section-id-mem
      5)
      
 (def section-id-global
@@ -952,7 +952,7 @@
 (def section-id-start
      8)
      
-(def section-id-element
+(def section-id-elem
      9)
      
 (def section-id-code
