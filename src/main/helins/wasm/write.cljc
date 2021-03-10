@@ -237,25 +237,47 @@
       (limits' hmap)))
 
 
+;;;;;;;;;; Sections / Helper
+
+
+(defn section-externval
+
+  ""
+
+  [view ctx k-section bin-section-id k-count compile-item]
+
+  (when-some [section (not-empty (ctx k-section))]
+    (-> view
+        (section-id bin-section-id)
+        (n-byte (get-in ctx
+                        [:wasm/write
+                         k-count]))
+        (u32 (count section)))
+    (doseq [item (vals section)]
+      (compile-item view
+                    item)))
+  view)
+
+
 ;;;;;;;;;; Sections / Func
 
 
 (defn funcsec'
 
-  [view {:wasm/keys                         [funcsec]
-         {flatidx-type :wasm.flatidx/type
-          n-byte-      :wasm.count/funcsec} :wasm/write}]
+  [view ctx]
 
-  (when (seq funcsec)
-    (-> view
-        (section-id wasm.bin/section-id-func)
-        (n-byte n-byte-)
-        (u32 (count funcsec)))
-    (doseq [func- (vals funcsec)]
-      (func view
-            flatidx-type
-            func-)))
-  view)
+  (section-externval view
+                     ctx
+                     :wasm/funcsec
+                     wasm.bin/section-id-func
+                     :wasm.count/funcsec
+                     (let [flatidx-type (get-in ctx
+                                                [:wasm/write
+                                                 :wasm.flatidx/type])]
+                       (fn compile-item [view item]
+                         (func view
+                               flatidx-type
+                               item)))))
 
 
 ;;;;;;;;;; Sections / Import
@@ -313,6 +335,21 @@
   view)
 
 
+;;;;;;;;;; sections / Table
+
+
+(defn tablesec'
+
+  [view ctx]
+
+  (section-externval view
+                     ctx
+                     :wasm/tablesec
+                     wasm.bin/section-id-table
+                     :wasm.count/tablesec
+                     tabletype'))
+
+
 ;;;;;;;;;; Sections / Type
 
 
@@ -356,4 +393,6 @@
       (version ctx)
       (typesec ctx)
       (importsec' ctx)
-      (funcsec' ctx)))
+      (funcsec' ctx)
+      (tablesec' ctx)
+      ))
