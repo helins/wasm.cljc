@@ -96,6 +96,7 @@
 
   [{{:wasm.count/keys [funcsec
                        importsec
+                       tablesec
                        typesec]} :wasm/write}]
 
   (reduce (fn [n-byte section]
@@ -104,6 +105,7 @@
           0
           [funcsec
            importsec
+           tablesec
            typesec]))
   
 
@@ -199,46 +201,62 @@
      (limits table)))
 
 
-;;;;;;;;;; Function section
+;;;;;;;;;; Sections / Helpers
+
+
+(defn section-externval
+
+  ""
+
+  [ctx k-section k-flatidx k-count count-item]
+
+  (if-some [sec (not-empty (ctx k-section))]
+    (update ctx
+            :wasm/write
+            (fn [ctx-write]
+              (as-> ctx-write
+                    ctx-write-2
+                (assoc ctx-write-2
+                       k-count
+                       0)
+                (reduce-kv (fn [ctx-write-3 idx item]
+                             (-> ctx-write-3
+                                 (update k-flatidx
+                                         #(assoc %
+                                                 idx
+                                                 (count %)))
+                                 (update k-count
+                                         #(+ %
+                                             (count-item item)))))
+                           ctx-write-2
+                           sec)
+                (update ctx-write-2
+                        k-count
+                        #(+ %
+                            (u32 (count sec)))))))
+    ctx))
+
+
+;;;;;;;;;; Sections / Func
 
 
 (defn funcsec'
 
   ""
 
-  [{:as        ctx
-    :wasm/keys [funcsec]}]
+  [ctx]
 
-  (if (seq funcsec)
-    (update ctx
-            :wasm/write
-            (fn [{:as          ctx-write
-                  flatidx-type :wasm.flatidx/type}]
-              (as-> ctx-write
-                    ctx-write-2
-                (assoc ctx-write-2
-                       :wasm.count/funcsec
-                       0)
-                (reduce-kv (fn [ctx-write-2 idx func-]
-                             (-> ctx-write-2
-                                 (update :wasm.flatidx/func
-                                         #(assoc %
-                                                 idx
-                                                 (count %)))
-                                 (update :wasm.count/funcsec
-                                         #(+ %
-                                             (func flatidx-type
-                                                   func-)))))
-                           ctx-write-2
-                           funcsec)
-                (update ctx-write-2
-                        :wasm.count/funcsec
-                        #(+ %
-                            (u32 (count funcsec)))))))
-    ctx))
+  (section-externval ctx
+                     :wasm/funcsec
+                     :wasm.flatidx/func
+                     :wasm.count/funcsec
+                     (partial func
+                              (get-in ctx
+                                      [:wasm/write
+                                       :wasm.flatidx/type]))))
 
 
-;;;;;;;;;; Import section
+;;;;;;;;;; Sections / Import
 
 
 (defn importdesc
@@ -303,7 +321,21 @@
                           n-byte)))))))
 
 
-;;;;;;;;;; Type section
+;;;;;;;;;; Sections / Table
+
+
+(defn tablesec'
+
+  [ctx]
+
+  (section-externval ctx
+                     :wasm/tablesec
+                     :wasm.flatidx/table
+                     :wasm.count/tablesec
+                     tabletype'))
+
+
+;;;;;;;;;; Sections / Type
 
 
 (defn typesec
@@ -351,6 +383,7 @@
                   typesec
                   importsec'
                   funcsec'
+                  tablesec'
                   )]
     (assoc-in ctx-2
               [:wasm/write
