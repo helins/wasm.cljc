@@ -49,6 +49,11 @@
   (u32 idx))
 
 
+(def funcidx'
+
+  ""
+
+  idx)
 
 (def typeidx'
   
@@ -97,6 +102,7 @@
   [{{:wasm.count/keys [funcsec
                        importsec
                        memsec
+                       startsec
                        tablesec
                        typesec]} :wasm/write}]
 
@@ -109,6 +115,7 @@
           [funcsec
            memsec
            importsec
+           startsec
            tablesec
            typesec]))
   
@@ -339,6 +346,26 @@
                      memtype'))
 
 
+;;;;;;;;;; Sections / Start
+
+
+(defn startsec'
+
+  [{:as        ctx
+    :wasm/keys [startsec]}]
+
+  (if startsec
+    (update ctx
+            :wasm/write
+            (fn [ctx-write]
+              (assoc ctx-write
+                     :wasm.count/startsec
+                     (funcidx' (get-in ctx-write
+                                       [:wasm.flatidx/func
+                                        (startsec :wasm/funcidx)])))))
+    ctx))
+
+
 ;;;;;;;;;; Sections / Table
 
 
@@ -403,6 +430,7 @@
                   funcsec'
                   tablesec'
                   memsec'
+                  startsec'
                   )]
     (assoc-in ctx-2
               [:wasm/write
