@@ -81,11 +81,12 @@
       ;wasm.count/importsec'
       ;:wasm/write
 
-      :wasm/codesec
-      (get 1)
-      :wasm/expr
-      (take 4)
-      wasm.count/expr'
+      ; :wasm/codesec
+      ; (get 1)
+      ; :wasm/expr
+      ; (->> (take 7))
+      ; wasm.count/expr'
+
       clojure.pprint/pprint
       )
 
@@ -105,9 +106,9 @@
       ;(wasmer.module/load-source "src/wasm/import.wasm")
       wasm.decompile/main
       wasm.count/module
-      ;:wasm/write
+      :wasm/write
 
-      wasm.write/main
+      ;wasm.write/main
 
       ;:wasm/write
       ;wasm.count/typesec
@@ -116,8 +117,8 @@
       ;(binf/rr-buffer 39)
       ;seq
 
-      binf/backing-buffer
-      wasm.decompile/main
+      ;binf/backing-buffer
+      ;wasm.decompile/main
       clojure.pprint/pprint
       )
 

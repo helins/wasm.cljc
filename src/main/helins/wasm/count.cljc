@@ -576,6 +576,29 @@
                                        :wasm.flatidx/type]))))
 
 
+;;;;;;;;;; Sections / Global
+
+
+(defn global'
+
+  [global]
+
+  (+ (globaltype' global)
+     (expr' (global :wasm/expr))))
+
+
+
+(defn globalsec'
+
+  [ctx]
+
+  (section-externval ctx
+                     :wasm/globalsec
+                     :wasm.flatidx/global
+                     :wasm.count/globalsec
+                     global'))
+
+
 ;;;;;;;;;; Sections / Import
 
 
@@ -613,23 +636,23 @@
   [{:as        ctx
     :wasm/keys [importsec]}]
 
-  (let [ctx-write    (ctx :wasm/write)
-        ctx-write-2  (-> ctx-write
-                         (assoc :wasm.count/importsec 0
-                                :wasm.import/n        0)
-                         (importdesc (importsec :wasm.import/func)
-                                     :wasm.flatidx/func
-                                     (partial func
-                                              (ctx-write :wasm.flatidx/type)))
-                         (importdesc (importsec :wasm.import/global)
-                                     :wasm.flatidx/global
-                                     globaltype')
-                         (importdesc (importsec :wasm.import/mem)
-                                     :wasm.flatidx/mem
-                                     memtype')
-                         (importdesc (importsec :wasm.import/table)
-                                     :wasm.flatidx/table
-                                     tabletype'))]
+  (let [ctx-write   (ctx :wasm/write)
+        ctx-write-2 (-> ctx-write
+                        (assoc :wasm.count/importsec 0
+                               :wasm.import/n        0)
+                        (importdesc (importsec :wasm.import/func)
+                                    :wasm.flatidx/func
+                                    (partial func
+                                             (ctx-write :wasm.flatidx/type)))
+                        (importdesc (importsec :wasm.import/global)
+                                    :wasm.flatidx/global
+                                    globaltype')
+                        (importdesc (importsec :wasm.import/mem)
+                                    :wasm.flatidx/mem
+                                    memtype')
+                        (importdesc (importsec :wasm.import/table)
+                                    :wasm.flatidx/table
+                                    tabletype'))]
     (assoc ctx
            :wasm/write
            (update ctx-write-2
@@ -751,6 +774,7 @@
   ""
 
   [{{:wasm.count/keys [funcsec
+                       globalsec
                        importsec
                        memsec
                        startsec
@@ -764,8 +788,9 @@
               n-byte-total))
           0
           [funcsec
-           memsec
+           globalsec
            importsec
+           memsec
            startsec
            tablesec
            typesec]))
@@ -796,6 +821,7 @@
                   funcsec'
                   tablesec'
                   memsec'
+                  globalsec'
                   startsec'
                   )]
     (assoc-in ctx-2
