@@ -18,49 +18,66 @@
             [helins.wasm.ir     :as wasm.ir]))
 
 
-;;;;;;;;;
+(declare end'
+         instr'+)
 
 
-(defn writer
-
-  ""
-
-  []
-
-  (volatile! (-> (binf.buffer/alloc (* 500
-                                       1024))
-                 binf/view
-                 (binf/endian-set :little-endian))))
+;;;;;;;;;; Values
 
 
+(defn byte'
 
-(defn at-least
+  [view b8]
 
-  ""
-
-  [v*view n-byte]
-
-  (let [view @v*view]
-    (if (>= (binf/remaining view)
-            n-byte)
-      view
-      (let [n-byte-view   (binf/limit view)
-            n-byte-min    (+ n-byte-view
-                             n-byte)
-            n-byte-view-2 (loop [n-byte-view-2 n-byte-view]
-                          (let [n-byte-view-3 (Math/ceil (* n-byte-view-2
-                                                            1.5))]
-                            (if (>= n-byte-view-3
-                                    n-byte-min)
-                              n-byte-view-3
-                              (recur n-byte-view-3))))]
-        (vreset! v*view
-                 (binf/grow view
-                            (- n-byte-view-2
-                               n-byte-view)))))))
+  (binf/wr-b8 view
+              b8))
 
 
-;;;;;;;;;;
+
+(defn f32'
+
+  [view f32]
+
+  (binf/wr-f32 view
+               f32))
+
+
+
+(defn f64'
+
+  [view f64]
+
+  (binf/wr-f64 view
+               f64))
+
+
+
+(defn i32'
+
+  [view i32]
+
+  (binf.leb128/wr-i32 view
+                      i32))
+
+
+
+(defn i64'
+
+  [view i64]
+
+  (binf.leb128/wr-i64 view
+                      i64))
+
+
+
+(defn s33'
+
+  [view s33]
+
+  (binf.leb128/wr-i64 view
+                      (binf.int64/i* s33)
+                      33))
+
 
 
 (defn u32
@@ -71,7 +88,7 @@
                       u32))
 
 
-;;;;;;;;;;
+;;;;;;;;;; Indices
 
 
 (defn idx
@@ -93,37 +110,43 @@
 
 
 
-(def typeidx'
+(def globalidx'
 
   ""
 
   idx)
 
 
-;;;;;;;;;;
 
-
-(defn magic
+(def labelidx'
 
   ""
 
-  [view]
-
-  (binf/wr-b32 view
-               wasm.bin/magic))
+  idx)
 
 
 
-(defn version
+(def localidx'
 
   ""
 
-  [view {:wasm/keys [version]}]
+  idx)
 
-  (binf/wr-b32 view
-               (condp =
-                      version
-                 wasm.bin/version-1 wasm.bin/version-1)))
+
+
+(def memidx'
+
+  ""
+
+  idx)
+
+
+
+(def typeidx'
+
+  ""
+
+  idx)
 
 
 ;;;;;;;;;;
@@ -266,6 +289,318 @@
       (limits' hmap)))
 
 
+;;;;;;;;;; Instructions - Control
+
+
+(defn blocktype'
+
+  [view blocktype]
+
+  (if (nil? blocktype)
+    (binf/wr-b8 view
+                wasm.bin/blocktype-nil)
+    ((case (blocktype 0)
+       :wasm/typeidx s33'
+       :wasm/valtype binf/wr-b8 view
+     view
+     (blocktype 1)))))
+
+
+
+(defn block'
+
+  [view opvec]
+
+  (-> view
+      (blocktype' (opvec 1))
+      (instr'+ (opvec 2))
+      end'))
+
+
+
+(defn end'
+
+  [view]
+
+  (binf/wr-b8 view
+              wasm.bin/end))
+
+
+
+(defn loop'
+
+  [view opvec]
+
+  (block' view
+          opvec))
+
+
+
+(defn else'
+
+  [view instr+]
+
+  (when (seq instr+)
+    (-> view
+        (binf/wr-b8 wasm.bin/else)
+        (instr'+ instr+)))
+  view)
+
+
+
+(defn if'
+
+  [view opvec]
+
+  (-> view
+      (blocktype' (opvec 1))
+      (instr'+ (opvec 2))
+      (else' (opvec 3))
+      end'))
+
+
+
+(defn br'
+
+  [view opvec]
+
+  (labelidx' view
+             (opvec 1)))
+
+
+
+(defn br_if'
+
+  [view opvec]
+
+  (br' view
+       opvec))
+
+
+
+(defn br_table'
+
+  [view opvec]
+
+  (let [choice+ (opvec 1)]
+    (u32 view
+         (count choice+))
+    (doseq [labelidx choice+]
+      (labelidx' view
+                 labelidx))
+    (labelidx' (opvec 2))))
+
+
+
+(defn call'
+
+  [view opvec]
+
+  (funcidx' view
+            (opvec 1)))
+
+
+
+(defn call_indirect'
+
+  [view opvec]
+
+  (-> view
+      (typeidx' (opvec 1))
+      (binf/wr-b8 0)))
+
+
+;;;;;;;;;; Instructions / Variables
+
+
+(defn op-var-local
+
+  ""
+
+  [view opvec]
+
+  (localidx' view
+             (opvec 1)))
+
+
+
+(defn op-var-global
+
+  ""
+  
+  [view opvec]
+
+  (globalidx' view
+              (opvec 1)))
+
+
+;;;;;;;;;; Instructions / Memory
+
+
+(defn memarg'
+
+  ""
+
+  [view [align offset]]
+
+  (-> view
+      (u32 align)
+      (u32 offset)))
+
+
+
+(defn op-memarg
+
+  ""
+
+  [view opvec]
+
+  (memarg' view
+           (rest opvec)))
+
+
+
+(defn op-memory
+
+  ""
+
+  [view opvec]
+
+  (memidx' view
+           (opvec 1)))
+
+
+;;;;;;;;;;; Numeric instructions / Constants
+
+
+(defn op-constval
+
+  ""
+
+
+  ([f-value]
+
+   (partial op-constval
+            f-value))
+
+
+  ([f-value view opvec]
+
+   (f-value view
+            (opvec 1))))
+
+
+;;;;;;;;;;; Numeric instructions / Saturated truncation
+
+
+(defn trunc_sat
+
+  ""
+
+  [view opvec]
+
+  (u32 view
+       (opvec 1)))
+  
+
+;;;;;;;;;; Instructions / Registry
+
+
+(def opcode'
+     byte')
+
+
+
+(def opcode->f
+
+  ""
+
+  {wasm.bin/block         block'
+   wasm.bin/loop-         loop'
+   wasm.bin/if-           if'
+   wasm.bin/br            br'
+   wasm.bin/br_if         br_if'
+   wasm.bin/br_table      br_table'
+   wasm.bin/call          call'
+   wasm.bin/call_indirect call_indirect'
+   wasm.bin/local-get     op-var-local
+   wasm.bin/local-set     op-var-local
+   wasm.bin/local-tee     op-var-local
+   wasm.bin/global-get    op-var-global
+   wasm.bin/global-set    op-var-global
+   wasm.bin/i32-load      op-memarg 
+   wasm.bin/i64-load      op-memarg
+   wasm.bin/f32-load      op-memarg
+   wasm.bin/f64-load      op-memarg
+   wasm.bin/i32-load8_s   op-memarg
+   wasm.bin/i32-load8_u   op-memarg
+   wasm.bin/i32-load16_s  op-memarg
+   wasm.bin/i32-load16_u  op-memarg
+   wasm.bin/i64-load8_s   op-memarg
+   wasm.bin/i64-load8_u   op-memarg
+   wasm.bin/i64-load16_s  op-memarg
+   wasm.bin/i64-load16_u  op-memarg
+   wasm.bin/i64-load32_s  op-memarg
+   wasm.bin/i64-load32_u  op-memarg
+   wasm.bin/i32-store     op-memarg
+   wasm.bin/i64-store     op-memarg
+   wasm.bin/f32-store     op-memarg
+   wasm.bin/f64-store     op-memarg
+   wasm.bin/i32-store8    op-memarg
+   wasm.bin/i32-store16   op-memarg
+   wasm.bin/i64-store8    op-memarg
+   wasm.bin/i64-store16   op-memarg
+   wasm.bin/i64-store32   op-memarg
+   wasm.bin/memory-size   op-memory
+   wasm.bin/memory-grow   op-memory
+   wasm.bin/i32-const     (op-constval i32')
+   wasm.bin/i64-const     (op-constval i64')
+   wasm.bin/f32-const     (op-constval f32')
+   wasm.bin/f64-const     (op-constval f64')
+   wasm.bin/trunc_sat     trunc_sat})
+
+
+
+(defn instr'
+
+  ""
+
+  [view opvec]
+
+  (let [opcode (opvec 0)]
+    (opcode' view
+             opcode)
+    (when-some [f (opcode->f opcode)]
+      (f view
+         opvec)))
+  view)
+
+
+
+(defn instr'+
+
+  ""
+
+  [view opvec+]
+
+  (doseq [opvec opvec+]
+    (instr' view
+            opvec))
+  view)
+
+
+
+(defn expr'
+
+  ""
+
+  [view opvec+]
+
+  (-> view
+      (instr'+ opvec+)
+      end'))
+
+
 ;;;;;;;;;; Sections / Helper
 
 
@@ -307,6 +642,31 @@
                          (func view
                                flatidx-type
                                item)))))
+
+
+;;;;;;;;;; Sections / Global
+
+
+(defn global'
+
+  [view global]
+
+  (-> view
+      (globaltype' global)
+      (expr' (global :wasm/expr))))
+
+  
+
+(defn globalsec'
+
+  [view ctx]
+
+  (section-externval view
+                     ctx
+                     :wasm/globalsec
+                     wasm.bin/section-id-global
+                     :wasm.count/globalsec
+                     global'))
 
 
 ;;;;;;;;;; Sections / Import
@@ -437,7 +797,32 @@
   view)
 
 
-;;;;;;;;;;
+;;;;;;;;;; Module
+
+
+(defn magic
+
+  ""
+
+  [view]
+
+  (binf/wr-b32 view
+               wasm.bin/magic))
+
+
+
+(defn version
+
+  ""
+
+  [view {:wasm/keys [version]}]
+
+  (binf/wr-b32 view
+               (condp =
+                      version
+                 wasm.bin/version-1 wasm.bin/version-1)))
+
+
 
 
 (defn main
@@ -459,5 +844,6 @@
       (funcsec' ctx)
       (tablesec' ctx)
       (memsec' ctx)
+      (globalsec' ctx)
       (startsec' ctx)
       ))

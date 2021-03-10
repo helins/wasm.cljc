@@ -426,7 +426,7 @@
       (let [x-2 (bit-and 0x7F
                          (binf.int64/u8 x))]
         (if (= x-2
-               0x40)
+               wasm.bin/blocktype-nil)
           nil
           [:wasm/valtype
            (-valtype x-2)]))

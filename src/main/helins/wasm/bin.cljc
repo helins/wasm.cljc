@@ -259,6 +259,9 @@
 ;;;;;;;;;; Types
 
 
+(def blocktype-nil
+     0x40)
+
 (def elemtype
      0x70)
 
