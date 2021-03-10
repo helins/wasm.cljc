@@ -19,7 +19,8 @@
 
 
 (declare end'
-         instr'+)
+         instr'+
+         u32)
 
 
 ;;;;;;;;;; Values
@@ -67,6 +68,18 @@
 
   (binf.leb128/wr-i64 view
                       i64))
+
+
+
+(defn name'
+
+  ""
+
+  [view buffer]
+
+  (-> view
+      (u32 (count buffer))
+      (binf/wr-buffer buffer)))
 
 
 
@@ -140,6 +153,12 @@
 
   idx)
 
+
+(def tableidx'
+
+  ""
+
+  idx)
 
 
 (def typeidx'
@@ -623,6 +642,57 @@
   view)
 
 
+;;;;;;;;;; Sections / Export
+
+
+(defn export'
+
+  [view space flatidx bin-export-type compile-idx]
+
+  (doseq [[idx
+           name+] space]
+    (let [idx-2 (flatidx idx)]
+      (doseq [{buffer :wasm/name} name+]
+        (-> view
+            (name' buffer)
+            (binf/wr-b8 bin-export-type)
+            (compile-idx idx-2)))))
+  view)
+
+
+
+(defn exportsec'
+
+  [view {:wasm/keys                     [exportsec]
+         {:as      ctx-write
+          n-byte-  :wasm.count/exportsec
+          n-export :wasm.export/n}      :wasm/write}]
+
+  (when (pos? n-export)
+    (println :n n-export :byte n-byte-)
+    (-> view
+        (section-id wasm.bin/section-id-export)
+        (n-byte n-byte-)
+        (u32 n-export)
+        (export' (exportsec :wasm.export/func)
+                 (ctx-write :wasm.flatidx/func)
+                 wasm.bin/exportdesc-func
+                 funcidx')
+        (export' (exportsec :wasm.export/global)
+                 (ctx-write :wasm.flatidx/global)
+                 wasm.bin/exportdesc-global
+                 globalidx')
+        (export' (exportsec :wasm.export/mem)
+                 (ctx-write :wasm.flatidx/mem)
+                 wasm.bin/exportdesc-mem
+                 memidx')
+        (export' (exportsec :wasm.export/table)
+                 (ctx-write :wasm.flatidx/table)
+                 wasm.bin/exportdesc-table
+                 tableidx')))
+  view)
+
+
 ;;;;;;;;;; Sections / Func
 
 
@@ -682,10 +752,8 @@
            buffer-module :wasm.import/module
            buffer-name   :wasm.import/name}  (vals space)]
     (-> view
-        (u32 (count buffer-module))
-        (binf/wr-buffer buffer-module)
-        (u32 (count buffer-name))
-        (binf/wr-buffer buffer-name)
+        (name' buffer-module)
+        (name' buffer-name)
         (binf/wr-b8 import-type)
         (f hmap)))
   view)
@@ -845,5 +913,6 @@
       (tablesec' ctx)
       (memsec' ctx)
       (globalsec' ctx)
+      (exportsec' ctx)
       (startsec' ctx)
       ))
