@@ -96,14 +96,18 @@
 
   [{{:wasm.count/keys [funcsec
                        importsec
+                       memsec
                        tablesec
                        typesec]} :wasm/write}]
 
-  (reduce (fn [n-byte section]
-            (+ n-byte
-               (section' section)))
+  (reduce (fn [n-byte-total n-byte-section]
+            (if n-byte-section
+              (+ n-byte-total
+                 (section' n-byte-section))
+              n-byte-total))
           0
           [funcsec
+           memsec
            importsec
            tablesec
            typesec]))
@@ -321,6 +325,20 @@
                           n-byte)))))))
 
 
+;;;;;;;;;; Sections / Mem
+
+
+(defn memsec'
+
+  [ctx]
+
+  (section-externval ctx
+                     :wasm/memsec
+                     :wasm.flatidx/tablesec
+                     :wasm.count/memsec
+                     memtype'))
+
+
 ;;;;;;;;;; Sections / Table
 
 
@@ -384,6 +402,7 @@
                   importsec'
                   funcsec'
                   tablesec'
+                  memsec'
                   )]
     (assoc-in ctx-2
               [:wasm/write
