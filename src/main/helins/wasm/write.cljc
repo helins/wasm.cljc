@@ -74,6 +74,35 @@
 ;;;;;;;;;;
 
 
+(defn idx
+
+  ""
+
+  [view idx]
+
+  (u32 view
+       idx))
+
+
+
+(def funcidx'
+
+  ""
+
+  idx)
+
+
+
+(def typeidx'
+
+  ""
+
+  idx)
+
+
+;;;;;;;;;;
+
+
 (defn magic
 
   ""
@@ -128,8 +157,8 @@
 
   [view flatidx-type {:wasm/keys [typeidx]}]
 
-  (u32 view
-       (flatidx-type typeidx)))
+  (typeidx' view
+            (flatidx-type typeidx)))
 
 
 
@@ -350,6 +379,25 @@
                      memtype'))
 
 
+;;;;;;;;;; Sections / Start
+
+
+(defn startsec'
+
+  [view {:as        ctx
+         :wasm/keys [startsec]}]
+
+  (when startsec
+    (let [ctx-write (ctx :wasm/write)]
+      (-> view
+          (section-id wasm.bin/section-id-start)
+          (n-byte (ctx-write :wasm.count/startsec))
+          (funcidx' (get-in ctx-write
+                            [:wasm.flatidx/func
+                             (startsec :wasm/funcidx)])))))
+  view)
+
+
 ;;;;;;;;;; Sections / Table
 
 
@@ -411,4 +459,5 @@
       (funcsec' ctx)
       (tablesec' ctx)
       (memsec' ctx)
+      (startsec' ctx)
       ))
