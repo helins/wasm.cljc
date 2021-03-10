@@ -104,10 +104,7 @@
                   wasm.bin/section-id-start  wasm.read/startsec'
                   wasm.bin/section-id-elem   wasm.read/elemsec'
                   wasm.bin/section-id-code   wasm.read/codesec'
-                  wasm.bin/section-id-data   wasm.read/datasec'
-                  ;(fn [ctx _view]
-                  ;  ctx)
-                  )
+                  wasm.bin/section-id-data   wasm.read/datasec')
                ctx-2
                (binf/view view
                           start

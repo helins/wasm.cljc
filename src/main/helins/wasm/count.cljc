@@ -18,16 +18,16 @@
             [helins.wasm.ir     :as wasm.ir]))
 
 
-;;;;;;;;;;
+(declare instr'+
+         u32)
 
 
-(defn u32
+;;;;;;;;;; Values
 
-  [u32]
 
-  (binf.leb128/n-byte-u32 u32))
+(def byte'
+     1)
 
-;;;;;;;;;;
 
 
 (defn name'
@@ -39,7 +39,55 @@
        n-byte)))
 
 
-;;;;;;;;;;
+
+(defn f32'
+
+  [_f32]
+
+  binf/sz-f32)
+
+
+
+(defn f64'
+
+  [_f64]
+
+  binf/sz-f64)
+
+
+
+
+(defn i32'
+
+  [i32]
+
+  (binf.leb128/n-byte-i32 i32))
+
+
+
+(defn i64'
+
+  [i64]
+
+  (binf.leb128/n-byte-i32 i64))
+
+
+
+(defn s33'
+
+  [s33]
+
+  (binf.leb128/n-byte-i32 s33))
+
+
+(defn u32
+
+  [u32]
+
+  (binf.leb128/n-byte-u32 u32))
+
+
+;;;;;;;;;; Indices
 
 
 (defn idx
@@ -49,11 +97,44 @@
   (u32 idx))
 
 
+
 (def funcidx'
 
   ""
 
   idx)
+
+
+
+(def globalidx'
+
+  ""
+
+  idx)
+
+
+
+(def labelidx'
+
+  ""
+
+  idx)
+
+
+(def localidx'
+
+  ""
+
+  idx)
+
+
+(def memidx'
+
+  ""
+
+  idx)
+
+
 
 (def typeidx'
   
@@ -61,64 +142,6 @@
 
   idx)
 
-
-;;;;;;;;;;
-
-
-(def magic
-     4)
-
-
-(def version
-     4)
-
-
-;;;;;;;;;;
-
-
-(def section-id
-     1)
-
-
-
-(defn section'
-
-  ""
-
-  [n-byte]
-
-  (if n-byte
-    (+ section-id
-       (u32 n-byte)
-       n-byte)
-    0))
-
-
-
-(defn section+
-
-  ""
-
-  [{{:wasm.count/keys [funcsec
-                       importsec
-                       memsec
-                       startsec
-                       tablesec
-                       typesec]} :wasm/write}]
-
-  (reduce (fn [n-byte-total n-byte-section]
-            (if n-byte-section
-              (+ n-byte-total
-                 (section' n-byte-section))
-              n-byte-total))
-          0
-          [funcsec
-           memsec
-           importsec
-           startsec
-           tablesec
-           typesec]))
-  
 
 ;;;;;;;;;; Types
 
@@ -210,6 +233,292 @@
 
   (+ elemtype'
      (limits table)))
+
+
+;;;;;;;;;; Instructions - Control
+
+
+(defn blocktype'
+
+  [blocktype]
+
+  (if (nil? blocktype)
+    1
+    (case (blocktype 0)
+      :wasm/typeidx (s33' (blocktype 1))
+      :wasm/valtype 1)))
+
+
+
+(defn block'
+
+  [opvec]
+
+  (+ (blocktype' (opvec 1))
+     (instr'+ (opvec 2))
+     1  ;;  END
+     ))
+
+
+
+(defn loop'
+
+  [opvec]
+
+  (block' opvec))
+
+
+
+(defn else'
+
+  [instr+]
+
+  (if (seq instr+)
+    (+ 1  ;; `else` opcode
+       (instr'+ instr+))
+    0))
+
+
+
+(defn if'
+
+  [opvec]
+
+  (+ (blocktype' (opvec 1))
+     (instr'+ (opvec 2))
+     (else' (opvec 3))
+     1  ;;  END
+     ))
+
+
+
+(defn br'
+
+  [opvec]
+
+  (labelidx' (opvec 1)))
+
+
+
+(defn br_if'
+
+  [opvec]
+
+  (br' opvec))
+
+
+
+(defn br_table'
+
+  [opvec]
+
+  (let [choice+ (opvec 1)]
+    (+ (u32 (count choice+))
+       (reduce (fn [sum labelidx]
+                 (+ sum
+                    (labelidx' labelidx)))
+               0
+               choice+)
+       (labelidx' (opvec 2)))))
+
+
+
+(defn call'
+
+  [opvec]
+
+  (funcidx' (opvec 1)))
+
+
+
+(defn call_indirect'
+
+  [opvec]
+
+  (+ (typeidx' (opvec 1))
+     byte'))
+
+
+;;;;;;;;;; Instructions / Variables
+
+
+(defn op-var-local
+
+  ""
+
+  [opvec]
+
+  (localidx' (opvec 1)))
+
+
+
+(defn op-var-global
+
+  ""
+  
+  [opvec]
+
+  (globalidx' (opvec 1)))
+
+
+;;;;;;;;;; Instructions / Memory
+
+
+(defn memarg'
+
+  ""
+
+  [[align offset]]
+
+  (+ (u32 align)
+     (u32 offset)))
+
+
+
+(defn op-memarg
+
+  ""
+
+  [opvec]
+
+  (memarg' (rest opvec)))
+
+
+
+(defn op-memory
+
+  ""
+
+  [opvec]
+
+  (memidx' (opvec 1)))
+
+
+;;;;;;;;;;; Numeric instructions / Constants
+
+
+(defn op-constval
+
+  ""
+
+
+  ([f-value]
+
+   (partial op-constval
+            f-value))
+
+
+  ([f-value opvec]
+
+   (f-value (opvec 1))))
+
+
+;;;;;;;;;;; Numeric instructions / Saturated truncation
+
+
+(defn trunc_sat
+
+  ""
+
+  [opvec]
+
+  (u32 (opvec 1)))
+  
+
+;;;;;;;;;; Instructions / Registry
+
+
+(def opcode'
+     byte')
+
+
+
+(def opcode->f
+
+  ""
+
+  {wasm.bin/block         block'
+   wasm.bin/loop-         loop'
+   wasm.bin/if-           if'
+   wasm.bin/br            br'
+   wasm.bin/br_if         br_if'
+   wasm.bin/br_table      br_table'
+   wasm.bin/call          call'
+   wasm.bin/call_indirect call_indirect'
+   wasm.bin/local-get     op-var-local
+   wasm.bin/local-set     op-var-local
+   wasm.bin/local-tee     op-var-local
+   wasm.bin/global-get    op-var-global
+   wasm.bin/global-set    op-var-global
+   wasm.bin/i32-load      op-memarg 
+   wasm.bin/i64-load      op-memarg
+   wasm.bin/f32-load      op-memarg
+   wasm.bin/f64-load      op-memarg
+   wasm.bin/i32-load8_s   op-memarg
+   wasm.bin/i32-load8_u   op-memarg
+   wasm.bin/i32-load16_s  op-memarg
+   wasm.bin/i32-load16_u  op-memarg
+   wasm.bin/i64-load8_s   op-memarg
+   wasm.bin/i64-load8_u   op-memarg
+   wasm.bin/i64-load16_s  op-memarg
+   wasm.bin/i64-load16_u  op-memarg
+   wasm.bin/i64-load32_s  op-memarg
+   wasm.bin/i64-load32_u  op-memarg
+   wasm.bin/i32-store     op-memarg
+   wasm.bin/i64-store     op-memarg
+   wasm.bin/f32-store     op-memarg
+   wasm.bin/f64-store     op-memarg
+   wasm.bin/i32-store8    op-memarg
+   wasm.bin/i32-store16   op-memarg
+   wasm.bin/i64-store8    op-memarg
+   wasm.bin/i64-store16   op-memarg
+   wasm.bin/i64-store32   op-memarg
+   wasm.bin/memory-size   op-memory
+   wasm.bin/memory-grow   op-memory
+   wasm.bin/i32-const     (op-constval i32')
+   wasm.bin/i64-const     (op-constval i64')
+   wasm.bin/f32-const     (op-constval f32')
+   wasm.bin/f64-const     (op-constval f64')
+   wasm.bin/trunc_sat     trunc_sat})
+
+
+
+(defn instr'
+
+  ""
+
+  [opvec]
+
+  (if-some [f (opcode->f (opvec 0))]
+    (+ opcode'
+       (f opvec))
+    opcode'))
+
+
+
+(defn instr'+
+
+  ""
+
+  [opvec+]
+
+  (reduce (fn [sum opvec]
+            (+ sum
+               (instr' opvec)))
+          0
+          opvec+))
+
+
+
+(defn expr'
+
+  ""
+
+  [opvec+]
+
+  (+ (instr'+ opvec+)
+     1  ;;  END
+     ))
 
 
 ;;;;;;;;;; Sections / Helpers
@@ -415,7 +724,64 @@
       ctx)))
 
 
-;;;;;;;;;;
+;;;;;;;;;; Sections / Main
+ 
+
+(def section-id
+     1)
+
+
+
+(defn section'
+
+  ""
+
+  [n-byte]
+
+  (if n-byte
+    (+ section-id
+       (u32 n-byte)
+       n-byte)
+    0))
+
+
+
+(defn section+
+
+  ""
+
+  [{{:wasm.count/keys [funcsec
+                       importsec
+                       memsec
+                       startsec
+                       tablesec
+                       typesec]} :wasm/write}]
+
+  (reduce (fn [n-byte-total n-byte-section]
+            (if n-byte-section
+              (+ n-byte-total
+                 (section' n-byte-section))
+              n-byte-total))
+          0
+          [funcsec
+           memsec
+           importsec
+           startsec
+           tablesec
+           typesec]))
+  
+
+;;;;;;;;;; Module
+
+
+(def magic'
+     4)
+
+
+
+(def version'
+     4)
+
 
 
 (defn module
@@ -435,6 +801,6 @@
     (assoc-in ctx-2
               [:wasm/write
                :wasm.count/module]
-              (+ magic
-                 version
+              (+ magic'
+                 version'
                  (section+ ctx-2)))))

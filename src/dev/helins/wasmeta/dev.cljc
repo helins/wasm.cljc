@@ -81,6 +81,11 @@
       ;wasm.count/importsec'
       ;:wasm/write
 
+      :wasm/codesec
+      (get 1)
+      :wasm/expr
+      (take 4)
+      wasm.count/expr'
       clojure.pprint/pprint
       )
 
@@ -136,23 +141,53 @@
 
 
   (def *reg
-       (atom {:ok (malli/-string-schema)}))
+       (atom (assoc (malli/default-schemas)
+                    :test-string (malli/-string-schema)
+                    :foo       [:int
+                                {:gen/gen (sgen/fmap (fn [x]
+                                                       (swap! *reg
+                                                              assoc
+                                                              :vecstring
+                                                              :boolean)
+                                                       (println :got x)
+                                                       x)
+                                                     (s/gen int?))}]
+                    :vecstring (malli/schema [:vector :string]))))
+
+
+  (malli/validate [:vector
+                   {:registry (malli.registry/mutable-registry (atom {:test-string (malli/-string-schema)}))}
+                   :test-string]
+                  ["ok"])
+
+                  ;{:registry (malli.registry/mutable-registry *reg)})
+
+  (malli/validate [:vector
+                 ;  {:registry (malli.registry/mutable-registry (atom {:test-string :string}))
+                   :test-string]
+                  {:registry (malli.registry/mutable-registry *reg)})
+
 
   (def sch
-       [:map
-        ;{:registry malli/default-registry
-        ;           ;(malli.registry/mutable-registry *reg)
-        ;           }
-        [:a 
-         #_{:gen/gen (sgen/fmap (fn [x]
-                                (println :x x)
-                                (str x))
-                              (s/gen int?))}
-         :int]
-        [:b :int]])
+       (malli/schema [:vector
+                      :test-string
+                      ]
+                     {:registry (malli.registry/mutable-registry *reg)}))
+
+
+
+(def registry*
+  (atom {:string (malli/-string-schema)
+         :maybe (malli/-maybe-schema)
+         :map (malli/-map-schema)}))
+
+
+  (malli/validate :foo
+                  42
+                  {:registry (malli.registry/mutable-registry *reg)})
+
        
 
-  (malli/validate [:maybe string?] "kikka" {:registry malli/default-registry})
 
   (malli/validate sch
                  {:a 42
@@ -172,7 +207,9 @@
                            [:ok 'ok]])
 
 
-  (malli.gen/generate sch
+  (malli.gen/generate [:cat :vecstring
+                            :foo
+                            :vecstring]
                       {:registry (malli.registry/mutable-registry *reg)})
   
   )
