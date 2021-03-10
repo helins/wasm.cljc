@@ -1073,7 +1073,7 @@
 
   (exportdesc' ctx
                view
-               {:wasm/export (name' view)}))
+               {:wasm/name (name' view)}))
 
 
 
@@ -1106,7 +1106,7 @@
   [ctx hmap k-space idx]
 
   (update-in ctx
-             [:wasm/export
+             [:wasm/exportsec
               k-space
               idx]
              (fnil conj

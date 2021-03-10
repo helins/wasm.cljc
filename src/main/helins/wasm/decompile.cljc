@@ -23,6 +23,10 @@
 
   {:wasm.customsec/bin wasm.read/custom-default
    :wasm/codesec       (sorted-map)
+   :wasm/exportsec     {:wasm.export/func   (sorted-map)
+                        :wasm.export/global (sorted-map)
+                        :wasm.export/mem    (sorted-map)
+                        :wasm.export/table  (sorted-map)}
    :wasm/funcidx       0
    :wasm/funcsec       (sorted-map)
    :wasm/importsec     {:wasm.import/func   (sorted-map)

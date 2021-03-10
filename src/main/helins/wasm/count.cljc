@@ -136,6 +136,14 @@
 
 
 
+(def tableidx'
+
+  ""
+
+  idx)
+
+
+
 (def typeidx'
   
   ""
@@ -557,6 +565,71 @@
     ctx))
 
 
+;;;;;;;;;; Sections / Export
+
+
+(defn export'
+
+  ""
+
+  [ctx-write space k-flatidx count-idx]
+
+  (let [count-idx-2 (comp count-idx
+                          (ctx-write k-flatidx))]
+    (reduce-kv (fn [ctx-write-2 idx name+]
+                 (let [n-byte-exportdesc (+ byte'
+                                            (count-idx-2 idx))]
+                   (reduce (fn [ctx-write-3 {buffer :wasm/name}]
+                             (let [n-byte-name (count buffer)]
+                               (update ctx-write-3
+                                       :wasm.count/exportsec
+                                       #(+ % n-byte-exportdesc
+                                           (u32 n-byte-name)
+                                           n-byte-name))))
+                           ctx-write-2
+                           name+)))
+               (update ctx-write
+                       :wasm.export/n
+                       #(+ %
+                           (count space)))
+               space)))
+
+
+
+(defn exportsec'
+
+  ""
+
+  [{:as        ctx
+    :wasm/keys [exportsec]}]
+
+  (update ctx
+          :wasm/write
+          (fn [ctx-write]
+            (let [ctx-write-2 (-> ctx-write
+                                  (assoc :wasm.count/exportsec 0
+                                         :wasm.export/n        0)
+                                  (export' (exportsec :wasm.export/func)
+                                           :wasm.flatidx/func
+                                           funcidx')
+                                  (export' (exportsec :wasm.export/global)
+                                           :wasm.flatidx/global
+                                           globalidx')
+                                  (export' (exportsec :wasm.export/mem)
+                                           :wasm.flatidx/mem
+                                           memidx')
+                                  (export' (exportsec :wasm.export/table)
+                                           :wasm.flatidx/table
+                                           tableidx'))]
+              (update ctx-write-2
+                      :wasm.count/exportsec
+                      (fn [n-byte]
+                        (if (pos? n-byte)
+                          (+ (u32 (ctx-write-2 :wasm.export/n))
+                             n-byte)
+                          0)))))))
+
+
 ;;;;;;;;;; Sections / Func
 
 
@@ -761,7 +834,8 @@
 
   [n-byte]
 
-  (if n-byte
+  (if (and n-byte
+           (pos? n-byte))
     (+ section-id
        (u32 n-byte)
        n-byte)
@@ -773,7 +847,8 @@
 
   ""
 
-  [{{:wasm.count/keys [funcsec
+  [{{:wasm.count/keys [exportsec
+                       funcsec
                        globalsec
                        importsec
                        memsec
@@ -787,7 +862,8 @@
                  (section' n-byte-section))
               n-byte-total))
           0
-          [funcsec
+          [exportsec
+           funcsec
            globalsec
            importsec
            memsec
@@ -822,6 +898,7 @@
                   tablesec'
                   memsec'
                   globalsec'
+                  exportsec'
                   startsec'
                   )]
     (assoc-in ctx-2
