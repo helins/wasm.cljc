@@ -1290,7 +1290,15 @@
 
   [view]
 
-  (into []
+  (vec' (fn [view]
+          [(u32' view)
+           (valtype' view)])
+        view)
+
+  ;; Decompressed
+  ;;
+  #_(into []
+
         (mapcat identity)
         (vec' (fn [view]
                 (repeat (u32' view)

@@ -163,6 +163,7 @@
   (func (export "local")
         (result i64)
         (local $a i64)
+        (local $b f32)
     (local.set $a
                (i64.const 42))
     (local.get $a))
