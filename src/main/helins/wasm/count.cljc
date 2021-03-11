@@ -565,6 +565,58 @@
     ctx))
 
 
+;;;;;;;;;; Sections / Elem
+
+
+(defn elemsec'
+
+  ""
+
+  [{:as        ctx
+    :wasm/keys [elemsec]}]
+
+  (if (seq elemsec)
+    (update ctx
+            :wasm/write
+            (fn [{:as           ctx-write
+                  flatidx-func  :wasm.flatidx/func
+                  flatidx-table :wasm.flatidx/table}]
+              (let [ctx-write-2 (reduce-kv (fn [ctx-write-2 tableidx elem+]
+                                             (let [n-byte-tableidx (-> tableidx
+                                                                       flatidx-table
+                                                                       tableidx')
+                                                   funcidx'2       (comp funcidx'
+                                                                         flatidx-func)
+                                                   n-elem          (count elem+)]
+                                               (reduce (fn [ctx-write-3 {:wasm/keys [funcidx+
+                                                                                     offset]}]
+                                                         (update ctx-write-3
+                                                                 :wasm.count/elemsec
+                                                                 #(+ %
+                                                                     n-byte-tableidx
+                                                                     (expr' offset)
+                                                                     (u32 n-elem)
+                                                                     (reduce (fn [sum funcidx]
+                                                                               (+ sum
+                                                                                  (funcidx'2 funcidx)))
+                                                                             0
+                                                                             funcidx+))))
+                                                       (update ctx-write-2
+                                                               :wasm.elem/n
+                                                               #(+ %
+                                                                   n-elem))
+                                                       elem+)))
+                                           (assoc ctx-write
+                                                  :wasm.count/elemsec 0
+                                                  :wasm.elem/n        0)
+                                           elemsec)]
+                (update ctx-write-2
+                        :wasm.count/elemsec
+                        #(+ (u32 (ctx-write-2 :wasm.elem/n))
+                            %)))))
+    ctx))
+
+
 ;;;;;;;;;; Sections / Export
 
 
@@ -847,7 +899,8 @@
 
   ""
 
-  [{{:wasm.count/keys [exportsec
+  [{{:wasm.count/keys [elemsec
+                       exportsec
                        funcsec
                        globalsec
                        importsec
@@ -862,7 +915,8 @@
                  (section' n-byte-section))
               n-byte-total))
           0
-          [exportsec
+          [elemsec
+           exportsec
            funcsec
            globalsec
            importsec
@@ -900,6 +954,7 @@
                   globalsec'
                   exportsec'
                   startsec'
+                  elemsec'
                   )]
     (assoc-in ctx-2
               [:wasm/write
