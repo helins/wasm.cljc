@@ -565,6 +565,70 @@
     ctx))
 
 
+;;;;;;;;; Sections / Code
+
+
+(defn locals'
+
+  [local+]
+
+  (reduce (fn [sum [n _valtype]]
+            (+ sum
+               (u32 n)
+               valtype))
+          0
+          local+))
+
+
+
+(defn func'
+
+  [{:wasm/keys [expr
+                local+]}]
+
+  (+ (u32 (count local+))
+     (locals' local+)
+     (expr' expr)))
+
+
+
+(defn code'
+
+  ""
+
+  [ctx-write code]
+
+  (let [n-byte (func' code)]
+    (-> ctx-write
+        (update :wasm.count/codesec
+                #(+ %
+                    (u32 n-byte)
+                    n-byte))
+        (update :wasm.codesec/func-size
+                conj
+                n-byte))))
+
+
+
+(defn codesec'
+
+  ""
+
+  [{:as        ctx
+    :wasm/keys [codesec]}]
+
+  (if (seq codesec)
+    (update ctx
+            :wasm/write
+            (fn [ctx-write]
+              (reduce code'
+                      (assoc ctx-write
+                             :wasm.codesec/func-size []
+                             :wasm.count/codesec     (u32 (count codesec)))
+                      (vals codesec))))
+    ctx))
+
+
 ;;;;;;;;;; Sections / Elem
 
 
@@ -899,7 +963,8 @@
 
   ""
 
-  [{{:wasm.count/keys [elemsec
+  [{{:wasm.count/keys [codesec
+                       elemsec
                        exportsec
                        funcsec
                        globalsec
@@ -915,7 +980,8 @@
                  (section' n-byte-section))
               n-byte-total))
           0
-          [elemsec
+          [codesec
+           elemsec
            exportsec
            funcsec
            globalsec
@@ -955,6 +1021,7 @@
                   exportsec'
                   startsec'
                   elemsec'
+                  codesec'
                   )]
     (assoc-in ctx-2
               [:wasm/write
