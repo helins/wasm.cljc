@@ -642,6 +642,39 @@
   view)
 
 
+;;;;;;;;;; Sections / Elem
+
+
+(defn elemsec'
+
+  ""
+
+  [view {:as        ctx
+         :wasm/keys [elemsec]}]
+
+  (when (seq elemsec)
+    (let [{:as           ctx-write
+           flatidx-func  :wasm.flatidx/func
+           flatidx-table :wasm.flatidx/table} (ctx :wasm/write)]
+      (-> view
+          (section-id wasm.bin/section-id-elem)
+          (n-byte (ctx-write :wasm.count/elemsec))
+          (u32 (ctx-write :wasm.elem/n)))
+      (doseq [[tableidx
+               elem+]   elemsec]
+        (let [tableidx-2 (flatidx-table tableidx)]
+          (doseq [{:wasm/keys [funcidx+
+                               offset]} elem+]
+            (-> view
+                (tableidx' tableidx-2)
+                (expr' offset)
+                (u32 (count funcidx+)))
+            (doseq [funcidx funcidx+]
+              (funcidx' view
+                        (flatidx-func funcidx))))))))
+  view)
+
+
 ;;;;;;;;;; Sections / Export
 
 
@@ -669,7 +702,6 @@
           n-export :wasm.export/n}      :wasm/write}]
 
   (when (pos? n-export)
-    (println :n n-export :byte n-byte-)
     (-> view
         (section-id wasm.bin/section-id-export)
         (n-byte n-byte-)
@@ -915,4 +947,5 @@
       (globalsec' ctx)
       (exportsec' ctx)
       (startsec' ctx)
+      (elemsec' ctx)
       ))
