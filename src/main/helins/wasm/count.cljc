@@ -260,10 +260,11 @@
 
 (defn block'
 
-  [opvec]
+  [flatidx opvec]
 
   (+ (blocktype' (opvec 1))
-     (instr'+ (opvec 2))
+     (instr'+ flatidx
+              (opvec 2))
      1  ;;  END
      ))
 
@@ -271,30 +272,34 @@
 
 (defn loop'
 
-  [opvec]
+  [flatidx opvec]
 
-  (block' opvec))
+  (block' flatidx
+          opvec))
 
 
 
 (defn else'
 
-  [instr+]
+  [flatidx instr+]
 
   (if (seq instr+)
     (+ 1  ;; `else` opcode
-       (instr'+ instr+))
+       (instr'+ flatidx
+                instr+))
     0))
 
 
 
 (defn if'
 
-  [opvec]
+  [flatidx opvec]
 
   (+ (blocktype' (opvec 1))
-     (instr'+ (opvec 2))
-     (else' (opvec 3))
+     (instr'+ flatidx
+              (opvec 2))
+     (else' flatidx
+            (opvec 3))
      1  ;;  END
      ))
 
@@ -302,7 +307,7 @@
 
 (defn br'
 
-  [opvec]
+  [_flatidx opvec]
 
   (labelidx' (opvec 1)))
 
@@ -310,15 +315,16 @@
 
 (defn br_if'
 
-  [opvec]
+  [_flatidx opvec]
 
-  (br' opvec))
+  (br' nil
+       opvec))
 
 
 
 (defn br_table'
 
-  [opvec]
+  [_flatidx opvec]
 
   (let [choice+ (opvec 1)]
     (+ (u32 (count choice+))
@@ -333,17 +339,19 @@
 
 (defn call'
 
-  [opvec]
+  [flatidx opvec]
 
-  (funcidx' (opvec 1)))
+  (funcidx' ((flatidx :wasm.flatidx/func)
+             (opvec 1))))
 
 
 
 (defn call_indirect'
 
-  [opvec]
+  [flatidx opvec]
 
-  (+ (typeidx' (opvec 1))
+  (+ (typeidx' ((flatidx :wasm.flatidx/type)
+                (opvec 1)))
      byte'))
 
 
@@ -354,7 +362,7 @@
 
   ""
 
-  [opvec]
+  [_flatidx opvec]
 
   (localidx' (opvec 1)))
 
@@ -364,9 +372,10 @@
 
   ""
   
-  [opvec]
+  [flatidx opvec]
 
-  (globalidx' (opvec 1)))
+  (globalidx' ((flatidx :wasm.flatidx/global)
+               (opvec 1))))
 
 
 ;;;;;;;;;; Instructions / Memory
@@ -387,7 +396,7 @@
 
   ""
 
-  [opvec]
+  [_flatidx opvec]
 
   (memarg' (rest opvec)))
 
@@ -397,9 +406,10 @@
 
   ""
 
-  [opvec]
+  [flatidx opvec]
 
-  (memidx' (opvec 1)))
+  (memidx' ((flatidx :wasm.flatidx/mem)
+            (opvec 1))))
 
 
 ;;;;;;;;;;; Numeric instructions / Constants
@@ -416,7 +426,7 @@
             f-value))
 
 
-  ([f-value opvec]
+  ([f-value _flatidx opvec]
 
    (f-value (opvec 1))))
 
@@ -428,7 +438,7 @@
 
   ""
 
-  [opvec]
+  [_flatidx opvec]
 
   (u32 (opvec 1)))
   
@@ -495,11 +505,12 @@
 
   ""
 
-  [opvec]
+  [flatidx opvec]
 
   (if-some [f (opcode->f (opvec 0))]
     (+ opcode'
-       (f opvec))
+       (f flatidx
+          opvec))
     opcode'))
 
 
@@ -508,11 +519,12 @@
 
   ""
 
-  [opvec+]
+  [flatidx opvec+]
 
   (reduce (fn [sum opvec]
             (+ sum
-               (instr' opvec)))
+               (instr' flatidx
+                       opvec)))
           0
           opvec+))
 
@@ -522,9 +534,10 @@
 
   ""
 
-  [opvec+]
+  [flatidx opvec+]
 
-  (+ (instr'+ opvec+)
+  (+ (instr'+ flatidx
+              opvec+)
      1  ;;  END
      ))
 
@@ -583,12 +596,13 @@
 
 (defn func'
 
-  [{:wasm/keys [expr
-                local+]}]
+  [flatidx {:wasm/keys [expr
+                        local+]}]
 
   (+ (u32 (count local+))
      (locals' local+)
-     (expr' expr)))
+     (expr' flatidx
+            expr)))
 
 
 
@@ -598,7 +612,8 @@
 
   [ctx-write code]
 
-  (let [n-byte (func' code)]
+  (let [n-byte (func' ctx-write
+                      code)]
     (-> ctx-write
         (update :wasm.count/codesec
                 #(+ %
@@ -658,7 +673,8 @@
                                                                  :wasm.count/elemsec
                                                                  #(+ %
                                                                      n-byte-tableidx
-                                                                     (expr' offset)
+                                                                     (expr' ctx-write
+                                                                            offset)
                                                                      (u32 n-elem)
                                                                      (reduce (fn [sum funcidx]
                                                                                (+ sum
@@ -770,10 +786,11 @@
 
 (defn global'
 
-  [global]
+  [flatidx global]
 
   (+ (globaltype' global)
-     (expr' (global :wasm/expr))))
+     (expr' flatidx
+            (global :wasm/expr))))
 
 
 
@@ -785,7 +802,8 @@
                      :wasm/globalsec
                      :wasm.flatidx/global
                      :wasm.count/globalsec
-                     global'))
+                     (partial global'
+                              (ctx :wasm/write))))
 
 
 ;;;;;;;;;; Sections / Import
@@ -980,7 +998,7 @@
                  (section' n-byte-section))
               n-byte-total))
           0
-          [codesec
+          [;codesec
            elemsec
            exportsec
            funcsec
