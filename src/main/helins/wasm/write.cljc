@@ -328,11 +328,12 @@
 
 (defn block'
 
-  [view opvec]
+  [view flatidx opvec]
 
   (-> view
       (blocktype' (opvec 1))
-      (instr'+ (opvec 2))
+      (instr'+ flatidx
+               (opvec 2))
       end'))
 
 
@@ -348,40 +349,44 @@
 
 (defn loop'
 
-  [view opvec]
+  [view flatidx opvec]
 
   (block' view
+          flatidx
           opvec))
 
 
 
 (defn else'
 
-  [view instr+]
+  [view flatidx instr+]
 
   (when (seq instr+)
     (-> view
         (binf/wr-b8 wasm.bin/else)
-        (instr'+ instr+)))
+        (instr'+ flatidx
+                 instr+)))
   view)
 
 
 
 (defn if'
 
-  [view opvec]
+  [view flatidx opvec]
 
   (-> view
       (blocktype' (opvec 1))
-      (instr'+ (opvec 2))
-      (else' (opvec 3))
+      (instr'+ flatidx
+               (opvec 2))
+      (else' flatidx
+             (opvec 3))
       end'))
 
 
 
 (defn br'
 
-  [view opvec]
+  [view _flatidx opvec]
 
   (labelidx' view
              (opvec 1)))
@@ -390,16 +395,17 @@
 
 (defn br_if'
 
-  [view opvec]
+  [view _flatidx opvec]
 
   (br' view
+       nil
        opvec))
 
 
 
 (defn br_table'
 
-  [view opvec]
+  [view _flatidx opvec]
 
   (let [choice+ (opvec 1)]
     (u32 view
@@ -413,19 +419,21 @@
 
 (defn call'
 
-  [view opvec]
+  [view flatidx opvec]
 
   (funcidx' view
-            (opvec 1)))
+            ((flatidx :wasm.flatidx/func)
+             (opvec 1))))
 
 
 
 (defn call_indirect'
 
-  [view opvec]
+  [view flatidx opvec]
 
   (-> view
-      (typeidx' (opvec 1))
+      (typeidx' ((flatidx :wasm.flatidx/type)
+                 (opvec 1)))
       (binf/wr-b8 0)))
 
 
@@ -436,7 +444,7 @@
 
   ""
 
-  [view opvec]
+  [view _flatidx opvec]
 
   (localidx' view
              (opvec 1)))
@@ -447,10 +455,11 @@
 
   ""
   
-  [view opvec]
+  [view flatidx opvec]
 
   (globalidx' view
-              (opvec 1)))
+              ((flatidx :wasm.flatidx/global)
+               (opvec 1))))
 
 
 ;;;;;;;;;; Instructions / Memory
@@ -472,7 +481,7 @@
 
   ""
 
-  [view opvec]
+  [view _flatidx opvec]
 
   (memarg' view
            (rest opvec)))
@@ -483,10 +492,11 @@
 
   ""
 
-  [view opvec]
+  [view flatidx opvec]
 
   (memidx' view
-           (opvec 1)))
+           ((flatidx :wasm.flatidx/mem')
+            (opvec 1))))
 
 
 ;;;;;;;;;;; Numeric instructions / Constants
@@ -503,7 +513,7 @@
             f-value))
 
 
-  ([f-value view opvec]
+  ([f-value view _flatidx opvec]
 
    (f-value view
             (opvec 1))))
@@ -516,7 +526,7 @@
 
   ""
 
-  [view opvec]
+  [view _flatidx opvec]
 
   (u32 view
        (opvec 1)))
@@ -584,13 +594,14 @@
 
   ""
 
-  [view opvec]
+  [view flatidx opvec]
 
   (let [opcode (opvec 0)]
     (opcode' view
              opcode)
     (when-some [f (opcode->f opcode)]
       (f view
+         flatidx
          opvec)))
   view)
 
@@ -600,10 +611,11 @@
 
   ""
 
-  [view opvec+]
+  [view flatidx opvec+]
 
   (doseq [opvec opvec+]
     (instr' view
+            flatidx
             opvec))
   view)
 
@@ -613,10 +625,11 @@
 
   ""
 
-  [view opvec+]
+  [view flatidx opvec+]
 
   (-> view
-      (instr'+ opvec+)
+      (instr'+ flatidx
+               opvec+)
       end'))
 
 
@@ -667,7 +680,8 @@
                                offset]} elem+]
             (-> view
                 (tableidx' tableidx-2)
-                (expr' offset)
+                (expr' ctx-write
+                       offset)
                 (u32 (count funcidx+)))
             (doseq [funcidx funcidx+]
               (funcidx' view
@@ -751,24 +765,29 @@
 
 (defn global'
 
-  [view global]
+  [view flatidx global]
 
   (-> view
       (globaltype' global)
-      (expr' (global :wasm/expr))))
+      (expr' flatidx
+             (global :wasm/expr))))
 
   
 
 (defn globalsec'
 
-  [view ctx]
+  [view {:as       ctx
+         ctx-write :wasm/write}]
 
   (section-externval view
                      ctx
                      :wasm/globalsec
                      wasm.bin/section-id-global
                      :wasm.count/globalsec
-                     global'))
+                     (fn [view global]
+                       (global' view
+                                ctx-write
+                                global))))
 
 
 ;;;;;;;;;; Sections / Import
