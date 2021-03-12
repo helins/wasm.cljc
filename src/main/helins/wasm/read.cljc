@@ -662,10 +662,7 @@
                             view)))))))
 
 
-;;;;;;;;;; Modules
-
-
-;;;;; Indices
+;;;;;;;;;; Indices
 
 
 (defn idx
@@ -745,29 +742,6 @@
    Defined to mimick non-terminal symbol in WASM specification."
 
   idx)
-
-
-;;;;; Sections
-
-
-(defn section'
-
-  ""
-
-  [view]
-
-  (let [id (byte' view)]
-    (when-not (wasm.bin/section-id? id)
-      (throw (ex-info (str "Unknown section ID: "
-                           id)
-                      {})))
-    (let [n-byte (u32' view)
-          start  (binf/position view)]
-      (binf/skip view
-                 n-byte)
-      {:wasm.section/id     id
-       :wasm.section/n-byte n-byte
-       :wasm.section/start  start})))
 
 
 ;;;;; Custom section
@@ -1235,20 +1209,15 @@
 
   [ctx view]
 
-  (update ctx
-          :wasm/codesec
-          (fn [codesec]
-            (let [idx-offset (count (get-in ctx
-                                            [:wasm/importsec
-                                             :wasm.import/func]))]
-              (reduce (fn [codesec-2 idx]
-                        (assoc codesec-2
-                               (+ idx-offset
-                                  idx)
-                               (code' {}
-                                      view)))
-                      codesec
-                      (range (u32' view)))))))
+  (assoc-in ctx
+            [:wasm/source
+             :wasm.source/codesec]
+            (reduce (fn [source-codesec _idx]
+                      (conj source-codesec
+                            (code' {}
+                                   view)))
+                    []
+                    (range (u32' view)))))
 
 
 
@@ -1263,7 +1232,7 @@
     (binf/skip view
                n-byte)
     (assoc hmap
-           :wasm/code
+           :wasm.codesec/view
            (binf/view view
                       start
                       n-byte))))
@@ -1274,9 +1243,7 @@
 
   ""
 
-  [{:as  hmap
-    view :wasm/code}
-   ctx]
+  [hmap ctx view]
 
   (-> hmap
       (assoc :wasm/local+ (locals' view)
@@ -1309,22 +1276,28 @@
 
 
 
-(defn codesec'-2
+(defn codesec'2
 
   ""
 
   [ctx]
 
-  (update ctx
-          :wasm/codesec
-          (fn [codesec]
-            (reduce-kv (fn [codesec-2 funcidx hmap]
-                         (assoc codesec-2
-                                funcidx
-                                (func' hmap
-                                       ctx)))
-                       (empty codesec)
-                       codesec))))
+  (let [idx-offset (or (ffirst (ctx :wasm/funcsec))
+                       (ctx :wasm/funcidx))]
+    (update ctx
+            :wasm/codesec
+            (fn [codesec]
+              (reduce-kv (fn [codesec-2 idx {:wasm.codesec/keys [view]}]
+                           (assoc codesec-2
+                                  (+ idx-offset
+                                     idx)
+                                  (func' {}
+                                         ctx
+                                         view)))
+                         codesec
+                         (get-in ctx
+                                 [:wasm/source
+                                  :wasm.source/codesec]))))))
 
 
 ;;;;; Data section
@@ -1470,3 +1443,86 @@
                                opcode)
                           {})))
         opvec))))
+
+
+;;;;;;;;;; Sections
+
+
+(defn section'
+
+  ""
+
+  [view]
+
+  (let [id (byte' view)]
+    (when-not (wasm.bin/section-id? id)
+      (throw (ex-info (str "Unknown section ID: "
+                           id)
+                      {})))
+    (let [n-byte (u32' view)
+          start  (binf/position view)]
+      (binf/skip view
+                 n-byte)
+      {:wasm.section/id    id
+       :wasm.section/view (binf/view view
+                                     start
+                                     n-byte)})))
+
+
+
+(defn section'+
+
+  ""
+
+  [ctx]
+
+  (reduce (fn [ctx-2 {:wasm.section/keys [id
+                                          view]}]
+            (if (= id
+                   wasm.bin/section-id-custom)
+              (update ctx-2
+                      :wasm.bin/customsec
+                      (fnil conj
+                            [])
+                      (customsec' ctx-2
+                                  view))
+              ((condp =
+                      id
+                  wasm.bin/section-id-type   typesec'
+                  wasm.bin/section-id-import importsec'
+                  wasm.bin/section-id-func   funcsec'
+                  wasm.bin/section-id-table  tablesec'
+                  wasm.bin/section-id-mem    memsec'
+                  wasm.bin/section-id-global globalsec'
+                  wasm.bin/section-id-export exportsec'
+                  wasm.bin/section-id-start  startsec'
+                  wasm.bin/section-id-elem   elemsec'
+                  wasm.bin/section-id-code   codesec'
+                  wasm.bin/section-id-data   datasec')
+               ctx-2
+               view)))
+          ctx
+          (get-in ctx
+                  [:wasm/source
+                   :wasm.source/section+])))
+
+;;;;;;;;;; Module
+
+
+(defn module'
+
+  ""
+
+  [ctx view]
+
+  (magic' view)
+  (-> ctx
+      (assoc :wasm/version
+             (version' view))
+      (assoc-in [:wasm/source
+                 :wasm.source/section+]
+                (loop [section+ []]
+                  (if (pos? (binf/remaining view))
+                    (recur (conj section+
+                                 (section' view)))
+                    section+)))))

@@ -9,7 +9,8 @@
 
   {:author "Adam Helinski"}
 
-  (:require #?(:clj [clojure.edn])
+  (:require [clojure.data]
+            #?(:clj [clojure.edn])
             [clojure.pprint]
             [clojure.spec.alpha     :as s]
             [clojure.spec.gen.alpha :as sgen]
@@ -18,6 +19,7 @@
             [helins.binf.int        :as binf.int]
             [helins.binf.leb128     :as binf.leb128]
             [helins.binf.string     :as binf.string]
+            [helins.wasm            :as wasm]
             [helins.wasm.bin        :as wasm.bin]
             [helins.wasm.count      :as wasm.count]
             [helins.wasm.decompile  :as wasm.decompile]
@@ -73,10 +75,12 @@
   (-> 
       (->> 
          (wasmer.module/load-source "src/wasm/test.wasm")
+         wasm/buffer->view
       ;    (wasmer.module/load-source "src/wasm/import.wasm")
       ;    (wasmer.module/load-source "src/wasm/simple.wasm")
       ;    (wasmer.module/load-source "src/wasm/export.wasm")
-           (wasm.decompile/main))
+         wasm/decompile
+           )
       ;:wasm/tablesec
       ;wasm.count/importsec'
       ;:wasm/write
@@ -91,24 +95,13 @@
       )
 
 
-  #_(->
-      (take 40
-            (seq (wasmer.module/load-source "src/wasm/import.wasm")))
-      byte-array
-      vec
-      ;wasm.decompile/main
-      ;clojure.pprint/pprint
-      )
-
-
   (-> 
       (wasmer.module/load-source "src/wasm/test.wasm")
       ;(wasmer.module/load-source "src/wasm/import.wasm")
-      wasm.decompile/main
-      wasm.count/module
-      ;:wasm/write
+      wasm/buffer->view
+      wasm/decompile
 
-      wasm.write/main
+      wasm/compile
 
       ;:wasm/write
       ;wasm.count/typesec
@@ -118,10 +111,10 @@
       ;seq
 
       binf/backing-buffer
-      wasm.decompile/main
+      wasm/buffer->view
+      wasm/decompile
       clojure.pprint/pprint
       )
-
 
 
 

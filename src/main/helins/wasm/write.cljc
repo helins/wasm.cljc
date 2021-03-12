@@ -1040,19 +1040,13 @@
 
 
 
-
-(defn main
+(defn module'
 
   ""
 
-  [ctx]
+  [view ctx]
 
-  (-> (get-in ctx
-              [:wasm/write
-               :wasm.count/module])
-      binf.buffer/alloc
-      binf/view
-      (binf/endian-set :little-endian)
+  (-> view
       magic
       (version ctx)
       (typesec ctx)
