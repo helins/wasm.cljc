@@ -14,7 +14,8 @@
             [helins.wasm.count  :as wasm.count]
             [helins.wasm.read   :as wasm.read]
             [helins.wasm.write  :as wasm.write])
-  #?(:clj (:import java.io.RandomAccessFile
+  #?(:clj (:import (java.io File
+                            RandomAccessFile)
                    java.nio.channels.FileChannel$MapMode))
   (:refer-clojure :exclude [compile]))
 
@@ -50,7 +51,7 @@
    :wasm/typesec       (sorted-map)})
 
 
-;;;;;;;;;;
+;;;;;;;;;; BinF views containing the source of a WASM module
 
 
 (defn buffer->view
@@ -75,7 +76,18 @@
                    :little-endian))
 
 
-;;;;;;;;;;
+;;;;;;;;;; Compilation
+
+
+(defn- -compile
+
+  ;;
+
+  [view ctx]
+
+  (wasm.write/module' (prepare-view view)
+                      ctx))
+
 
 
 (defn compile
@@ -85,13 +97,40 @@
   [ctx]
 
   (let [ctx-2 (wasm.count/module' ctx)]
-    (-> (get-in ctx-2
-                [:wasm/write
-                 :wasm.count/module])
-        binf.buffer/alloc
-        binf/view
-        prepare-view
-        (wasm.write/module' ctx-2))))
+    (-compile (-> (get-in ctx-2
+                          [:wasm/write
+                           :wasm.count/module])
+                  binf.buffer/alloc
+                  binf/view)
+              ctx-2)))
+
+
+
+#?(:clj (defn compile-file
+
+  ""
+
+  [ctx ^String path]
+
+  (let [ctx-2  (wasm.count/module' ctx)
+        n-byte (get-in ctx-2
+                      [:wasm/write
+                        :wasm.count/module])
+        file   (File. path)]
+    (.createNewFile file)
+    (let [raf     (RandomAccessFile. file
+                                     "rw")
+          channel (.getChannel raf)
+          mmap    (.map channel
+                        FileChannel$MapMode/READ_WRITE
+                        0
+                        n-byte)]
+      (.setLength raf
+                  n-byte)
+      (-compile mmap
+                ctx-2)
+      (.force mmap)))
+   ctx))
 
 
 ;;;;;;;;;; Decompilation

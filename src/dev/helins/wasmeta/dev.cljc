@@ -71,12 +71,16 @@
 
 
   (-> (wasm/decompile-file "src/wasm/test.wasm")
-      clojure.pprint/pprint)
+      (wasm/compile-file "/tmp/test.wasm")
+      ;(wasm/decompile-file "/tmp/test.wasm")
+      clojure.pprint/pprint
+      )
 
 
   (-> 
       (->> 
          (wasmer.module/load-source "src/wasm/test.wasm")
+         ;(wasmer.module/load-source "/tmp/test.wasm")
          wasm/buffer->view
       ;    (wasmer.module/load-source "src/wasm/import.wasm")
       ;    (wasmer.module/load-source "src/wasm/simple.wasm")
@@ -93,7 +97,7 @@
       ; (->> (take 7))
       ; wasm.count/expr'
 
-      clojure.pprint/pprint
+      ;clojure.pprint/pprint
       )
 
 
