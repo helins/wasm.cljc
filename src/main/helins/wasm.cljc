@@ -14,6 +14,8 @@
             [helins.wasm.count  :as wasm.count]
             [helins.wasm.read   :as wasm.read]
             [helins.wasm.write  :as wasm.write])
+  #?(:clj (:import java.io.RandomAccessFile
+                   java.nio.channels.FileChannel$MapMode))
   (:refer-clojure :exclude [compile]))
 
 
@@ -92,6 +94,8 @@
         (wasm.write/module' ctx-2))))
 
 
+;;;;;;;;;; Decompilation
+
 
 (defn decompile
 
@@ -111,3 +115,29 @@
        wasm.read/section'+
        wasm.read/codesec'2
        (dissoc :wasm/source))))
+
+
+
+#?(:clj (defn decompile-file
+
+  ""
+
+
+  ([path]
+
+   (decompile-file ctx
+                   path))
+
+
+  ([ctx ^String path]
+
+   (let [channel (-> (RandomAccessFile. path
+                          "r")
+                     .getChannel)]
+     (decompile ctx
+                (-> (.map channel
+                          FileChannel$MapMode/READ_ONLY
+                          0
+                          (.size channel))
+                    .load
+                    prepare-view))))))
