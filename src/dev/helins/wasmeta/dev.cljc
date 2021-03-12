@@ -22,7 +22,6 @@
             [helins.wasm            :as wasm]
             [helins.wasm.bin        :as wasm.bin]
             [helins.wasm.count      :as wasm.count]
-            [helins.wasm.decompile  :as wasm.decompile]
             [helins.wasm.ir         :as wasm.ir]
             [helins.wasm.read       :as wasm.read]
             [helins.wasm.spec       :as wasm.spec]

@@ -23,10 +23,6 @@
          elemtype'
          export'
          exportdesc'
-         exportdesc-func'
-         exportdesc-global'
-         exportdesc-mem'
-         exportdesc-table'
          expr'
          func'
          funcidx'
@@ -34,10 +30,6 @@
          globalidx'
          import'
          importdesc'
-         importdesc-func'
-         importdesc-global'
-         importdesc-mem'
-         importdesc-table'
          instr
          instr'+
          labelidx'
@@ -47,7 +39,6 @@
          memidx'
          mut'
          opcode->f
-         opcode-const->f
          s32'
          s64'
          start'
@@ -86,10 +77,7 @@
        ctx-2))))
 
 
-;;;;;;;;;; Values
-
-
-;;;;; Byte
+;;;;;;;;;; Values / Byte
 
 
 (defn byte'
@@ -100,8 +88,7 @@
 
   (binf/rr-u8 view))
 
-
-;;;;; Integers
+;;;;;;;;;; Values / Integers
 
 
 (defn i32'
@@ -174,7 +161,7 @@
   (binf.leb128/rr-u64 view))
 
 
-;;;;; Floating-Point
+;;;;;;;;;; Values / Floating-Point
 
 
 (defn f32'
@@ -196,7 +183,7 @@
   (binf/rr-f64 view))
 
 
-;;;;; Names
+;;;;;;;;;; Values / Names
 
 
 (defn name'
@@ -209,10 +196,7 @@
                   (u32' view)))
 
 
-;;;;;;;;;; Types
-
-
-;;;;; Value types
+;;;;;;;;;; Types / Value Types
 
 
 (defn -valtype
@@ -243,7 +227,7 @@
   (-valtype (byte' view)))
 
 
-;;;;; Result types
+;;;;;;;;;; Types / Result Types
 
 
 (defn resulttype'
@@ -255,20 +239,7 @@
   (not-empty (vec' valtype'
              view)))
 
-
-;;;;; Funtion types
-
-
-(defn func
-
-  ""
-
-  [hmap view]
-
-  (assoc hmap
-         :wasm/typeidx
-         (typeidx' view)))
-
+;;;;;;;;;; Types / Function Types
 
 
 (defn funcref'
@@ -298,7 +269,7 @@
    (resulttype' view)])
 
 
-;;;;; Limits
+;;;;;;;;;; Types / Limits
 
 
 (defn limits-min
@@ -344,7 +315,7 @@
        view)))
 
 
-;;;;; Memory types
+;;;;;;;;;; Types / Memory Types
 
 
 (defn memtype'
@@ -357,7 +328,7 @@
            view))
 
 
-;;;;; Table types
+;;;;;;;;;; Types / Table types
 
 
 (defn tabletype'
@@ -382,7 +353,7 @@
   (byte' view))
 
 
-;;;;; Global types
+;;;;;;;;;; Types / Global types
 
 
 (defn globaltype'
@@ -413,7 +384,7 @@
                       {})))))
 
 
-;;;;; Control instructions
+;;;;;;;;;; Instructions / Control Instructions
 
 
 (defn blocktype'
@@ -537,7 +508,7 @@
         (byte' view)))
 
 
-;;;;; Variable instructions
+;;;;;;;;;; Instructions / Variable Instructions
 
 
 (defn op-var-local
@@ -561,7 +532,7 @@
         (globalidx' view)))
 
 
-;;;;;; Memory instructions
+;;;;;;;;;; Instructions / Memory Instructions
 
 
 (defn memarg'
@@ -597,10 +568,8 @@
         (memidx' view)))
 
 
-;;;;; Numeric instructions
+;;;;;;;;;; Instructions / Numeric Instructions
 
-
-;;; Constants
 
 
 (defn op-constval
@@ -631,7 +600,7 @@
         (u32' view)))
   
 
-;;;;;
+;;;;;;;;;; Instructions / Expressions
 
 
 (defn instr'+
@@ -662,7 +631,80 @@
                             view)))))))
 
 
-;;;;;;;;;; Indices
+;;;;;;;;;; Instructions / (Gathering everything together)
+
+
+(def opcode->f
+
+  ""
+
+  {wasm.bin/block         block'
+   wasm.bin/loop-         loop'
+   wasm.bin/if-           if'
+   wasm.bin/br            br'
+   wasm.bin/br_if         br_if'
+   wasm.bin/br_table      br_table'
+   wasm.bin/call          call'
+   wasm.bin/call_indirect call_indirect'
+   wasm.bin/local-get     op-var-local
+   wasm.bin/local-set     op-var-local
+   wasm.bin/local-tee     op-var-local
+   wasm.bin/global-get    op-var-global
+   wasm.bin/global-set    op-var-global
+   wasm.bin/i32-load      op-memarg 
+   wasm.bin/i64-load      op-memarg
+   wasm.bin/f32-load      op-memarg
+   wasm.bin/f64-load      op-memarg
+   wasm.bin/i32-load8_s   op-memarg
+   wasm.bin/i32-load8_u   op-memarg
+   wasm.bin/i32-load16_s  op-memarg
+   wasm.bin/i32-load16_u  op-memarg
+   wasm.bin/i64-load8_s   op-memarg
+   wasm.bin/i64-load8_u   op-memarg
+   wasm.bin/i64-load16_s  op-memarg
+   wasm.bin/i64-load16_u  op-memarg
+   wasm.bin/i64-load32_s  op-memarg
+   wasm.bin/i64-load32_u  op-memarg
+   wasm.bin/i32-store     op-memarg
+   wasm.bin/i64-store     op-memarg
+   wasm.bin/f32-store     op-memarg
+   wasm.bin/f64-store     op-memarg
+   wasm.bin/i32-store8    op-memarg
+   wasm.bin/i32-store16   op-memarg
+   wasm.bin/i64-store8    op-memarg
+   wasm.bin/i64-store16   op-memarg
+   wasm.bin/i64-store32   op-memarg
+   wasm.bin/memory-size   op-memory
+   wasm.bin/memory-grow   op-memory
+   wasm.bin/i32-const     (op-constval i32')
+   wasm.bin/i64-const     (op-constval i64')
+   wasm.bin/f32-const     (op-constval f32')
+   wasm.bin/f64-const     (op-constval f64')
+   wasm.bin/trunc_sat     trunc_sat})
+
+
+
+(defn instr
+
+  ""
+
+  [ctx opcode view]
+
+  (let [opvec [opcode]]
+    (if-some [f (opcode->f opcode)]
+      (f opvec
+         ctx
+         view)
+      (do
+        (when-not (contains? wasm.bin/opcode->opsym
+                             opcode)
+          (throw (ex-info (str "This opcode is not a recognized instruction: "
+                               opcode)
+                          {})))
+        opvec))))
+
+
+;;;;;;;;;; Modules / Indices
 
 
 (defn idx
@@ -744,7 +786,45 @@
   idx)
 
 
-;;;;; Custom section
+;;;;;;;;;; Modules / Sections
+
+
+(defn section'
+
+  ""
+
+  [view]
+
+  (let [id (byte' view)]
+    (when-not (wasm.bin/section-id? id)
+      (throw (ex-info (str "Unknown section ID: "
+                           id)
+                      {})))
+    (let [n-byte (u32' view)
+          start  (binf/position view)]
+      (binf/skip view
+                 n-byte)
+      {:wasm.section/id    id
+       :wasm.section/view (binf/view view
+                                     start
+                                     n-byte)})))
+
+
+;;;;;;;;;; Modules / (Helpers)
+
+
+(defn func
+
+  ""
+
+  [hmap view]
+
+  (assoc hmap
+         :wasm/typeidx
+         (typeidx' view)))
+
+
+;;;;;;;;;; Modules / Custom Section
 
 
 (defn customsec'
@@ -788,7 +868,7 @@
              view))
 
 
-;;;;; Type section
+;;;;;;;;;; Modules / Type Section
 
 
 (defn typesec'
@@ -804,7 +884,7 @@
         view))
 
 
-;;;;; Import section
+;;;;;;;;;; Modules / Import Section
 
 
 (defn importsec'
@@ -832,29 +912,6 @@
 
 
 
-(defn importdesc'
-
-  ""
-
-  [ctx view hmap]
-
-  (let [type (byte' view)
-        f    (condp =
-                    type
-               wasm.bin/importdesc-func   importdesc-func'
-               wasm.bin/importdesc-table  importdesc-table'
-               wasm.bin/importdesc-mem    importdesc-mem'
-               wasm.bin/importdesc-global importdesc-global'
-               (throw (ex-info (str "Unknown type in import description: "
-                                    type)
-                               {})))]
-
-    (f ctx
-       view
-       hmap)))
-
-
-
 (defn importdesc-any
 
   ""
@@ -871,7 +928,7 @@
 
 
 
-(defn importdesc-func'
+(defn importdesc-func
 
   ""
 
@@ -885,7 +942,7 @@
 
 
 
-(defn importdesc-table'
+(defn importdesc-table
 
   ""
 
@@ -899,7 +956,7 @@
 
 
 
-(defn importdesc-mem'
+(defn importdesc-mem
 
   ""
 
@@ -913,7 +970,7 @@
 
 
 
-(defn importdesc-global'
+(defn importdesc-global
 
   ""
 
@@ -926,7 +983,29 @@
                   :wasm/globalidx))
 
 
-;;;;; Function section
+(defn importdesc'
+
+  ""
+
+  [ctx view hmap]
+
+  (let [type (byte' view)
+        f    (condp =
+                    type
+               wasm.bin/importdesc-func   importdesc-func
+               wasm.bin/importdesc-table  importdesc-table
+               wasm.bin/importdesc-mem    importdesc-mem
+               wasm.bin/importdesc-global importdesc-global
+               (throw (ex-info (str "Unknown type in import description: "
+                                    type)
+                               {})))]
+
+    (f ctx
+       view
+       hmap)))
+
+
+;;;;;;;;;; Modules / Function Section
 
 
 (defn funcsec'
@@ -943,7 +1022,7 @@
         view))
 
 
-;;;;; Table section
+;;;;;;;;;; Modules / Table Section
 
 
 (defn tablesec'
@@ -969,7 +1048,7 @@
                                    view)))
 
 
-;;;;; Memory section
+;;;;;;;;;; Modules / Memory Section
 
 
 (defn memsec'
@@ -995,7 +1074,7 @@
                                view)))
 
 
-;;;;; Global section
+;;;;;;;;;; Modules / Global section
 
 
 (defn globalsec'
@@ -1024,7 +1103,7 @@
                                           view)))))
 
 
-;;;;; Export section
+;;;;;;;;;; Modules / Export Section
 
 
 (defn exportsec'
@@ -1051,28 +1130,6 @@
 
 
 
-(defn exportdesc'
-
-  ""
-
-  [ctx view hmap]
-
-  (let [export-type (byte' view)
-        f           (condp =
-                           export-type
-                      wasm.bin/exportdesc-func   exportdesc-func'
-                      wasm.bin/exportdesc-table  exportdesc-table'
-                      wasm.bin/exportdesc-mem    exportdesc-mem'
-                      wasm.bin/exportdesc-global exportdesc-global'
-                      (throw (ex-info (str "Unknown type in export description: "
-                                           type)
-                                      {})))]
-    (f ctx
-       view
-       hmap)))
-
-
-
 (defn exportdesc-any
 
   ""
@@ -1089,7 +1146,7 @@
 
 
 
-(defn exportdesc-func'
+(defn exportdesc-func
 
   ""
 
@@ -1102,7 +1159,7 @@
 
 
 
-(defn exportdesc-table'
+(defn exportdesc-table
 
   ""
 
@@ -1115,7 +1172,7 @@
 
 
 
-(defn exportdesc-mem'
+(defn exportdesc-mem
 
   ""
 
@@ -1128,7 +1185,7 @@
 
 
 
-(defn exportdesc-global'
+(defn exportdesc-global
 
   ""
 
@@ -1140,7 +1197,29 @@
                   (globalidx' view)))
 
 
-;;;;; Start section
+
+(defn exportdesc'
+
+  ""
+
+  [ctx view hmap]
+
+  (let [export-type (byte' view)
+        f           (condp =
+                           export-type
+                      wasm.bin/exportdesc-func   exportdesc-func
+                      wasm.bin/exportdesc-table  exportdesc-table
+                      wasm.bin/exportdesc-mem    exportdesc-mem
+                      wasm.bin/exportdesc-global exportdesc-global
+                      (throw (ex-info (str "Unknown type in export description: "
+                                           type)
+                                      {})))]
+    (f ctx
+       view
+       hmap)))
+
+
+;;;;;;;;;; Modules / Start Section
 
 
 (defn startsec'
@@ -1167,7 +1246,7 @@
          (funcidx' view)))
 
 
-;;;;; Element section
+;;;;;;;;;; Modules / Element Section
 
 
 (defn elemsec'
@@ -1197,10 +1276,9 @@
                                     view)
               :wasm/funcidx+ (vec' funcidx'
                                    view)}))
-             
 
 
-;;;;; Code section
+;;;;;;;;;; Modules / Code Section
 
 
 (defn codesec'
@@ -1300,7 +1378,7 @@
                                   :wasm.source/codesec]))))))
 
 
-;;;;; Data section
+;;;;;;;;;; Modules / Data Section
 
 
 (defn datasec'
@@ -1332,7 +1410,7 @@
                                            (u32' view))}))
 
 
-;;;;; Module
+;;;;; Modules / Modules
 
 
 (defn magic'
@@ -1357,116 +1435,6 @@
   [view]
 
   (binf/rr-u32 view))
-
-
-;;;;;;;;;; All operations which needs to process more than their opsym
-
-
-(def opcode->f
-
-  ""
-
-  {wasm.bin/block         block'
-   wasm.bin/loop-         loop'
-   wasm.bin/if-           if'
-   wasm.bin/br            br'
-   wasm.bin/br_if         br_if'
-   wasm.bin/br_table      br_table'
-   wasm.bin/call          call'
-   wasm.bin/call_indirect call_indirect'
-   wasm.bin/local-get     op-var-local
-   wasm.bin/local-set     op-var-local
-   wasm.bin/local-tee     op-var-local
-   wasm.bin/global-get    op-var-global
-   wasm.bin/global-set    op-var-global
-   wasm.bin/i32-load      op-memarg 
-   wasm.bin/i64-load      op-memarg
-   wasm.bin/f32-load      op-memarg
-   wasm.bin/f64-load      op-memarg
-   wasm.bin/i32-load8_s   op-memarg
-   wasm.bin/i32-load8_u   op-memarg
-   wasm.bin/i32-load16_s  op-memarg
-   wasm.bin/i32-load16_u  op-memarg
-   wasm.bin/i64-load8_s   op-memarg
-   wasm.bin/i64-load8_u   op-memarg
-   wasm.bin/i64-load16_s  op-memarg
-   wasm.bin/i64-load16_u  op-memarg
-   wasm.bin/i64-load32_s  op-memarg
-   wasm.bin/i64-load32_u  op-memarg
-   wasm.bin/i32-store     op-memarg
-   wasm.bin/i64-store     op-memarg
-   wasm.bin/f32-store     op-memarg
-   wasm.bin/f64-store     op-memarg
-   wasm.bin/i32-store8    op-memarg
-   wasm.bin/i32-store16   op-memarg
-   wasm.bin/i64-store8    op-memarg
-   wasm.bin/i64-store16   op-memarg
-   wasm.bin/i64-store32   op-memarg
-   wasm.bin/memory-size   op-memory
-   wasm.bin/memory-grow   op-memory
-   wasm.bin/i32-const     (op-constval i32')
-   wasm.bin/i64-const     (op-constval i64')
-   wasm.bin/f32-const     (op-constval f32')
-   wasm.bin/f64-const     (op-constval f64')
-   wasm.bin/trunc_sat     trunc_sat})
-
-
-
-(def opcode-const->f
-
-  ""
-
-  (select-keys opcode->f
-               [wasm.bin/f32-const
-                wasm.bin/f64-const
-                wasm.bin/global-get
-                wasm.bin/i32-const
-                wasm.bin/i64-const]))
-
-
-
-(defn instr
-
-  ""
-
-  [ctx opcode view]
-
-  (let [opvec [opcode]]
-    (if-some [f (opcode->f opcode)]
-      (f opvec
-         ctx
-         view)
-      (do
-        (when-not (contains? wasm.bin/opcode->opsym
-                             opcode)
-          (throw (ex-info (str "This opcode is not a recognized instruction: "
-                               opcode)
-                          {})))
-        opvec))))
-
-
-;;;;;;;;;; Sections
-
-
-(defn section'
-
-  ""
-
-  [view]
-
-  (let [id (byte' view)]
-    (when-not (wasm.bin/section-id? id)
-      (throw (ex-info (str "Unknown section ID: "
-                           id)
-                      {})))
-    (let [n-byte (u32' view)
-          start  (binf/position view)]
-      (binf/skip view
-                 n-byte)
-      {:wasm.section/id    id
-       :wasm.section/view (binf/view view
-                                     start
-                                     n-byte)})))
 
 
 
@@ -1506,7 +1474,6 @@
                   [:wasm/source
                    :wasm.source/section+])))
 
-;;;;;;;;;; Module
 
 
 (defn module'

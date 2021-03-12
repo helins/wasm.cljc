@@ -13,7 +13,6 @@
             [clojure.spec.gen.alpha :as sgen]
             [helins.binf.string     :as binf.string]
             [helins.wasm.bin        :as wasm.bin]
-            [helins.wasm.decompile  :as wasm.decompile]
             [malli.core             :as malli]
             [malli.util]))
 
@@ -329,7 +328,7 @@
 
 
 
-(s/def :wasm/module
+#_(s/def :wasm/module
        (s/with-gen (s/keys :req [
                                 ;:wasm/funcidx
                                 ;:wasm/funcsec
