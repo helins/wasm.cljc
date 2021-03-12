@@ -711,15 +711,44 @@
           (n-byte (ctx-write :wasm.count/codesec))
           (u32 (count codesec)))
       (doseq [[n-byte
-               [_
-                code]]  (partition 2
+               code]  (partition 2
                                  (interleave (ctx-write :wasm.codesec/func-size)
-                                             codesec
-                                             #_(vals codesec)))]
+                                             (vals codesec)))]
         (code' view
                ctx-write
                n-byte
                code))))
+  view)
+
+
+;;;;;;;;;; Sections / Data
+
+
+(defn datasec'
+
+  ""
+
+  [view {:as        ctx
+         :wasm/keys [datasec]}]
+
+  (when (seq datasec)
+    (let [{:as         ctx-write
+           flatidx-mem :wasm.flatidx/mem} (ctx :wasm/write)]
+      (-> view
+          (section-id wasm.bin/section-id-data)
+          (n-byte (ctx-write :wasm.count/datasec))
+          (u32 (ctx-write :wasm.data/n)))
+      (doseq [[memidx
+               data+] datasec]
+        (let [memidx-2 (flatidx-mem memidx)]
+          (doseq [{:wasm/keys [data
+                               offset]} data+]
+            (-> view
+                (memidx' memidx-2)
+                (expr' ctx-write
+                       offset)
+                (u32 (count data))
+                (binf/wr-buffer data)))))))
   view)
 
 
@@ -1036,4 +1065,4 @@
       (startsec' ctx)
       (elemsec' ctx)
       (codesec' ctx)
-      ))
+      (datasec' ctx)))
