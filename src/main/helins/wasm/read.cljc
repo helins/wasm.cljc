@@ -1274,9 +1274,11 @@
 
   ""
 
-  [func ctx view]
+  [{:as  hmap
+    view :wasm/code}
+   ctx]
 
-  (-> func
+  (-> hmap
       (assoc :wasm/local+ (locals' view)
              :wasm/expr   (expr' ctx
                                  view))
@@ -1316,14 +1318,12 @@
   (update ctx
           :wasm/codesec
           (fn [codesec]
-            (reduce-kv (fn [codesec-2 funcidx {:as        hmap
-                                               :wasm/keys [code]}]
+            (reduce-kv (fn [codesec-2 funcidx hmap]
                          (assoc codesec-2
                                 funcidx
                                 (func' hmap
-                                       ctx
-                                       code)))
-                       {}
+                                       ctx)))
+                       (empty codesec)
                        codesec))))
 
 

@@ -87,11 +87,12 @@
       ; (->> (take 7))
       ; wasm.count/expr'
 
-      clojure.pprint/pprint
+      :wasm/codesec
+      ;clojure.pprint/pprint
       )
 
 
-  (->
+  #_(->
       (take 40
             (seq (wasmer.module/load-source "src/wasm/import.wasm")))
       byte-array
@@ -119,7 +120,8 @@
 
       binf/backing-buffer
       wasm.decompile/main
-      clojure.pprint/pprint
+      :wasm/codesec
+      ;clojure.pprint/pprint
       )
 
 

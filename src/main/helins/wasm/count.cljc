@@ -56,7 +56,6 @@
 
 
 
-
 (defn i32'
 
   [i32]
@@ -998,7 +997,7 @@
                  (section' n-byte-section))
               n-byte-total))
           0
-          [;codesec
+          [codesec
            elemsec
            exportsec
            funcsec

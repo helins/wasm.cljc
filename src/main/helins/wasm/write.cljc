@@ -320,9 +320,9 @@
                 wasm.bin/blocktype-nil)
     ((case (blocktype 0)
        :wasm/typeidx s33'
-       :wasm/valtype binf/wr-b8 view
+       :wasm/valtype binf/wr-b8 view)
      view
-     (blocktype 1)))))
+     (blocktype 1))))
 
 
 
@@ -655,6 +655,74 @@
   view)
 
 
+;;;;;;;;; Sections / Code
+
+
+(defn locals'
+
+  [view local+]
+
+  (doseq [[n
+           valtype] local+]
+    (-> view
+        (u32 n)
+        (valtype' valtype)))
+  view)
+
+
+
+(defn func'
+
+  [view flatidx {:wasm/keys [expr
+                             local+]}]
+
+  (-> view
+      (u32 (count local+))
+      (locals' local+)
+      (expr' flatidx
+             expr)))
+
+
+
+(defn code'
+
+  ""
+
+  [view flatidx n-byte code]
+
+  (-> view
+      (u32 n-byte)
+      (func' flatidx
+             code)))
+
+
+
+(defn codesec'
+
+  ""
+
+  [view {:as        ctx
+         :wasm/keys [codesec]}]
+
+  (when (seq codesec)
+    (let [ctx-write (ctx :wasm/write)]
+      (-> view
+          (section-id wasm.bin/section-id-code)
+          (n-byte (ctx-write :wasm.count/codesec))
+          (u32 (count codesec)))
+      (doseq [[n-byte
+               [_
+                code]]  (partition 2
+                                 (interleave (ctx-write :wasm.codesec/func-size)
+                                             codesec
+                                             #_(vals codesec)))]
+        (code' view
+               ctx-write
+               n-byte
+               code))))
+  view)
+
+
 ;;;;;;;;;; Sections / Elem
 
 
@@ -967,4 +1035,5 @@
       (exportsec' ctx)
       (startsec' ctx)
       (elemsec' ctx)
+      (codesec' ctx)
       ))
