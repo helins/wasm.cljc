@@ -76,6 +76,10 @@
       clojure.pprint/pprint
       )
 
+  (->
+      (wasm/decompile-file "/tmp/test.wasm")
+      clojure.pprint/pprint
+      )
 
   (-> 
       (->> 

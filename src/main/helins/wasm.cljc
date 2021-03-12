@@ -118,18 +118,18 @@
                         :wasm.count/module])
         file   (File. path)]
     (.createNewFile file)
-    (let [raf     (RandomAccessFile. file
-                                     "rw")
-          channel (.getChannel raf)
-          mmap    (.map channel
-                        FileChannel$MapMode/READ_WRITE
-                        0
-                        n-byte)]
-      (.setLength raf
-                  n-byte)
-      (-compile mmap
-                ctx-2)
-      (.force mmap)))
+    (with-open [raf (RandomAccessFile. file
+                                       "rw")]
+      (let [channel (.getChannel raf)
+            mmap    (.map channel
+                          FileChannel$MapMode/READ_WRITE
+                          0
+                          n-byte)]
+        (.setLength raf
+                    n-byte)
+        (-compile mmap
+                  ctx-2)
+        (.force mmap))))
    ctx))
 
 
@@ -170,13 +170,13 @@
 
   ([ctx ^String path]
 
-   (let [channel (-> (RandomAccessFile. path
-                          "r")
-                     .getChannel)]
-     (decompile ctx
-                (-> (.map channel
-                          FileChannel$MapMode/READ_ONLY
-                          0
-                          (.size channel))
-                    .load
-                    prepare-view))))))
+   (with-open [raf (RandomAccessFile. path
+                                      "r")]
+     (let [channel (.getChannel raf)]
+       (decompile ctx
+                  (-> (.map channel
+                            FileChannel$MapMode/READ_ONLY
+                            0
+                            (.size channel))
+                      .load
+                      prepare-view)))))))
