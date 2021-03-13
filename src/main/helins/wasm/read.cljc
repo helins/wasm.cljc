@@ -994,30 +994,16 @@
 
   ""
 
-  [{:as                  ctx
-    :wasm.customsec/keys [bin]}
-   view]
+  [ctx view]
 
-  (bin ctx
-       (name' view)
-       (binf/view view
-                  (binf/position view)
-                  (binf/remaining view))))
-
-
-
-(defn custom-default
-
-  ""
-
-  [ctx custom-name view]
-
-  (update-in ctx
-             [:wasm/customsec
-              custom-name]
-             (fnil conj
-                   [])
-             view))
+  (update ctx
+          :wasm/customsec
+          (fnil conj
+                [])
+          {:wasm/name (name' view)
+           :wasm/data (binf/view view
+                                 (binf/position view)
+                                 (binf/remaining view))}))
 
 
 ;;;;;;;;;; Modules / Type Section
