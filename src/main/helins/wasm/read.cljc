@@ -200,7 +200,7 @@
                   (u32' view)))
 
 
-;;;;;;;;;; Types / Reference types
+;;;;;;;;;; Types / Reference Types
 
 
 (defn reftype'
@@ -336,19 +336,9 @@
   [hmap view]
 
   (-> hmap
-      (assoc :wasm/elemtype
-             (elemtype' view))
+      (assoc :wasm/reftype
+             (reftype' view))
       (limits' view)))
-
-
-
-(defn elemtype'
-
-  ""
-
-  [view]
-
-  (byte' view))
 
 
 ;;;;;;;;;; Types / Global types

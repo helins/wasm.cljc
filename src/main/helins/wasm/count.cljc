@@ -103,7 +103,7 @@
        n-byte)))
 
 
-;;;;;;;;;; Types / Reference types
+;;;;;;;;;; Types / Reference Types
 
 
 (def reftype'
@@ -185,13 +185,8 @@
 
   [table]
 
-  (+ elemtype'
+  (+ reftype'
      (limits' table)))
-
-
-
-(def elemtype'
-     1)
 
 
 ;;;;;;;;;; Types / Global types
