@@ -21,6 +21,7 @@
 (declare code'
          dataidx'
          elemidx'
+         elemkind'2
          elemtype'
          end'
          export'
@@ -38,6 +39,21 @@
          tableidx'
          typeidx'
          u32')
+
+
+;;;;;;;;;; Conventions
+
+
+(defn vec'
+
+  [view f-item coll]
+
+  (u32' view
+        (count coll))
+  (doseq [x coll]
+    (f-item view
+            x))
+  view)
 
 
 ;;;;;;;;;; Values / Byte
@@ -135,6 +151,19 @@
 
   (binf/wr-b8 view
               reftype))
+
+
+
+(defn reftype'2
+
+  ""
+
+  [view kw-reftype]
+
+  (reftype' view
+            (case kw-reftype
+              :extern wasm.bin/externref
+              :func   wasm.bin/funcref)))
 
 
 ;;;;;;;;;; Types / Value Types
@@ -1121,21 +1150,83 @@
       (-> view
           (section-id wasm.bin/section-id-elem)
           (u32' (ctx-write :wasm.count/elemsec))
-          (u32' (ctx-write :wasm.elem/n)))
-      (doseq [[tableidx
-               elem+]   elemsec]
-        (let [tableidx-2 (flatidx-table tableidx)]
-          (doseq [{:wasm/keys [funcidx+
-                               offset]} elem+]
-            (-> view
-                (tableidx' tableidx-2)
-                (expr' ctx-write
-                       offset)
-                (u32' (count funcidx+)))
-            (doseq [funcidx funcidx+]
-              (funcidx' view
-                        (flatidx-func funcidx))))))))
+          (u32' (count elemsec)))
+      (doseq [{:wasm/keys      [offset
+                                tableidx]
+               :wasm.elem/keys [mode]
+               etype           :wasm.elem/type
+               eresolve        :wasm.elem/resolve
+               evec            :wasm.elem/vec}    (vals elemsec)]
+        (let [idx? (= eresolve
+                      :idx)
+              flag (if offset  ;;  meaning it is active
+                     (if tableidx
+                       (if idx?
+                         0x02
+                         0x06)
+                       (if idx?
+                         0x00
+                         0x04))
+                     (if (= mode
+                            :declarative)
+                       (if idx?
+                         0x03
+                         0x07)
+                       (if idx
+                         0x01
+                         0x05)))]
+          (byte' view
+                 flag)
+          (when offset
+            (when tableidx
+              (tableidx' view
+                         (flatidx-table tableidx)))
+            (expr' view
+                   ctx-write
+                   offset))
+          (when (and (not= flag
+                           0x00)
+                     (not= flag
+                           0x04))
+            ((if idx?
+               reftype'2
+               elemkind'2)
+             view
+             etype))
+          (vec' view
+                (if idx?
+                  (fn [view funcidx]
+                    (funcidx' view
+                              (flatidx-func funcidx)))
+                  (fn [view expr]
+                    (expr' view
+                           ctx-write
+                           expr)))
+                evec)))))
   view)
+
+
+
+(defn elemkind'
+
+  ""
+
+  [view elemkind]
+
+  (binf/wr-b8 view
+              elemkind))
+
+
+
+(defn elemkind'2
+
+  ""
+
+  [view kw-elemkind]
+
+  (elemkind' view
+             (case kw-elemkind
+               :func wasm.bin/elemkind-funcref)))
 
 
 ;;;;;;;;;; Modules / Code Section

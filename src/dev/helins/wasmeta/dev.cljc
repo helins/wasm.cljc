@@ -70,7 +70,7 @@
 
 
   (-> (wasm/decompile-file "src/wasm/test.wasm")
-      ;(wasm/compile-file "/tmp/test.wasm")
+      (wasm/compile-file "/tmp/test.wasm")
       ;(wasm/decompile-file "/tmp/test.wasm")
       clojure.pprint/pprint
       )
