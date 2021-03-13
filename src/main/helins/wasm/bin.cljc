@@ -51,6 +51,9 @@
    0x23 'global.get
    0x24 'global.set
 
+   0x25 'table.get
+   0x26 'table.set
+
    ;;;; [0x25, 0x27] is reserved
 
    0x28 'i32.load
@@ -247,7 +250,12 @@
          0x09 'data.drop
          0x0A 'memory.copy
          0x0B 'memory.fill
-         }
+         0x0C 'table.init
+         0x0D 'elem.drop
+         0x0E 'table.copy
+         0x0F 'table.grow
+         0x10 'table.size
+         0x11 'table.fill}
 
    ;;;; [0xFD, 0xFF] is undefined
    })
@@ -404,6 +412,33 @@
 (def global-set
      0x24)
 
+
+;;;;;;;;;; Instructions / Table Instructions
+
+
+(def table-get
+     0x25)
+
+(def table-set
+     0x26)
+
+(def table-init
+     0x0C)
+
+(def elem-drop
+     0x0D)
+
+(def table-copy
+     0x0E)
+
+(def table-grow
+     0x0F)
+
+(def tabler-size
+     0x10)
+
+(def table-fill
+     0x11)
 
 ;;;;;;;;;; Instructions / Memory Instructions
 
