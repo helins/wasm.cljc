@@ -453,7 +453,7 @@
 (def table-grow
      0x0F)
 
-(def tabler-size
+(def table-size
      0x10)
 
 (def table-fill

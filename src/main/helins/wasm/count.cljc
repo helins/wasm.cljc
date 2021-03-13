@@ -15,6 +15,8 @@
 
 
 (declare code'
+         dataidx'
+         elemidx'
          elemtype'
          export'
          func'
@@ -26,6 +28,7 @@
          localidx'
          locals'
          memidx'
+         tableidx'
          typeidx')
 
 
@@ -98,6 +101,13 @@
   (let [n-byte (count buffer)]
     (+ (u32' n-byte)
        n-byte)))
+
+
+;;;;;;;;;; Types / Reference types
+
+
+(def reftype'
+     1)
 
 
 ;;;;;;;;;; Types / Value Types
@@ -306,6 +316,38 @@
      byte'))
 
 
+
+;;;;;;;;; Instructions / Reference Instructions
+
+
+(defn ref-null'
+
+  [_flatidx _opvec]
+
+  reftype')
+
+
+
+(defn ref-func'
+
+  [flatidx opvec]
+
+  (funcidx' ((flatidx :wasm.flatidx/funcidx)
+             (opvec 1))))
+
+
+;;;;;;;;;; Instructions / Parametric Instructions
+
+
+(defn select-t'
+
+  [_flatidx opvec]
+
+  (let [n-valtype (count (opvec 1))]
+    (+ (u32' n-valtype)
+       n-valtype)))
+
+
 ;;;;;;;;;; Instructions / Variable Instructions
 
 
@@ -327,6 +369,66 @@
 
   (globalidx' ((flatidx :wasm.flatidx/global)
                (opvec 1))))
+
+
+;;;;;;;;;; Instructions / Table Instructions
+
+
+(defn op-table
+
+  "Table instruction involving a table index immediate."
+
+  [flatidx opvec]
+
+  (tableidx' ((flatidx :wasm.flatidx/table)
+              (opvec 1))))
+
+
+
+(defn op-table-misc
+
+  ""
+
+  [flatidx opvec]
+
+  (tableidx' ((flatidx :wasm.flatidx/table)
+              (opvec 2))))
+
+
+
+(defn table-init'
+
+  ""
+
+  [flatidx opvec]
+
+  (+ (elemidx' ((flatidx :wasm.flatidx/elem)
+                (opvec 2)))
+     (tableidx' ((flatidx :wasm.flatidx/table)
+                 (opvec 3)))))
+
+
+
+(defn elem-drop'
+
+  ""
+
+  [flatidx opvec]
+
+  (elemidx' ((flatidx :wasm.flatidx/elem)
+             (opvec 2))))
+
+
+
+(defn table-copy'
+
+  ""
+
+  [flatidx opvec]
+  
+  (let [flatidx-table (flatidx :wasm.flatidx/table)]
+    (+ (tableidx' (flatidx-table (opvec 2)))
+       (tableidx' (flatidx-table (opvec 3))))))
 
 
 ;;;;;;;;;; Instructions / Memory Instructions
@@ -363,6 +465,50 @@
             (opvec 1))))
 
 
+
+(defn memory-init'
+
+  ""
+
+  [flatidx opvec]
+
+  (+ (dataidx' ((flatidx :wasm.flatidx/data)
+                (opvec 2)))
+     byte'))
+
+
+
+(defn data-drop'
+
+  ""
+
+  [flatidx opvec]
+
+  (dataidx' ((flatidx :wasm.flatidx/data)
+             (opvec 2))))
+
+
+
+(defn memory-copy'
+
+  ""
+
+  [_flatidx _opvec]
+
+  (* 2
+     byte'))
+
+
+
+(defn memory-fill'
+
+  ""
+
+  [_flatidx _opvec]
+
+  byte')
+
+
 ;;;;;;;;;; Instructions / Numeric Instructions
 
 
@@ -382,16 +528,6 @@
    (f-value (opvec 1))))
 
 
-
-(defn trunc_sat
-
-  ""
-
-  [_flatidx opvec]
-
-  (u32' (opvec 1)))
-  
-
 ;;;;;;;;;; Instructions / Expressions
 
 
@@ -400,7 +536,7 @@
 
 
 
-(def opcode->f
+(def op-main->f
 
   ""
 
@@ -412,11 +548,16 @@
    wasm.bin/br_table      br_table'
    wasm.bin/call          call'
    wasm.bin/call_indirect call_indirect'
+   wasm.bin/ref-null      ref-null'
+   wasm.bin/ref-func      ref-func'
+   wasm.bin/select-t      select-t'
    wasm.bin/local-get     op-var-local
    wasm.bin/local-set     op-var-local
    wasm.bin/local-tee     op-var-local
    wasm.bin/global-get    op-var-global
    wasm.bin/global-set    op-var-global
+   wasm.bin/table-get     op-table
+   wasm.bin/table-set     op-table
    wasm.bin/i32-load      op-memarg 
    wasm.bin/i64-load      op-memarg
    wasm.bin/f32-load      op-memarg
@@ -445,9 +586,24 @@
    wasm.bin/i32-const     (op-constval i32')
    wasm.bin/i64-const     (op-constval i64')
    wasm.bin/f32-const     (op-constval f32')
-   wasm.bin/f64-const     (op-constval f64')
+   wasm.bin/f64-const     (op-constval f64')})
 
-   wasm.bin/misc     trunc_sat})
+
+
+(def op-misc->f
+
+  ""
+
+  {wasm.bin/memory-init memory-init'
+   wasm.bin/data-drop   data-drop'
+   wasm.bin/memory-copy memory-copy'
+   wasm.bin/memory-fill memory-fill'
+   wasm.bin/table-init  table-init'
+   wasm.bin/elem-drop   elem-drop'
+   wasm.bin/table-copy  table-copy'
+   wasm.bin/table-grow  op-table-misc
+   wasm.bin/table-size  op-table-misc
+   wasm.bin/table-fill  op-table-misc})
 
 
 
@@ -457,11 +613,33 @@
 
   [flatidx opvec]
 
-  (if-some [f (opcode->f (opvec 0))]
-    (+ opcode'
-       (f flatidx
-          opvec))
-    opcode'))
+  (let [opcode (opvec 0)]
+    (if (= opcode
+           wasm.bin/misc)
+      (let [opcode-2 (opvec 1)]
+        (if-some [f-2 (op-misc->f opcode-2)]
+          (f-2 flatidx
+               opvec)
+            (do
+              (when-not (contains? wasm.bin/opcode-misc->opsym
+                                   opcode-2)
+                (throw (ex-info (str "Unknown immediate to miscellaneous opcode: "
+                                   opcode-2)
+                              {})))
+              (+ opcode'
+                 (u32' opcode-2)))))
+      (if-some [f (op-main->f opcode)]
+        (+ opcode'
+           (f flatidx
+              opvec))
+        (do
+          (when-not (contains? wasm.bin/opcode-main->opsym
+                               opcode)
+            (throw (ex-info (str "Unknown opcode: "
+                                 opvec
+                                 opcode)
+                            {})))
+          opcode')))))
 
 
 
@@ -503,39 +681,17 @@
 
 
 
+(def typeidx'
+
+  "Alias to [[idx]]."
+
+  idx)
+
+
+
 (def funcidx'
 
-  ""
-
-  idx)
-
-
-
-(def globalidx'
-
-  ""
-
-  idx)
-
-
-
-(def labelidx'
-
-  ""
-
-  idx)
-
-
-(def localidx'
-
-  ""
-
-  idx)
-
-
-(def memidx'
-
-  ""
+  "Alias to [[idx]]."
 
   idx)
 
@@ -543,15 +699,55 @@
 
 (def tableidx'
 
-  ""
+  "Alias to [[idx]]."
 
   idx)
 
 
 
-(def typeidx'
-  
-  ""
+(def memidx'
+
+  "Alias to [[idx]]."
+
+  idx)
+
+
+
+(def globalidx'
+
+  "Alias to [[idx]]."
+
+  idx)
+
+
+
+(def elemidx'
+
+  "Alias to [[idx]]."
+
+  idx)
+
+
+
+(def dataidx'
+
+  "Alias to [[idx]]."
+
+  idx)
+
+
+
+(def localidx'
+
+  "Alias to [[idx]]."
+
+  idx)
+
+
+
+(def labelidx'
+
+  "Alias to [[idx]]."
 
   idx)
 

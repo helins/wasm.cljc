@@ -635,7 +635,7 @@
 
 
 
-(defn op-memory-main
+(defn op-memory
 
   ""
 
@@ -711,19 +711,6 @@
          (const view))))
 
 
-;;;;;;;;;; Instructions / (Miscellaneous)
-
-
-(defn misc
-
-  ""
-
-  [opvec _ctx view]
-
-  (conj opvec
-        (u32' view)))
-  
-
 ;;;;;;;;;; Instructions / Expressions
 
 
@@ -772,8 +759,8 @@
    wasm.bin/i64-store8    op-memarg
    wasm.bin/i64-store16   op-memarg
    wasm.bin/i64-store32   op-memarg
-   wasm.bin/memory-size   op-memory-main
-   wasm.bin/memory-grow   op-memory-main
+   wasm.bin/memory-size   op-memory
+   wasm.bin/memory-grow   op-memory
    wasm.bin/i32-const     (op-constval i32')
    wasm.bin/i64-const     (op-constval i64')
    wasm.bin/f32-const     (op-constval f32')
@@ -785,16 +772,16 @@
 
   ""
 
-  {0x08 memory-init'
-   0x09 data-drop'
-   0x0A memory-copy'
-   0x0B memory-fill'
-   0x0C table-init'
-   0x0D elem-drop'
-   0x0E table-copy'
-   0x0F op-table
-   0x10 op-table 
-   0x11 op-table})
+  {wasm.bin/memory-init memory-init'
+   wasm.bin/data-drop   data-drop'
+   wasm.bin/memory-copy memory-copy'
+   wasm.bin/memory-fill memory-fill'
+   wasm.bin/table-init  table-init'
+   wasm.bin/elem-drop   elem-drop'
+   wasm.bin/table-copy  table-copy'
+   wasm.bin/table-grow  op-table
+   wasm.bin/table-size  op-table 
+   wasm.bin/table-fill  op-table})
 
 
 
@@ -929,6 +916,8 @@
   "Alias to [[idx]]."
 
   idx)
+
+
 
 (def localidx'
 
