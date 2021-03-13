@@ -18,12 +18,27 @@
             [helins.wasm.ir     :as wasm.ir]))
 
 
-(declare end'
+(declare code'
+         elemtype'
+         end'
+         export'
+         func'
+         funcidx'
+         global'
+         globalidx'
+         import'+
          instr'+
-         u32)
+         labelidx'
+         locals'
+         localidx'
+         memidx'
+         mut'
+         tableidx'
+         typeidx'
+         u32')
 
 
-;;;;;;;;;; Values
+;;;;;;;;;; Values / Byte
 
 
 (defn byte'
@@ -34,23 +49,7 @@
               b8))
 
 
-
-(defn f32'
-
-  [view f32]
-
-  (binf/wr-f32 view
-               f32))
-
-
-
-(defn f64'
-
-  [view f64]
-
-  (binf/wr-f64 view
-               f64))
-
+;;;;;;;;;; Values / Integers
 
 
 (defn i32'
@@ -71,18 +70,6 @@
 
 
 
-(defn name'
-
-  ""
-
-  [view buffer]
-
-  (-> view
-      (u32 (count buffer))
-      (binf/wr-buffer buffer)))
-
-
-
 (defn s33'
 
   [view s33]
@@ -93,7 +80,7 @@
 
 
 
-(defn u32
+(defn u32'
 
   [view u32]
 
@@ -101,107 +88,41 @@
                       u32))
 
 
-;;;;;;;;;; Indices
+;;;;;;;;;; Values / Floating-Point
 
 
-(defn idx
+(defn f32'
 
-  ""
+  [view f32]
 
-  [view idx]
-
-  (u32 view
-       idx))
-
-
-
-(def funcidx'
-
-  ""
-
-  idx)
+  (binf/wr-f32 view
+               f32))
 
 
 
-(def globalidx'
+(defn f64'
 
-  ""
+  [view f64]
 
-  idx)
+  (binf/wr-f64 view
+               f64))
 
 
+;;;;;;;;;; Values / Names
 
-(def labelidx'
+
+(defn name'
 
   ""
 
-  idx)
+  [view buffer]
+
+  (-> view
+      (u32' (count buffer))
+      (binf/wr-buffer buffer)))
 
 
-
-(def localidx'
-
-  ""
-
-  idx)
-
-
-
-(def memidx'
-
-  ""
-
-  idx)
-
-
-(def tableidx'
-
-  ""
-
-  idx)
-
-
-(def typeidx'
-
-  ""
-
-  idx)
-
-
-;;;;;;;;;;
-
-
-(defn n-byte
-
-  ""
-
-  [view n-byte]
-
-  (u32 view
-       n-byte))
-
-
-
-(defn section-id
-
-  [view section-id]
-
-  (binf/wr-b8 view
-              section-id))
-
-
-;;;;;;;;;; Types
-
-
-(defn func
-
-  ""
-
-  [view flatidx-type {:wasm/keys [typeidx]}]
-
-  (typeidx' view
-            (flatidx-type typeidx)))
-
+;;;;;;;;;; Types / Value Types
 
 
 (defn valtype'
@@ -214,8 +135,10 @@
               vt))
 
 
+;;;;;;;;;; Types / Result Types
 
-(defn resulttype
+
+(defn resulttype'
 
   ""
 
@@ -229,27 +152,72 @@
   view)
 
 
+;;;;;;;;;; Types / Function Types
 
-(defn functype
+
+(defn functype'
 
   [view [param+ result+]]
 
   (-> view
       (binf/wr-b8 0x60)
-      (resulttype param+)
-      (resulttype result+)))
+      (resulttype' param+)
+      (resulttype' result+)))
+
+
+;;;;;;;;;; Types / Limits
+
+
+(defn limits'
+
+  ""
+
+  [view {min- :wasm.limit/min
+         max- :wasm.limit/max}]
+
+  (if max-
+    (-> view
+        (binf/wr-b8 wasm.bin/limits-minmax)
+        (u32' min-)
+        (u32' max-))
+    (-> view
+        (binf/wr-b8 wasm.bin/limits-min)
+        (u32' min-))))
+
+
+;;;;;;;;;; Types / Memory Types
+
+
+(defn memtype'
+
+  [view hmap]
+
+  (limits' view
+           hmap))
+
+
+;;;;;;;;;; Types / Table types
+
+
+(defn tabletype'
+
+  [view hmap]
+
+  (-> view
+      (elemtype' (hmap :wasm/elemtype))
+      (limits' hmap)))
 
 
 
-(defn mut'
+(defn elemtype'
 
-  [view mutable?]
+  [view elemtype]
 
   (binf/wr-b8 view
-              (if mutable?
-                wasm.bin/mut-var
-                wasm.bin/mut-const)))
+              elemtype))
 
+
+;;;;;;;;;; Types / Global types
 
 
 (defn globaltype'
@@ -263,52 +231,17 @@
 
 
 
-(defn limits'
+(defn mut'
 
-  ""
-
-  [view {min- :wasm.limit/min
-         max- :wasm.limit/max}]
-
-  (if max-
-    (-> view
-        (binf/wr-b8 wasm.bin/limits-minmax)
-        (u32 min-)
-        (u32 max-))
-    (-> view
-        (binf/wr-b8 wasm.bin/limits-min)
-        (u32 min-))))
-
-
-
-(defn memtype'
-
-  [view hmap]
-
-  (limits' view
-           hmap))
-
-
-
-(defn elemtype'
-
-  [view elemtype]
+  [view mutable?]
 
   (binf/wr-b8 view
-              elemtype))
+              (if mutable?
+                wasm.bin/mut-var
+                wasm.bin/mut-const)))
 
 
-
-(defn tabletype'
-
-  [view hmap]
-
-  (-> view
-      (elemtype' (hmap :wasm/elemtype))
-      (limits' hmap)))
-
-
-;;;;;;;;;; Instructions - Control
+;;;;;;;;;; Instructions / Control Instructions
 
 
 (defn blocktype'
@@ -408,8 +341,8 @@
   [view _flatidx opvec]
 
   (let [choice+ (opvec 1)]
-    (u32 view
-         (count choice+))
+    (u32' view
+          (count choice+))
     (doseq [labelidx choice+]
       (labelidx' view
                  labelidx))
@@ -437,7 +370,7 @@
       (binf/wr-b8 0)))
 
 
-;;;;;;;;;; Instructions / Variables
+;;;;;;;;;; Instructions / Variable Instructions
 
 
 (defn op-var-local
@@ -462,7 +395,7 @@
                (opvec 1))))
 
 
-;;;;;;;;;; Instructions / Memory
+;;;;;;;;;; Instructions / Memory Instructions
 
 
 (defn memarg'
@@ -472,8 +405,8 @@
   [view [align offset]]
 
   (-> view
-      (u32 align)
-      (u32 offset)))
+      (u32' align)
+      (u32' offset)))
 
 
 
@@ -499,7 +432,7 @@
             (opvec 1))))
 
 
-;;;;;;;;;;; Numeric instructions / Constants
+;;;;;;;;;; Instructions / Numeric Instructions
 
 
 (defn op-constval
@@ -519,8 +452,6 @@
             (opvec 1))))
 
 
-;;;;;;;;;;; Numeric instructions / Saturated truncation
-
 
 (defn trunc_sat
 
@@ -528,11 +459,11 @@
 
   [view _flatidx opvec]
 
-  (u32 view
-       (opvec 1)))
+  (u32' view
+        (opvec 1)))
   
 
-;;;;;;;;;; Instructions / Registry
+;;;;;;;;;; Instructions / Expressions
 
 
 (def opcode'
@@ -633,7 +564,96 @@
       end'))
 
 
-;;;;;;;;;; Sections / Helper
+;;;;;;;;;; Modules / Indices
+
+
+(defn idx
+
+  ""
+
+  [view idx]
+
+  (u32' view
+        idx))
+
+
+
+(def funcidx'
+
+  ""
+
+  idx)
+
+
+
+(def globalidx'
+
+  ""
+
+  idx)
+
+
+
+(def labelidx'
+
+  ""
+
+  idx)
+
+
+
+(def localidx'
+
+  ""
+
+  idx)
+
+
+
+(def memidx'
+
+  ""
+
+  idx)
+
+
+(def tableidx'
+
+  ""
+
+  idx)
+
+
+(def typeidx'
+
+  ""
+
+  idx)
+
+
+;;;;;;;;;; Modules / Sections
+
+
+(defn section-id
+
+  [view section-id]
+
+  (binf/wr-b8 view
+              section-id))
+
+
+;;;;;;;;;; Sections / (Helpers)
+
+
+(defn func
+
+  ""
+
+  [view flatidx-type {:wasm/keys [typeidx]}]
+
+  (typeidx' view
+            (flatidx-type typeidx)))
+
 
 
 (defn section-externval
@@ -645,198 +665,94 @@
   (when-some [section (not-empty (ctx k-section))]
     (-> view
         (section-id bin-section-id)
-        (n-byte (get-in ctx
+        (u32' (get-in ctx
                         [:wasm/write
                          k-count]))
-        (u32 (count section)))
+        (u32' (count section)))
     (doseq [item (vals section)]
       (compile-item view
                     item)))
   view)
 
 
-;;;;;;;;; Sections / Code
+;;;;;;;;;; Modules / Type Section
 
 
-(defn locals'
+(defn typesec'
 
-  [view local+]
+  ""
 
-  (doseq [[n
-           valtype] local+]
+  [view {:as        ctx
+         :wasm/keys [typesec]}]
+
+  (when (seq typesec)
     (-> view
-        (u32 n)
-        (valtype' valtype)))
+        (section-id wasm.bin/section-id-type)
+        (u32' (get-in ctx
+                      [:wasm/write
+                       :wasm.count/typesec]))
+        (u32' (count typesec)))
+    (doseq [signature (map :wasm/signature
+                           (vals typesec))]
+      (functype' view
+                 signature)))
   view)
 
 
-
-(defn func'
-
-  [view flatidx {:wasm/keys [expr
-                             local+]}]
-
-  (-> view
-      (u32 (count local+))
-      (locals' local+)
-      (expr' flatidx
-             expr)))
+;;;;;;;;;; Modules / Import Section
 
 
-
-(defn code'
+(defn importsec'
 
   ""
 
-  [view flatidx n-byte code]
+  [view {:wasm/keys                          [importsec]
+         {flatidx-type :wasm.flatidx/type
+          n-byte-      :wasm.count/importsec
+          n-import     :wasm.import/n}       :wasm/write}]
 
-  (-> view
-      (u32 n-byte)
-      (func' flatidx
-             code)))
-
-
-
-(defn codesec'
-
-  ""
-
-  [view {:as        ctx
-         :wasm/keys [codesec]}]
-
-  (when (seq codesec)
-    (let [ctx-write (ctx :wasm/write)]
-      (-> view
-          (section-id wasm.bin/section-id-code)
-          (n-byte (ctx-write :wasm.count/codesec))
-          (u32 (count codesec)))
-      (doseq [[n-byte
-               code]  (partition 2
-                                 (interleave (ctx-write :wasm.codesec/func-size)
-                                             (vals codesec)))]
-        (code' view
-               ctx-write
-               n-byte
-               code))))
-  view)
-
-
-;;;;;;;;;; Sections / Data
-
-
-(defn datasec'
-
-  ""
-
-  [view {:as        ctx
-         :wasm/keys [datasec]}]
-
-  (when (seq datasec)
-    (let [{:as         ctx-write
-           flatidx-mem :wasm.flatidx/mem} (ctx :wasm/write)]
-      (-> view
-          (section-id wasm.bin/section-id-data)
-          (n-byte (ctx-write :wasm.count/datasec))
-          (u32 (ctx-write :wasm.data/n)))
-      (doseq [[memidx
-               data+] datasec]
-        (let [memidx-2 (flatidx-mem memidx)]
-          (doseq [{:wasm/keys [data
-                               offset]} data+]
-            (-> view
-                (memidx' memidx-2)
-                (expr' ctx-write
-                       offset)
-                (u32 (count data))
-                (binf/wr-buffer data)))))))
-  view)
-
-
-;;;;;;;;;; Sections / Elem
-
-
-(defn elemsec'
-
-  ""
-
-  [view {:as        ctx
-         :wasm/keys [elemsec]}]
-
-  (when (seq elemsec)
-    (let [{:as           ctx-write
-           flatidx-func  :wasm.flatidx/func
-           flatidx-table :wasm.flatidx/table} (ctx :wasm/write)]
-      (-> view
-          (section-id wasm.bin/section-id-elem)
-          (n-byte (ctx-write :wasm.count/elemsec))
-          (u32 (ctx-write :wasm.elem/n)))
-      (doseq [[tableidx
-               elem+]   elemsec]
-        (let [tableidx-2 (flatidx-table tableidx)]
-          (doseq [{:wasm/keys [funcidx+
-                               offset]} elem+]
-            (-> view
-                (tableidx' tableidx-2)
-                (expr' ctx-write
-                       offset)
-                (u32 (count funcidx+)))
-            (doseq [funcidx funcidx+]
-              (funcidx' view
-                        (flatidx-func funcidx))))))))
-  view)
-
-
-;;;;;;;;;; Sections / Export
-
-
-(defn export'
-
-  [view space flatidx bin-export-type compile-idx]
-
-  (doseq [[idx
-           name+] space]
-    (let [idx-2 (flatidx idx)]
-      (doseq [{buffer :wasm/name} name+]
-        (-> view
-            (name' buffer)
-            (binf/wr-b8 bin-export-type)
-            (compile-idx idx-2)))))
-  view)
-
-
-
-(defn exportsec'
-
-  [view {:wasm/keys                     [exportsec]
-         {:as      ctx-write
-          n-byte-  :wasm.count/exportsec
-          n-export :wasm.export/n}      :wasm/write}]
-
-  (when (pos? n-export)
+  (when (pos? n-byte-)
     (-> view
-        (section-id wasm.bin/section-id-export)
-        (n-byte n-byte-)
-        (u32 n-export)
-        (export' (exportsec :wasm.export/func)
-                 (ctx-write :wasm.flatidx/func)
-                 wasm.bin/exportdesc-func
-                 funcidx')
-        (export' (exportsec :wasm.export/global)
-                 (ctx-write :wasm.flatidx/global)
-                 wasm.bin/exportdesc-global
-                 globalidx')
-        (export' (exportsec :wasm.export/mem)
-                 (ctx-write :wasm.flatidx/mem)
-                 wasm.bin/exportdesc-mem
-                 memidx')
-        (export' (exportsec :wasm.export/table)
-                 (ctx-write :wasm.flatidx/table)
-                 wasm.bin/exportdesc-table
-                 tableidx')))
+        (section-id wasm.bin/section-id-import)
+        (u32' n-byte-)
+        (u32' n-import)
+        (import'+ (importsec :wasm.import/func)
+                  wasm.bin/importdesc-func
+                  (fn [view hmap]
+                    (func view
+                          flatidx-type
+                          hmap)))
+        (import'+ (importsec :wasm.import/global)
+                  wasm.bin/importdesc-global
+                  globaltype')
+        (import'+ (importsec :wasm.import/mem)
+                  wasm.bin/importdesc-mem
+                  memtype')
+        (import'+ (importsec :wasm.import/table)
+                  wasm.bin/importdesc-table
+                  tabletype')))
   view)
 
 
-;;;;;;;;;; Sections / Func
+
+(defn import'+
+
+  ""
+
+  [view space import-type f]
+
+  (doseq [{:as           hmap
+           buffer-module :wasm.import/module
+           buffer-name   :wasm.import/name}  (vals space)]
+    (-> view
+        (name' buffer-module)
+        (name' buffer-name)
+        (binf/wr-b8 import-type)
+        (f hmap)))
+  view)
+
+
+;;;;;;;;;; Modules / Function Section
 
 
 (defn funcsec'
@@ -857,19 +773,38 @@
                                item)))))
 
 
-;;;;;;;;;; Sections / Global
+;;;;;;;;;; Modules / Table Section
 
 
-(defn global'
+(defn tablesec'
 
-  [view flatidx global]
+  [view ctx]
 
-  (-> view
-      (globaltype' global)
-      (expr' flatidx
-             (global :wasm/expr))))
+  (section-externval view
+                     ctx
+                     :wasm/tablesec
+                     wasm.bin/section-id-table
+                     :wasm.count/tablesec
+                     tabletype'))
 
-  
+
+;;;;;;;;;; Modules / Memory Section
+
+
+(defn memsec'
+
+  [view ctx]
+
+  (section-externval view
+                     ctx
+                     :wasm/memsec
+                     wasm.bin/section-id-mem
+                     :wasm.count/memsec
+                     memtype'))
+
+
+;;;;;;;;;; Modules / Global section
+
 
 (defn globalsec'
 
@@ -887,75 +822,68 @@
                                 global))))
 
 
-;;;;;;;;;; Sections / Import
+
+(defn global'
+
+  [view flatidx global]
+
+  (-> view
+      (globaltype' global)
+      (expr' flatidx
+             (global :wasm/expr))))
 
 
-(defn import'+
+;;;;;;;;;; Modules / Export Section
 
-  ""
 
-  [view space import-type f]
+(defn exportsec'
 
-  (doseq [{:as           hmap
-           buffer-module :wasm.import/module
-           buffer-name   :wasm.import/name}  (vals space)]
+  [view {:wasm/keys                     [exportsec]
+         {:as      ctx-write
+          n-byte-  :wasm.count/exportsec
+          n-export :wasm.export/n}      :wasm/write}]
+
+  (when (pos? n-export)
     (-> view
-        (name' buffer-module)
-        (name' buffer-name)
-        (binf/wr-b8 import-type)
-        (f hmap)))
+        (section-id wasm.bin/section-id-export)
+        (u32' n-byte-)
+        (u32' n-export)
+        (export' (exportsec :wasm.export/func)
+                 (ctx-write :wasm.flatidx/func)
+                 wasm.bin/exportdesc-func
+                 funcidx')
+        (export' (exportsec :wasm.export/global)
+                 (ctx-write :wasm.flatidx/global)
+                 wasm.bin/exportdesc-global
+                 globalidx')
+        (export' (exportsec :wasm.export/mem)
+                 (ctx-write :wasm.flatidx/mem)
+                 wasm.bin/exportdesc-mem
+                 memidx')
+        (export' (exportsec :wasm.export/table)
+                 (ctx-write :wasm.flatidx/table)
+                 wasm.bin/exportdesc-table
+                 tableidx')))
   view)
 
 
 
-(defn importsec'
+(defn export'
 
-  ""
+  [view space flatidx bin-export-type compile-idx]
 
-  [view {:wasm/keys                          [importsec]
-         {flatidx-type :wasm.flatidx/type
-          n-byte-      :wasm.count/importsec
-          n-import     :wasm.import/n}       :wasm/write}]
-
-  (when (pos? n-byte-)
-    (-> view
-        (section-id wasm.bin/section-id-import)
-        (n-byte n-byte-)
-        (u32 n-import)
-        (import'+ (importsec :wasm.import/func)
-                  wasm.bin/importdesc-func
-                  (fn [view hmap]
-                    (func view
-                          flatidx-type
-                          hmap)))
-        (import'+ (importsec :wasm.import/global)
-                  wasm.bin/importdesc-global
-                  globaltype')
-        (import'+ (importsec :wasm.import/mem)
-                  wasm.bin/importdesc-mem
-                  memtype')
-        (import'+ (importsec :wasm.import/table)
-                  wasm.bin/importdesc-table
-                  tabletype')))
+  (doseq [[idx
+           name+] space]
+    (let [idx-2 (flatidx idx)]
+      (doseq [{buffer :wasm/name} name+]
+        (-> view
+            (name' buffer)
+            (binf/wr-b8 bin-export-type)
+            (compile-idx idx-2)))))
   view)
 
 
-;;;;;;;;;; Sections / mem
-
-
-(defn memsec'
-
-  [view ctx]
-
-  (section-externval view
-                     ctx
-                     :wasm/memsec
-                     wasm.bin/section-id-mem
-                     :wasm.count/memsec
-                     memtype'))
-
-
-;;;;;;;;;; Sections / Start
+;;;;;;;;;; Modules / Start Section
 
 
 (defn startsec'
@@ -967,56 +895,148 @@
     (let [ctx-write (ctx :wasm/write)]
       (-> view
           (section-id wasm.bin/section-id-start)
-          (n-byte (ctx-write :wasm.count/startsec))
+          (u32' (ctx-write :wasm.count/startsec))
           (funcidx' (get-in ctx-write
                             [:wasm.flatidx/func
                              (startsec :wasm/funcidx)])))))
   view)
 
 
-;;;;;;;;;; Sections / Table
+;;;;;;;;;; Modules / Element Section
 
 
-(defn tablesec'
-
-  [view ctx]
-
-  (section-externval view
-                     ctx
-                     :wasm/tablesec
-                     wasm.bin/section-id-table
-                     :wasm.count/tablesec
-                     tabletype'))
-
-
-;;;;;;;;;; Sections / Type
-
-
-(defn typesec
+(defn elemsec'
 
   ""
 
   [view {:as        ctx
-         :wasm/keys [typesec]}]
+         :wasm/keys [elemsec]}]
 
-  (when (seq typesec)
-    (-> view
-        (section-id wasm.bin/section-id-type)
-        (n-byte (get-in ctx
-                        [:wasm/write
-                         :wasm.count/typesec]))
-        (u32 (count typesec)))
-    (doseq [signature (map :wasm/signature
-                           (vals typesec))]
-      (functype view
-                signature)))
+  (when (seq elemsec)
+    (let [{:as           ctx-write
+           flatidx-func  :wasm.flatidx/func
+           flatidx-table :wasm.flatidx/table} (ctx :wasm/write)]
+      (-> view
+          (section-id wasm.bin/section-id-elem)
+          (u32' (ctx-write :wasm.count/elemsec))
+          (u32' (ctx-write :wasm.elem/n)))
+      (doseq [[tableidx
+               elem+]   elemsec]
+        (let [tableidx-2 (flatidx-table tableidx)]
+          (doseq [{:wasm/keys [funcidx+
+                               offset]} elem+]
+            (-> view
+                (tableidx' tableidx-2)
+                (expr' ctx-write
+                       offset)
+                (u32' (count funcidx+)))
+            (doseq [funcidx funcidx+]
+              (funcidx' view
+                        (flatidx-func funcidx))))))))
   view)
 
 
-;;;;;;;;;; Module
+;;;;;;;;;; Modules / Code Section
 
 
-(defn magic
+(defn codesec'
+
+  ""
+
+  [view {:as        ctx
+         :wasm/keys [codesec]}]
+
+  (when (seq codesec)
+    (let [ctx-write (ctx :wasm/write)]
+      (-> view
+          (section-id wasm.bin/section-id-code)
+          (u32' (ctx-write :wasm.count/codesec))
+          (u32' (count codesec)))
+      (doseq [[n-byte
+               code]  (partition 2
+                                 (interleave (ctx-write :wasm.codesec/func-size)
+                                             (vals codesec)))]
+        (code' view
+               ctx-write
+               n-byte
+               code))))
+  view)
+
+
+
+(defn code'
+
+  ""
+
+  [view flatidx n-byte code]
+
+  (-> view
+      (u32' n-byte)
+      (func' flatidx
+             code)))
+
+
+
+(defn func'
+
+  [view flatidx {:wasm/keys [expr
+                             local+]}]
+
+  (-> view
+      (u32' (count local+))
+      (locals' local+)
+      (expr' flatidx
+             expr)))
+
+
+
+(defn locals'
+
+  [view local+]
+
+  (doseq [[n
+           valtype] local+]
+    (-> view
+        (u32' n)
+        (valtype' valtype)))
+  view)
+
+
+;;;;;;;;;; Modules / Data Section
+
+
+(defn datasec'
+
+  ""
+
+  [view {:as        ctx
+         :wasm/keys [datasec]}]
+
+  (when (seq datasec)
+    (let [{:as         ctx-write
+           flatidx-mem :wasm.flatidx/mem} (ctx :wasm/write)]
+      (-> view
+          (section-id wasm.bin/section-id-data)
+          (u32' (ctx-write :wasm.count/datasec))
+          (u32' (ctx-write :wasm.data/n)))
+      (doseq [[memidx
+               data+] datasec]
+        (let [memidx-2 (flatidx-mem memidx)]
+          (doseq [{:wasm/keys [data
+                               offset]} data+]
+            (-> view
+                (memidx' memidx-2)
+                (expr' ctx-write
+                       offset)
+                (u32' (count data))
+                (binf/wr-buffer data)))))))
+  view)
+
+
+;;;;;;;;;; Modules / Modules
+
+
+(defn magic'
 
   ""
 
@@ -1027,7 +1047,7 @@
 
 
 
-(defn version
+(defn version'
 
   ""
 
@@ -1040,16 +1060,14 @@
 
 
 
-(defn module'
+(defn section'+
 
   ""
 
   [view ctx]
 
   (-> view
-      magic
-      (version ctx)
-      (typesec ctx)
+      (typesec' ctx)
       (importsec' ctx)
       (funcsec' ctx)
       (tablesec' ctx)
@@ -1060,3 +1078,16 @@
       (elemsec' ctx)
       (codesec' ctx)
       (datasec' ctx)))
+
+
+
+(defn module'
+
+  ""
+
+  [view ctx]
+
+  (-> view
+      magic'
+      (version' ctx)
+      (section'+ ctx)))
