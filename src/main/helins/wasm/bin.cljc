@@ -15,7 +15,7 @@
 ;;;;;;;;;;
 
 
-(def opcode->opsym
+(def opcode-main->opsym
 
   ""
 
@@ -238,31 +238,50 @@
 
    ;;;; [0xC5, 0xFB] is reserved
 
-   0xFC {0x00 'i32.trunc_sat_f32_s
-         0x01 'i32.trunc_sat_f32_u
-         0x02 'i32.trunc_sat_f64_s
-         0x03 'i32.trunc_sat_f64_u
-         0x04 'i64.trunc_sat_f32_s
-         0x05 'i64.trunc_sat_f32_u
-         0x06 'i64.trunc_sat_f64_s
-         0x07 'i64.trunc_sat_f64_u
-         0x08 'memory.init
-         0x09 'data.drop
-         0x0A 'memory.copy
-         0x0B 'memory.fill
-         0x0C 'table.init
-         0x0D 'elem.drop
-         0x0E 'table.copy
-         0x0F 'table.grow
-         0x10 'table.size
-         0x11 'table.fill}
+   ;;;; 0xFC is the "miscellaneous" opcode whose operations are defined in `opcode-misc->opsym`
 
    ;;;; [0xFD, 0xFF] is undefined
-   })
+  })
 
 
 
-(defn -trunc_sat?
+
+(def opcode-misc->opsym
+
+  ""
+
+  {0x00 'i32.trunc_sat_f32_s
+   0x01 'i32.trunc_sat_f32_u
+   0x02 'i32.trunc_sat_f64_s
+   0x03 'i32.trunc_sat_f64_u
+   0x04 'i64.trunc_sat_f32_s
+   0x05 'i64.trunc_sat_f32_u
+   0x06 'i64.trunc_sat_f64_s
+   0x07 'i64.trunc_sat_f64_u
+   0x08 'memory.init
+   0x09 'data.drop
+   0x0A 'memory.copy
+   0x0B 'memory.fill
+   0x0C 'table.init
+   0x0D 'elem.drop
+   0x0E 'table.copy
+   0x0F 'table.grow
+   0x10 'table.size
+   0x11 'table.fill})
+
+
+;;;;;;;;;;
+
+
+(def misc
+
+  "\"Miscellaneous\" opcode. Operation is determined by reading the next `u32` following this value."
+
+  0xFC)
+
+
+
+(defn misc?
 
   ""
 
@@ -960,11 +979,7 @@
 
 
 
-(def trunc_sat
 
-  ""
-
-  0xFC)
 
 
 (def i32-trunc_sat_f32_s

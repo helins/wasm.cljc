@@ -446,7 +446,8 @@
    wasm.bin/i64-const     (op-constval i64')
    wasm.bin/f32-const     (op-constval f32')
    wasm.bin/f64-const     (op-constval f64')
-   wasm.bin/trunc_sat     trunc_sat})
+
+   wasm.bin/misc     trunc_sat})
 
 
 

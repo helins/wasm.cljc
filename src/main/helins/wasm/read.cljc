@@ -19,7 +19,9 @@
 (declare code'
          custom'
          data'
+         dataidx'
          elem'
+         elemidx'
          elemtype'
          export'
          exportdesc'
@@ -43,6 +45,7 @@
          s64'
          start'
          table'
+         tableidx'
          typeidx'
          u32')
 
@@ -197,26 +200,19 @@
                   (u32' view)))
 
 
-;;;;;;;;;; Types / Value Types
+;;;;;;;;;; Types / Reference types
 
 
-(defn -valtype
+(defn reftype'
 
   ""
 
-  [b8]
+  [view]
 
-  ;; Leveraging the fact that valtypes are contiguous.
-  ;;
-  (when (or (< b8
-               wasm.bin/numtype-f64)
-            (> b8
-               wasm.bin/numtype-i32))
-    (throw (ex-info (str "Unknown valtype: "
-                         b8)
-                    {})))
-  b8)
+  (byte' view))
 
+
+;;;;;;;;;; Types / Value Types
 
 
 (defn valtype'
@@ -225,7 +221,7 @@
 
   [view]
 
-  (-valtype (byte' view)))
+  (byte' view))
 
 
 ;;;;;;;;;; Types / Result Types
@@ -238,7 +234,7 @@
   [view]
 
   (not-empty (vec' valtype'
-             view)))
+                   view)))
 
 
 ;;;;;;;;;; Types / Function Types
@@ -401,8 +397,7 @@
         (if (= x-2
                wasm.bin/blocktype-nil)
           nil
-          [:wasm/valtype
-           (-valtype x-2)]))
+          [:wasm/valtype x-2]))
       [:wasm/typeidx (binf.int64/u32 x)])))
 
 
@@ -510,6 +505,38 @@
         (byte' view)))
 
 
+;;;;;;;;; Instructions / Reference Instructions
+
+
+(defn ref-null'
+
+  [opvec _ctx view]
+
+  (conj opvec
+        (reftype' view)))
+
+
+
+(defn ref-func'
+
+  [opvec _ctx view]
+
+  (conj opvec
+        (funcidx' view)))
+
+
+;;;;;;;;;; Instructions / Parametric Instructions
+
+
+(defn select-t'
+
+  [opvec _ctx view]
+
+  (conj opvec
+        (vec' valtype'
+              view)))
+
+
 ;;;;;;;;;; Instructions / Variable Instructions
 
 
@@ -532,6 +559,54 @@
 
   (conj opvec
         (globalidx' view)))
+
+
+;;;;;;;;;; Instructions / Table Instructions
+
+
+(defn op-table
+
+  "Table instruction involving a table index immediate."
+
+  [opvec _ctx view]
+
+  (conj opvec
+        (tableidx' view)))
+
+
+
+(defn table-init'
+
+  ""
+
+  [opvec _ctx view]
+
+  (conj opvec
+        (elemidx' view)
+        (tableidx' view)))
+
+
+
+(defn elem-drop'
+
+  ""
+
+  [opvec _ctx view]
+
+  (conj opvec
+        (elemidx' view)))
+
+
+
+(defn table-copy'
+
+  ""
+
+  [opvec _ctx view]
+
+  (conj opvec
+        (tableidx' view)
+        (tableidx' view)))
 
 
 ;;;;;;;;;; Instructions / Memory Instructions
@@ -560,7 +635,7 @@
 
 
 
-(defn op-memory
+(defn op-memory-main
 
   ""
 
@@ -568,6 +643,52 @@
 
   (conj opvec
         (memidx' view)))
+
+
+
+(defn memory-init'
+
+  ""
+
+  [opvec _ctx view]
+
+  (conj opvec
+        (dataidx' view)
+        (byte' view)))
+
+
+
+(defn data-drop'
+
+  ""
+
+  [opvec _ctx view]
+
+  (conj opvec
+        (dataidx' view)))
+
+
+
+(defn memory-copy'
+
+  ""
+
+  [opvec _ctx view]
+
+  (conj opvec
+        (byte' view)
+        (byte' view)))
+
+
+
+(defn memory-fill'
+
+  ""
+
+  [opvec _ctx view]
+
+  (conj opvec
+        (byte' view)))
 
 
 ;;;;;;;;;; Instructions / Numeric Instructions
@@ -590,8 +711,10 @@
          (const view))))
 
 
+;;;;;;;;;; Instructions / (Miscellaneous)
 
-(defn trunc_sat
+
+(defn misc
 
   ""
 
@@ -604,7 +727,7 @@
 ;;;;;;;;;; Instructions / Expressions
 
 
-(def opcode->f
+(def op-main->f
 
   ""
 
@@ -616,11 +739,16 @@
    wasm.bin/br_table      br_table'
    wasm.bin/call          call'
    wasm.bin/call_indirect call_indirect'
+   wasm.bin/ref-null      ref-null'
+   wasm.bin/ref-func      ref-func'
+   wasm.bin/select-t      select-t'
    wasm.bin/local-get     op-var-local
    wasm.bin/local-set     op-var-local
    wasm.bin/local-tee     op-var-local
    wasm.bin/global-get    op-var-global
    wasm.bin/global-set    op-var-global
+   wasm.bin/table-get     op-table
+   wasm.bin/table-set     op-table
    wasm.bin/i32-load      op-memarg 
    wasm.bin/i64-load      op-memarg
    wasm.bin/f32-load      op-memarg
@@ -644,13 +772,29 @@
    wasm.bin/i64-store8    op-memarg
    wasm.bin/i64-store16   op-memarg
    wasm.bin/i64-store32   op-memarg
-   wasm.bin/memory-size   op-memory
-   wasm.bin/memory-grow   op-memory
+   wasm.bin/memory-size   op-memory-main
+   wasm.bin/memory-grow   op-memory-main
    wasm.bin/i32-const     (op-constval i32')
    wasm.bin/i64-const     (op-constval i64')
    wasm.bin/f32-const     (op-constval f32')
-   wasm.bin/f64-const     (op-constval f64')
-   wasm.bin/trunc_sat     trunc_sat})
+   wasm.bin/f64-const     (op-constval f64')})
+
+
+
+(def op-misc->f
+
+  ""
+
+  {0x08 memory-init'
+   0x09 data-drop'
+   0x0A memory-copy'
+   0x0B memory-fill'
+   0x0C table-init'
+   0x0D elem-drop'
+   0x0E table-copy'
+   0x0F op-table
+   0x10 op-table 
+   0x11 op-table})
 
 
 
@@ -661,17 +805,33 @@
   [ctx opcode view]
 
   (let [opvec [opcode]]
-    (if-some [f (opcode->f opcode)]
-      (f opvec
-         ctx
-         view)
-      (do
-        (when-not (contains? wasm.bin/opcode->opsym
-                             opcode)
-          (throw (ex-info (str "This opcode is not a recognized instruction: "
+    (if (= opcode
+           wasm.bin/misc)
+      (let [opcode-2 (u32' view)
+            opvec-2  (conj opvec 
+                           opcode-2)]
+        (if-some [f-2 (op-misc->f opcode-2)]
+          (f-2 opvec-2
+               ctx
+               view)
+          (do
+            (when-not (contains? wasm.bin/opcode-misc->opsym
+                                 opcode-2)
+              (throw (ex-info (str "Secondary opcode for miscellaneous opcode is not a recognized instruction: "
+                                   opcode-2)
+                              {})))
+            opvec-2)))
+      (if-some [f (op-main->f opcode)]
+        (f opvec
+           ctx
+           view)
+        (do
+          (when-not (contains? wasm.bin/opcode-main->opsym
                                opcode)
-                          {})))
-        opvec))))
+            (throw (ex-info (str "This opcode is not a recognized instruction: "
+                                 opcode)
+                            {})))
+          opvec)))))
 
 
 
@@ -718,9 +878,7 @@
 
 (def typeidx'
 
-  "Alias to [[idx]].
-
-   Defined to mimick non-terminal symbol in WASM specification."
+  "Alias to [[idx]]."
 
   idx)
 
@@ -728,9 +886,7 @@
 
 (def funcidx'
 
-  "Alias to [[idx]].
-
-   Defined to mimick non-terminal symbol in WASM specification."
+  "Alias to [[idx]]."
 
   idx)
 
@@ -738,9 +894,7 @@
 
 (def tableidx'
 
-  "Alias to [[idx]].
-
-   Defined to mimick non-terminal symbol in WASM specification."
+  "Alias to [[idx]]."
 
   idx)
 
@@ -748,9 +902,7 @@
 
 (def memidx'
 
-  "Alias to [[idx]].
-
-   Defined to mimick non-terminal symbol in WASM specification."
+  "Alias to [[idx]]."
 
   idx)
 
@@ -758,19 +910,29 @@
 
 (def globalidx'
 
-  "Alias to [[idx]].
-
-   Defined to mimick non-terminal symbol in WASM specification."
+  "Alias to [[idx]]."
 
   idx)
 
 
 
+(def elemidx'
+
+  "Alias to [[idx]]."
+
+  idx)
+
+
+
+(def dataidx'
+
+  "Alias to [[idx]]."
+
+  idx)
+
 (def localidx'
 
-  "Alias to [[idx]].
-
-   Defined to mimick non-terminal symbol in WASM specification."
+  "Alias to [[idx]]."
 
   idx)
 
@@ -778,9 +940,7 @@
 
 (def labelidx'
 
-  "Alias to [[idx]].
-
-   Defined to mimick non-terminal symbol in WASM specification."
+  "Alias to [[idx]]."
 
   idx)
 
