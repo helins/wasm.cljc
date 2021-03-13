@@ -788,7 +788,7 @@
 
   [ctx k-section k-flatidx k-count count-item]
 
-  (if-some [sec (not-empty (ctx k-section))]
+  (if-some [section (not-empty (ctx k-section))]
     (update ctx
             :wasm/write
             (fn [ctx-write]
@@ -807,11 +807,11 @@
                                          #(+ %
                                              (count-item item)))))
                            ctx-write-2
-                           sec)
+                           section)
                 (update ctx-write-2
                         k-count
                         #(+ %
-                            (u32' (count sec)))))))
+                            (u32' (count section)))))))
     ctx))
 
 
@@ -1085,50 +1085,44 @@
 
   ""
 
-  [{:as        ctx
-    :wasm/keys [elemsec]}]
+  [{:as                               ctx
+    {:as          ctx-write
+     flatidx-func :wasm.flatidx/func} :wasm/write}]
 
-  (if (seq elemsec)
-    (update ctx
-            :wasm/write
-            (fn [{:as           ctx-write
-                  flatidx-func  :wasm.flatidx/func
-                  flatidx-table :wasm.flatidx/table}]
-              (let [ctx-write-2 (reduce-kv (fn [ctx-write-2 tableidx elem+]
-                                             (let [n-byte-tableidx (-> tableidx
-                                                                       flatidx-table
-                                                                       tableidx')
-                                                   funcidx'2       (comp funcidx'
-                                                                         flatidx-func)
-                                                   n-elem          (count elem+)]
-                                               (reduce (fn [ctx-write-3 {:wasm/keys [funcidx+
-                                                                                     offset]}]
-                                                         (update ctx-write-3
-                                                                 :wasm.count/elemsec
-                                                                 #(+ %
-                                                                     n-byte-tableidx
-                                                                     (expr' ctx-write
-                                                                            offset)
-                                                                     (u32' n-elem)
-                                                                     (reduce (fn [sum funcidx]
-                                                                               (+ sum
-                                                                                  (funcidx'2 funcidx)))
-                                                                             0
-                                                                             funcidx+))))
-                                                       (update ctx-write-2
-                                                               :wasm.elem/n
-                                                               #(+ %
-                                                                   n-elem))
-                                                       elem+)))
-                                           (assoc ctx-write
-                                                  :wasm.count/elemsec 0
-                                                  :wasm.elem/n        0)
-                                           elemsec)]
-                (update ctx-write-2
-                        :wasm.count/elemsec
-                        #(+ (u32' (ctx-write-2 :wasm.elem/n))
-                            %)))))
-    ctx))
+  (section-externval ctx
+                     :wasm/elemsec
+                     :wasm.flatidx/elem
+                     :wasm.count/elemsec
+                     (fn [{:as             hmap
+                           :wasm.elem/keys [mode]
+                          [kw
+                           etype
+                           vect]           :wasm/elem+}]
+
+                       (+ (if (= mode
+                                 :active)
+                            (+ (expr' ctx-write
+                                      (hmap :wasm/offset))
+                               (if-some [tableidx (hmap :wasm/tableidx)]
+                                 (tableidx' ((ctx-write :wasm.flatidx/table)
+                                             tableidx))
+                                 0))
+                            0)
+                          byte' ;; elemkind or reftype
+                          (u32' (count vect))
+                          (reduce (case kw
+                                    :expr  (fn [sum expr]
+                                             (+ sum
+                                                (expr' ctx-write
+                                                       expr)))
+                                    :idx  (case etype
+                                            :func (fn [sum funcidx]
+                                                    (+ sum
+                                                       (-> funcidx
+                                                           flatidx-func
+                                                           funcidx')))))
+                                  0
+                                  vect)))))
 
 
 ;;;;;;;;;; Modules / Code Section
