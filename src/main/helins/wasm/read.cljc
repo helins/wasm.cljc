@@ -1614,15 +1614,31 @@
 
   [ctx view]
 
-  (update-in ctx
-             [:wasm/datasec
-              (memidx' view)]
-             (fnil conj
-                   [])
-             {:wasm/offset (expr' ctx
-                                  view)
-              :wasm/data   (binf/rr-buffer view
-                                           (u32' view))}))
+  (-> ctx
+      (update :wasm/dataidx
+              inc)
+      (assoc-in [:wasm/datasec
+                 (ctx :wasm/dataidx)]
+                (let [flag (byte' view)]
+                  (when-not (<= 0x00
+                                flag
+                                0x02)
+                    (throw (ex-info (str "Data segment flat is not in [0;2]: "
+                                         flag)
+                                    {})))
+                  (->  (if (= flag
+                              0x01)
+                         {:wasm.data/mode :passive}
+                         (-> (if (= flag
+                                    0x02)
+                               {:wasm/memidx (memidx' view)}
+                               {})
+                             (assoc :wasm/offset    (expr' ctx
+                                                           view)
+                                    :wasm.data/mode :active)))
+                       (assoc :wasm/data
+                              (binf/rr-buffer view
+                                              (u32' view))))))))
 
 
 ;;;;;;;;;; Modules / Modules

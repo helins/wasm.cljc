@@ -32,6 +32,7 @@
 
   {:wasm/codesec       (sorted-map)
    :wasm/dataidx       0
+   :wasm/datasec       (sorted-map)
    :wasm/exportsec     {:wasm.export/func   (sorted-map)
                         :wasm.export/global (sorted-map)
                         :wasm.export/mem    (sorted-map)
