@@ -29,7 +29,25 @@
          locals'
          memidx'
          tableidx'
-         typeidx')
+         typeidx'
+         u32')
+
+
+;;;;;;;;;; Conventions
+
+
+(defn vec'
+
+  ""
+
+  [count-item coll]
+
+  (+ (u32' (count coll))
+     (reduce (fn [sum item]
+               (+ sum
+                  (count-item item)))
+             0
+             coll)))
 
 
 ;;;;;;;;;; Values / Byte
@@ -782,7 +800,7 @@
 
 
 
-(defn section-externval
+(defn section-space
 
   ""
 
@@ -929,14 +947,14 @@
 
   [ctx]
 
-  (section-externval ctx
-                     :wasm/funcsec
-                     :wasm.flatidx/func
-                     :wasm.count/funcsec
-                     (partial func
-                              (get-in ctx
-                                      [:wasm/write
-                                       :wasm.flatidx/type]))))
+  (section-space ctx
+                 :wasm/funcsec
+                 :wasm.flatidx/func
+                 :wasm.count/funcsec
+                 (partial func
+                          (get-in ctx
+                                  [:wasm/write
+                                   :wasm.flatidx/type]))))
 
 
 ;;;;;;;;;; Modules / Table Section
@@ -946,11 +964,11 @@
 
   [ctx]
 
-  (section-externval ctx
-                     :wasm/tablesec
-                     :wasm.flatidx/table
-                     :wasm.count/tablesec
-                     tabletype'))
+  (section-space ctx
+                 :wasm/tablesec
+                 :wasm.flatidx/table
+                 :wasm.count/tablesec
+                 tabletype'))
 
 
 ;;;;;;;;;; Modules / Memory Section
@@ -960,11 +978,11 @@
 
   [ctx]
 
-  (section-externval ctx
-                     :wasm/memsec
-                     :wasm.flatidx/mem
-                     :wasm.count/memsec
-                     memtype'))
+  (section-space ctx
+                 :wasm/memsec
+                 :wasm.flatidx/mem
+                 :wasm.count/memsec
+                 memtype'))
 
 
 ;;;;;;;;;; Modules / Global section
@@ -985,12 +1003,12 @@
 
   [ctx]
 
-  (section-externval ctx
-                     :wasm/globalsec
-                     :wasm.flatidx/global
-                     :wasm.count/globalsec
-                     (partial global'
-                              (ctx :wasm/write))))
+  (section-space ctx
+                 :wasm/globalsec
+                 :wasm.flatidx/global
+                 :wasm.count/globalsec
+                 (partial global'
+                          (ctx :wasm/write))))
 
 
 ;;;;;;;;;; Modules / Export Section
@@ -1089,40 +1107,33 @@
     {:as          ctx-write
      flatidx-func :wasm.flatidx/func} :wasm/write}]
 
-  (section-externval ctx
-                     :wasm/elemsec
-                     :wasm.flatidx/elem
-                     :wasm.count/elemsec
-                     (fn [{:as             hmap
-                           :wasm.elem/keys [mode]
-                          [kw
-                           etype
-                           vect]           :wasm/elem+}]
-
-                       (+ (if (= mode
-                                 :active)
-                            (+ (expr' ctx-write
-                                      (hmap :wasm/offset))
-                               (if-some [tableidx (hmap :wasm/tableidx)]
-                                 (tableidx' ((ctx-write :wasm.flatidx/table)
-                                             tableidx))
-                                 0))
-                            0)
-                          byte' ;; elemkind or reftype
-                          (u32' (count vect))
-                          (reduce (case kw
-                                    :expr  (fn [sum expr]
-                                             (+ sum
-                                                (expr' ctx-write
-                                                       expr)))
-                                    :idx  (case etype
-                                            :func (fn [sum funcidx]
-                                                    (+ sum
-                                                       (-> funcidx
-                                                           flatidx-func
-                                                           funcidx')))))
-                                  0
-                                  vect)))))
+  (section-space ctx
+                 :wasm/elemsec
+                 :wasm.flatidx/elem
+                 :wasm.count/elemsec
+                 (fn [{:as        hmap
+                       :wasm/keys [offset]
+                       eresolve   :wasm.elem/resolve
+                       etype      :wasm.elem/type
+                       evec       :wasm.elem/vec}]
+                   (+ byte'       ;;  flag
+                      (if offset  ;;  if active
+                        (+ (if-some [tableidx (hmap :wasm/tableidx)]
+                             (tableidx' ((ctx-write :wasm.flatidx/table)
+                                         tableidx))
+                             0)
+                           (expr' ctx-write
+                                  offset))
+                        0)
+                      (if etype
+                        byte'
+                        0)
+                      (vec' (case eresolve
+                              :expr (partial expr' 
+                                             ctx-write)
+                              :idx  (comp funcidx'
+                                          flatidx-func))
+                            evec)))))
 
 
 ;;;;;;;;;; Modules / Code Section
