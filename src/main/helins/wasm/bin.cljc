@@ -9,8 +9,6 @@
 
   {:author "Adam Helinski"}
 
-  #?(:cljs (:require-macros [helins.wasm.bin :refer [opcode*
-                                                     opsym*]]))
   (:refer-clojure :exclude [drop]))
 
 
@@ -259,9 +257,6 @@
 ;;;;;;;;;; Types
 
 
-(def blocktype-nil
-     0x40)
-
 (def elemtype
      0x70)
 
@@ -293,11 +288,11 @@
      0x7c)
 
 
-;;;;;;;;;; Instructions
+;;;;;;;;;; Instructions / Control instructions
 
 
-;;;;;; Control instructions
-
+(def blocktype-nil
+     0x40)
 
 (def unreachable
      0x00)
@@ -339,7 +334,7 @@
      0x11)
 
 
-;;;;; Parametric instructions
+;;;;;;;;;; Instructions / Parametric Instructions
 
 
 (def drop
@@ -348,8 +343,7 @@
 (def select
      0x1b)
 
-
-;;;;; Variable instructions
+;;;;;;;;;; Instructions / Variable instructions
 
 
 (def local-get
@@ -368,7 +362,7 @@
      0x24)
 
 
-;;;;; Memory instructions
+;;;;;;;;;; Instructions / Memory Instructions
 
 
 (def i32-load
@@ -447,7 +441,7 @@
      0x40)
 
 
-;;;;; Numeric instructions
+;;;;;;;;;; Instructions / Numeric Instructions
 
 
 (def i32-const
@@ -461,21 +455,6 @@
 
 (def f64-const
      0x44)
-
-
-
-(def i32-const
-     0x41)
-
-(def i64-const
-     0x42)
-
-(def f32-const
-     0x43)
-
-(def f64-const
-     0x44)
-
 
 
 
@@ -890,8 +869,6 @@
      0xC4)
 
 
-;;;; Saturated trunction
-
 
 (def trunc_sat
 
@@ -925,7 +902,7 @@
      7)
 
 
-;;;;;;;;; Sections
+;;;;;;;;; Modules / Sections
 
 
 (def section-id-custom
@@ -965,7 +942,19 @@
      11)
 
 
-;;;;; Import section
+
+(defn section-id?
+
+  ""
+
+  [section-id]
+
+  (<= 0
+      section-id
+      12))
+
+
+;;;;;;;;;; Modules / Import Section
 
 
 (def importdesc-func
@@ -981,7 +970,7 @@
      0x03)
 
 
-;;;;; Export section
+;;;;;;;;;; Modules / Export Section
 
 
 (def exportdesc-func
@@ -997,21 +986,7 @@
      0x03)
 
 
-;;;;;;;;;; Predicates for validation
-
-
-(defn section-id?
-
-  ""
-
-  [section-id]
-
-  (<= 0
-      section-id
-      12))
-
-
-;;;;;;;;;; Miscellaneous
+;;;;;;;;;; Modules / Modules
 
 
 (def magic
