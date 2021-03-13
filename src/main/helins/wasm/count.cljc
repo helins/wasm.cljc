@@ -1209,44 +1209,31 @@
 
   ""
 
-  [{:as        ctx
-    :wasm/keys [datasec]}]
+  [{:as                             ctx
+    {:as         ctx-write
+     flatidx-mem :wasm.flatidx/mem} :wasm/write}]
 
-  (if (seq datasec)
-    (update ctx
-            :wasm/write
-            (fn [{:as         ctx-write
-                  flatidx-mem :wasm.flatidx/mem}]
-              (let [ctx-write-2 (reduce-kv (fn [ctx-write-2 memidx data+]
-                                             (let [n-byte-memidx (-> memidx
-                                                                     flatidx-mem
-                                                                     memidx')]
-                                               (reduce (fn [ctx-write-3 {:wasm/keys [data
-                                                                                     offset]}]
-                                                         (let [n-byte-data (count data)]
-                                                           (update ctx-write-3
-                                                                   :wasm.count/datasec
-                                                                   #(+ %
-                                                                       n-byte-memidx
-                                                                       (expr' ctx-write-3
-                                                                              offset)
-                                                                       (u32' n-byte-data)
-                                                                       n-byte-data))))
-                                                       (update ctx-write-2
-                                                               :wasm.data/n
-                                                               #(+ %
-                                                                   (count data+)))
-                                                       data+)))
-                                           (assoc ctx-write
-                                                  :wasm.count/datasec 0
-                                                  :wasm.data/n        0)
-                                           datasec)]
-                (update ctx-write-2
-                        :wasm.count/datasec
-                        #(+ %
-                            (u32' (ctx-write-2 :wasm.data/n)))))))
-    ctx))
-
+  (section-space ctx
+                 :wasm/datasec
+                 :wasm.flatidx/data
+                 :wasm.count/datasec
+                 (fn [{:as        hmap
+                       :wasm/keys [data
+                                   offset]}]
+                   (let [n-byte-data (count data)]
+                     (+ byte'  ;;  flag
+                        (if offset
+                          (+ (expr' ctx-write
+                                    offset)
+                             (if-some [memidx (hmap :wasm/memidx)]
+                               (-> memidx
+                                   flatidx-mem
+                                   memidx')
+                               0))
+                          0)
+                        (u32' n-byte-data)
+                        n-byte-data)))))
+                      
 
 ;;;;;;;;;; Modules / Modules
  
