@@ -21,6 +21,7 @@
          data'
          dataidx'
          elem'
+         elemkind'
          elemidx'
          elemtype'
          export'
@@ -1405,15 +1406,57 @@
 
   [ctx view]
 
-  (update-in ctx
-             [:wasm/elemsec
-              (tableidx' view)]
-             (fnil conj
-                   [])
-             {:wasm/offset   (expr' ctx
-                                    view)
-              :wasm/funcidx+ (vec' funcidx'
-                                   view)}))
+  (-> ctx
+      (update :wasm/elemidx
+              inc)
+      (assoc-in [:wasm/elemsec
+                 (ctx :wasm/elemidx)]
+                (let [flag (byte' view)
+                      elem (if (pos? (bit-and flag
+                                              2r001))
+                             {:wasm.elem/mode (if (pos? (bit-and flag
+                                                                 2r010))
+                                                :declarative
+                                                :passive)}
+                             (-> {:wasm.elem/mode :active}
+                                 (cond->
+                                   (pos? (bit-and flag
+                                                  2r010))
+                                   (assoc :wasm/tableidx
+                                          (tableidx' view)))
+                                 (assoc :wasm/offset
+                                        (expr' ctx
+                                               view))))]
+                  (assoc elem
+                         :wasm/elem+
+                         (if (pos? (bit-and flag
+                                            2r100))
+                           [:expr
+                            (condp =
+                                   (reftype' view)
+                              wasm.bin/externref :extern
+                              wasm.bin/funcref   :func)
+                            (vec' (partial expr'
+                                           ctx)
+                                  view)]
+                           [:idx
+                            (if (zero? flag)
+                              :func
+                              (condp =
+                                     (elemkind' view)
+                                wasm.bin/elemkind-funcref :func))
+                            (vec' funcidx'
+                                  view)]))))))
+
+
+
+(defn elemkind'
+
+  ""
+
+  [view]
+
+  (byte' view))
 
 
 ;;;;;;;;;; Modules / Code Section

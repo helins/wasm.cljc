@@ -316,6 +316,11 @@
 (def externref
      0x6F)
 
+;;;;;;;;;; Types / (Elemkind, described in binary elemsec)
+
+
+(def elemkind-funcref
+     0x00)
 
 ;;;;;;;;;; Types / Function Types
 
