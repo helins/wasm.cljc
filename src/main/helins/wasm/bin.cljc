@@ -254,14 +254,40 @@
      0xFC))
 
 
-;;;;;;;;;; Types
+;;;;;;;;;; Types / Number Types
 
 
-(def elemtype
+(def numtype-i32
+     0x7f)
+
+(def numtype-i64
+     0x7e)
+
+(def numtype-f32
+     0x7d)
+
+(def numtype-f64
+     0x7c)
+
+
+;;;;;;;;;; Types / Reference Types
+
+
+(def funcref
      0x70)
+
+(def externref
+     0x6F)
+
+
+;;;;;;;;;; Types / Function Types
+
 
 (def functype
      0x60)
+
+;;;;;;;;;; Types / Limits
+
 
 (def limits-min
      0x00)
@@ -269,23 +295,14 @@
 (def limits-minmax
      0x01)
 
+;;;;;;;;;; Types / Global Types
+
+
 (def mut-const
      0x00)
 
 (def mut-var
      0x01)
-
-(def valtype-i32
-     0x7f)
-
-(def valtype-i64
-     0x7e)
-
-(def valtype-f32
-     0x7d)
-
-(def valtype-f64
-     0x7c)
 
 
 ;;;;;;;;;; Instructions / Control instructions

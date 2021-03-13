@@ -209,9 +209,9 @@
   ;; Leveraging the fact that valtypes are contiguous.
   ;;
   (when (or (< b8
-               wasm.bin/valtype-f64)
+               wasm.bin/numtype-f64)
             (> b8
-               wasm.bin/valtype-i32))
+               wasm.bin/numtype-i32))
     (throw (ex-info (str "Unknown valtype: "
                          b8)
                     {})))
