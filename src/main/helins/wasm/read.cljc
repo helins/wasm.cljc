@@ -30,7 +30,7 @@
          globalidx'
          import'
          importdesc'
-         instr
+         instr'
          instr'+
          labelidx'
          localidx'
@@ -87,6 +87,7 @@
   [view]
 
   (binf/rr-u8 view))
+
 
 ;;;;;;;;;; Values / Integers
 
@@ -454,9 +455,9 @@
                               instr+
                               [])
           (recur (conj instr+
-                       (instr ctx
-                              opcode
-                              view))))))))
+                       (instr' ctx
+                               opcode
+                               view))))))))
 
 
 
@@ -571,7 +572,6 @@
 ;;;;;;;;;; Instructions / Numeric Instructions
 
 
-
 (defn op-constval
 
   ""
@@ -601,37 +601,6 @@
   
 
 ;;;;;;;;;; Instructions / Expressions
-
-
-(defn instr'+
-
-  ""
-
-  [ctx view]
-
-  (expr' ctx
-         view))
-
-
-
-(defn expr'
-
-  ""
-
-  [ctx view]
-
-  (loop [instr+ []]
-    (let [opcode (byte' view)]
-      (if (= opcode
-             wasm.bin/end)
-        instr+
-        (recur (conj instr+
-                     (instr ctx
-                            opcode
-                            view)))))))
-
-
-;;;;;;;;;; Instructions / (Gathering everything together)
 
 
 (def opcode->f
@@ -684,7 +653,7 @@
 
 
 
-(defn instr
+(defn instr'
 
   ""
 
@@ -702,6 +671,35 @@
                                opcode)
                           {})))
         opvec))))
+
+
+
+(defn instr'+
+
+  ""
+
+  [ctx view]
+
+  (expr' ctx
+         view))
+
+
+
+(defn expr'
+
+  ""
+
+  [ctx view]
+
+  (loop [instr+ []]
+    (let [opcode (byte' view)]
+      (if (= opcode
+             wasm.bin/end)
+        instr+
+        (recur (conj instr+
+                     (instr' ctx
+                             opcode
+                             view)))))))
 
 
 ;;;;;;;;;; Modules / Indices
@@ -1410,7 +1408,7 @@
                                            (u32' view))}))
 
 
-;;;;; Modules / Modules
+;;;;;;;;;; Modules / Modules
 
 
 (defn magic'

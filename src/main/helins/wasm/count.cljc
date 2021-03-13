@@ -10,50 +10,33 @@
   {:author "Adam Helinski"}
 
   (:require [helins.binf        :as binf]
-            [helins.binf.buffer :as binf.buffer]
-            [helins.binf.int64  :as binf.int64]
             [helins.binf.leb128 :as binf.leb128]
-            [helins.binf.string :as binf.string]
-            [helins.wasm.bin    :as wasm.bin]
-            [helins.wasm.ir     :as wasm.ir]))
+            [helins.wasm.bin    :as wasm.bin]))
 
 
-(declare instr'+
-         u32)
+(declare code'
+         elemtype'
+         export'
+         func'
+         funcidx'
+         globalidx'
+         importdesc'
+         instr'+
+         labelidx'
+         localidx'
+         locals'
+         memidx'
+         typeidx')
 
 
-;;;;;;;;;; Values
+;;;;;;;;;; Values / Byte
 
 
 (def byte'
      1)
 
 
-
-(defn name'
-
-  [buffer]
-
-  (let [n-byte (count buffer)]
-    (+ (u32 n-byte)
-       n-byte)))
-
-
-
-(defn f32'
-
-  [_f32]
-
-  binf/sz-f32)
-
-
-
-(defn f64'
-
-  [_f64]
-
-  binf/sz-f64)
-
+;;;;;;;;;; Values / Integers
 
 
 (defn i32'
@@ -79,134 +62,84 @@
   (binf.leb128/n-byte-i32 s33))
 
 
-(defn u32
+
+(defn u32'
 
   [u32]
 
   (binf.leb128/n-byte-u32 u32))
 
 
-;;;;;;;;;; Indices
+;;;;;;;;;; Values / Floating-Point
 
 
-(defn idx
+(defn f32'
 
-  [idx]
+  [_f32]
 
-  (u32 idx))
-
-
-
-(def funcidx'
-
-  ""
-
-  idx)
+  binf/sz-f32)
 
 
 
-(def globalidx'
+(defn f64'
 
-  ""
+  [_f64]
 
-  idx)
-
-
-
-(def labelidx'
-
-  ""
-
-  idx)
+  binf/sz-f64)
 
 
-(def localidx'
-
-  ""
-
-  idx)
+;;;;;;;;;; Values / Names
 
 
-(def memidx'
+(defn name'
 
-  ""
+  [buffer]
 
-  idx)
-
-
-
-(def tableidx'
-
-  ""
-
-  idx)
+  (let [n-byte (count buffer)]
+    (+ (u32' n-byte)
+       n-byte)))
 
 
-
-(def typeidx'
-  
-  ""
-
-  idx)
+;;;;;;;;;; Types / Value Types
 
 
-;;;;;;;;;; Types
-
-
-(def valtype
+(def valtype'
      1)
 
 
+;;;;;;;;;; Types / Result Types
 
-(defn resulttype
+
+(defn resulttype'
 
   ""
 
   [valtype+]
 
   (let [n-valtype (count valtype+)]
-    (+ (u32 n-valtype)
+    (+ (u32' n-valtype)
        (* n-valtype
-          valtype))))
+          valtype'))))
 
 
+;;;;;;;;;; Types / Function Types
 
-(defn functype
+
+(defn functype'
 
   ""
 
   [[param+ result+]]
 
   (+ 1 ;; 0x60 functype
-     (resulttype param+)
-     (resulttype result+)))
+     (resulttype' param+)
+     (resulttype' result+)))
 
 
-
-(defn func
-
-  ""
-
-  [flatidx-type {:wasm/keys [typeidx]}]
-
-  (typeidx' (flatidx-type typeidx)))
-  
+;;;;;;;;;; Types / Limits
 
 
-(def elemtype'
-     1)
-
-
-
-(defn globaltype'
-
-  [_global]
-
-  2)
-
-
-
-(defn limits
+(defn limits'
 
   ""
 
@@ -214,12 +147,14 @@
     max- :wasm.limit/max}]
 
   (let [n-byte (+ 1             ;; Byte specifying if there is a maximum or not
-                  (u32 min-))]
+                  (u32' min-))]
     (if max-
       (+ n-byte
-         (u32 max-))
+         (u32' max-))
       n-byte)))
 
+
+;;;;;;;;;; Types / Memory Types
 
 
 (defn memtype'
@@ -228,8 +163,10 @@
 
   [mem]
 
-  (limits mem))
+  (limits' mem))
 
+
+;;;;;;;;;; Types / Table types
 
 
 (defn tabletype'
@@ -239,10 +176,25 @@
   [table]
 
   (+ elemtype'
-     (limits table)))
+     (limits' table)))
 
 
-;;;;;;;;;; Instructions - Control
+
+(def elemtype'
+     1)
+
+
+;;;;;;;;;; Types / Global types
+
+
+(defn globaltype'
+
+  [_global]
+
+  2)
+
+
+;;;;;;;;;; Instructions / Control Instructions
 
 
 (defn blocktype'
@@ -326,7 +278,7 @@
   [_flatidx opvec]
 
   (let [choice+ (opvec 1)]
-    (+ (u32 (count choice+))
+    (+ (u32' (count choice+))
        (reduce (fn [sum labelidx]
                  (+ sum
                     (labelidx' labelidx)))
@@ -354,7 +306,7 @@
      byte'))
 
 
-;;;;;;;;;; Instructions / Variables
+;;;;;;;;;; Instructions / Variable Instructions
 
 
 (defn op-var-local
@@ -377,7 +329,7 @@
                (opvec 1))))
 
 
-;;;;;;;;;; Instructions / Memory
+;;;;;;;;;; Instructions / Memory Instructions
 
 
 (defn memarg'
@@ -386,8 +338,8 @@
 
   [[align offset]]
 
-  (+ (u32 align)
-     (u32 offset)))
+  (+ (u32' align)
+     (u32' offset)))
 
 
 
@@ -411,7 +363,7 @@
             (opvec 1))))
 
 
-;;;;;;;;;;; Numeric instructions / Constants
+;;;;;;;;;; Instructions / Numeric Instructions
 
 
 (defn op-constval
@@ -430,8 +382,6 @@
    (f-value (opvec 1))))
 
 
-;;;;;;;;;;; Numeric instructions / Saturated truncation
-
 
 (defn trunc_sat
 
@@ -439,10 +389,10 @@
 
   [_flatidx opvec]
 
-  (u32 (opvec 1)))
+  (u32' (opvec 1)))
   
 
-;;;;;;;;;; Instructions / Registry
+;;;;;;;;;; Instructions / Expressions
 
 
 (def opcode'
@@ -541,7 +491,103 @@
      ))
 
 
-;;;;;;;;;; Sections / Helpers
+;;;;;;;;;; Modules / Indices
+
+
+(defn idx
+
+  [idx]
+
+  (u32' idx))
+
+
+
+(def funcidx'
+
+  ""
+
+  idx)
+
+
+
+(def globalidx'
+
+  ""
+
+  idx)
+
+
+
+(def labelidx'
+
+  ""
+
+  idx)
+
+
+(def localidx'
+
+  ""
+
+  idx)
+
+
+(def memidx'
+
+  ""
+
+  idx)
+
+
+
+(def tableidx'
+
+  ""
+
+  idx)
+
+
+
+(def typeidx'
+  
+  ""
+
+  idx)
+
+
+;;;;;;;;;; Modules / Sections
+
+
+(def section-id
+     1)
+
+
+
+(defn section'
+
+  ""
+
+  [n-byte]
+
+  (if (and n-byte
+           (pos? n-byte))
+    (+ section-id
+       (u32' n-byte)
+       n-byte)
+    0))
+
+
+;;;;;;;;;; Modules / (Helpers)
+
+
+(defn func
+
+  ""
+
+  [flatidx-type {:wasm/keys [typeidx]}]
+
+  (typeidx' (flatidx-type typeidx)))
+
 
 
 (defn section-externval
@@ -573,204 +619,189 @@
                 (update ctx-write-2
                         k-count
                         #(+ %
-                            (u32 (count sec)))))))
+                            (u32' (count sec)))))))
     ctx))
 
 
-;;;;;;;;; Sections / Code
-
-
-(defn locals'
-
-  [local+]
-
-  (reduce (fn [sum [n _valtype]]
-            (+ sum
-               (u32 n)
-               valtype))
-          0
-          local+))
+;;;;;;;;;; Modules / Custom Section
 
 
 
-(defn func'
 
-  [flatidx {:wasm/keys [expr
-                        local+]}]
-
-  (+ (u32 (count local+))
-     (locals' local+)
-     (expr' flatidx
-            expr)))
+;;;;;;;;;; Modules / Type Section
 
 
+(defn typesec'
 
-(defn code'
+  [{:as        ctx
+    :wasm/keys [typesec]}]
+
+  (let [n (count typesec)]
+    (if (pos? n)
+      (loop [idx-real                    0
+             idx-resolve                 {}
+             n-byte                      0
+             [[idx
+               {:wasm/keys [signature]}]
+              & typesec-2]               typesec]
+        (let [idx-resolve-2 (assoc idx-resolve
+                                   idx
+                                   idx-real)
+              n-byte-2      (+ n-byte
+                               (functype' signature))]
+          (if typesec-2
+            (recur (inc idx-real)
+                   idx-resolve-2
+                   n-byte-2
+                   typesec-2)
+            (update ctx
+                    :wasm/write
+                    #(assoc %
+                            :wasm.count/typesec (+ (u32' n)
+                                                   n-byte-2)
+                            :wasm.flatidx/type  idx-resolve-2)))))
+      ctx)))
+
+
+;;;;;;;;;; Modules / Import Section
+
+
+(defn importsec'
+
+  [{:as        ctx
+    :wasm/keys [importsec]}]
+
+  (let [ctx-write   (ctx :wasm/write)
+        ctx-write-2 (-> ctx-write
+                        (assoc :wasm.count/importsec 0
+                               :wasm.import/n        0)
+                        (importdesc' (importsec :wasm.import/func)
+                                     :wasm.flatidx/func
+                                     (partial func
+                                              (ctx-write :wasm.flatidx/type)))
+                        (importdesc' (importsec :wasm.import/global)
+                                     :wasm.flatidx/global
+                                     globaltype')
+                        (importdesc' (importsec :wasm.import/mem)
+                                     :wasm.flatidx/mem
+                                     memtype')
+                        (importdesc' (importsec :wasm.import/table)
+                                     :wasm.flatidx/table
+                                     tabletype'))]
+    (assoc ctx
+           :wasm/write
+           (update ctx-write-2
+                   :wasm.count/importsec
+                   (fn [n-byte]
+                     (if (zero? n-byte)
+                       0
+                       (+ (u32' (ctx-write-2 :wasm.import/n))
+                          n-byte)))))))
+
+
+
+(defn importdesc'
 
   ""
 
-  [ctx-write code]
+  [ctx-write space k-flatidx f-item]
 
-  (let [n-byte (func' ctx-write
-                      code)]
-    (-> ctx-write
-        (update :wasm.count/codesec
+  (if (seq space)
+    (-> (reduce-kv (fn [ctx-write-2 idx hmap]
+                     (-> ctx-write-2
+                         (update k-flatidx
+                                 (fn [flatidx]
+                                   (assoc flatidx
+                                          idx
+                                          (count flatidx))))
+                         (update :wasm.count/importsec
+                                 #(+ %
+                                     (name' (hmap :wasm.import/module))
+                                     (name' (hmap :wasm.import/name))
+                                     1  ;; byte specifying importdesc type
+                                     (f-item hmap)))))
+                   ctx-write
+                   space)
+        (update :wasm.import/n
                 #(+ %
-                    (u32 n-byte)
-                    n-byte))
-        (update :wasm.codesec/func-size
-                conj
-                n-byte))))
+                    (count space))))
+    ctx-write))
 
 
-
-(defn codesec'
-
-  ""
-
-  [{:as        ctx
-    :wasm/keys [codesec]}]
-
-  (if (seq codesec)
-    (update ctx
-            :wasm/write
-            (fn [ctx-write]
-              (reduce code'
-                      (assoc ctx-write
-                             :wasm.codesec/func-size []
-                             :wasm.count/codesec     (u32 (count codesec)))
-                      (vals codesec))))
-    ctx))
+;;;;;;;;;; Modules / Function Section
 
 
-;;;;;;;;;; Sections / Data
-
-
-(defn datasec'
+(defn funcsec'
 
   ""
 
-  [{:as        ctx
-    :wasm/keys [datasec]}]
+  [ctx]
 
-  (if (seq datasec)
-    (update ctx
-            :wasm/write
-            (fn [{:as         ctx-write
-                  flatidx-mem :wasm.flatidx/mem}]
-              (let [ctx-write-2 (reduce-kv (fn [ctx-write-2 memidx data+]
-                                             (let [n-byte-memidx (-> memidx
-                                                                     flatidx-mem
-                                                                     memidx')]
-                                               (reduce (fn [ctx-write-3 {:wasm/keys [data
-                                                                                     offset]}]
-                                                         (let [n-byte-data (count data)]
-                                                           (update ctx-write-3
-                                                                   :wasm.count/datasec
-                                                                   #(+ %
-                                                                       n-byte-memidx
-                                                                       (expr' ctx-write-3
-                                                                              offset)
-                                                                       (u32 n-byte-data)
-                                                                       n-byte-data))))
-                                                       (update ctx-write-2
-                                                               :wasm.data/n
-                                                               #(+ %
-                                                                   (count data+)))
-                                                       data+)))
-                                           (assoc ctx-write
-                                                  :wasm.count/datasec 0
-                                                  :wasm.data/n        0)
-                                           datasec)]
-                (update ctx-write-2
-                        :wasm.count/datasec
-                        #(+ %
-                            (u32 (ctx-write-2 :wasm.data/n)))))))
-    ctx))
+  (section-externval ctx
+                     :wasm/funcsec
+                     :wasm.flatidx/func
+                     :wasm.count/funcsec
+                     (partial func
+                              (get-in ctx
+                                      [:wasm/write
+                                       :wasm.flatidx/type]))))
 
 
-;;;;;;;;;; Sections / Elem
+;;;;;;;;;; Modules / Table Section
 
 
-(defn elemsec'
+(defn tablesec'
 
-  ""
+  [ctx]
 
-  [{:as        ctx
-    :wasm/keys [elemsec]}]
-
-  (if (seq elemsec)
-    (update ctx
-            :wasm/write
-            (fn [{:as           ctx-write
-                  flatidx-func  :wasm.flatidx/func
-                  flatidx-table :wasm.flatidx/table}]
-              (let [ctx-write-2 (reduce-kv (fn [ctx-write-2 tableidx elem+]
-                                             (let [n-byte-tableidx (-> tableidx
-                                                                       flatidx-table
-                                                                       tableidx')
-                                                   funcidx'2       (comp funcidx'
-                                                                         flatidx-func)
-                                                   n-elem          (count elem+)]
-                                               (reduce (fn [ctx-write-3 {:wasm/keys [funcidx+
-                                                                                     offset]}]
-                                                         (update ctx-write-3
-                                                                 :wasm.count/elemsec
-                                                                 #(+ %
-                                                                     n-byte-tableidx
-                                                                     (expr' ctx-write
-                                                                            offset)
-                                                                     (u32 n-elem)
-                                                                     (reduce (fn [sum funcidx]
-                                                                               (+ sum
-                                                                                  (funcidx'2 funcidx)))
-                                                                             0
-                                                                             funcidx+))))
-                                                       (update ctx-write-2
-                                                               :wasm.elem/n
-                                                               #(+ %
-                                                                   n-elem))
-                                                       elem+)))
-                                           (assoc ctx-write
-                                                  :wasm.count/elemsec 0
-                                                  :wasm.elem/n        0)
-                                           elemsec)]
-                (update ctx-write-2
-                        :wasm.count/elemsec
-                        #(+ (u32 (ctx-write-2 :wasm.elem/n))
-                            %)))))
-    ctx))
+  (section-externval ctx
+                     :wasm/tablesec
+                     :wasm.flatidx/table
+                     :wasm.count/tablesec
+                     tabletype'))
 
 
-;;;;;;;;;; Sections / Export
+;;;;;;;;;; Modules / Memory Section
 
 
-(defn export'
+(defn memsec'
 
-  ""
+  [ctx]
 
-  [ctx-write space k-flatidx count-idx]
+  (section-externval ctx
+                     :wasm/memsec
+                     :wasm.flatidx/mem
+                     :wasm.count/memsec
+                     memtype'))
 
-  (let [count-idx-2 (comp count-idx
-                          (ctx-write k-flatidx))]
-    (reduce-kv (fn [ctx-write-2 idx name+]
-                 (let [n-byte-exportdesc (+ byte'
-                                            (count-idx-2 idx))]
-                   (reduce (fn [ctx-write-3 {buffer :wasm/name}]
-                             (let [n-byte-name (count buffer)]
-                               (update ctx-write-3
-                                       :wasm.count/exportsec
-                                       #(+ % n-byte-exportdesc
-                                           (u32 n-byte-name)
-                                           n-byte-name))))
-                           ctx-write-2
-                           name+)))
-               (update ctx-write
-                       :wasm.export/n
-                       #(+ %
-                           (count space)))
-               space)))
 
+;;;;;;;;;; Modules / Global section
+
+
+
+(defn global'
+
+  [flatidx global]
+
+  (+ (globaltype' global)
+     (expr' flatidx
+            (global :wasm/expr))))
+
+
+
+(defn globalsec'
+
+  [ctx]
+
+  (section-externval ctx
+                     :wasm/globalsec
+                     :wasm.flatidx/global
+                     :wasm.count/globalsec
+                     (partial global'
+                              (ctx :wasm/write))))
+
+
+;;;;;;;;;; Modules / Export Section
 
 
 (defn exportsec'
@@ -802,135 +833,40 @@
                       :wasm.count/exportsec
                       (fn [n-byte]
                         (if (pos? n-byte)
-                          (+ (u32 (ctx-write-2 :wasm.export/n))
+                          (+ (u32' (ctx-write-2 :wasm.export/n))
                              n-byte)
                           0)))))))
 
 
-;;;;;;;;;; Sections / Func
 
-
-(defn funcsec'
+(defn export'
 
   ""
 
-  [ctx]
+  [ctx-write space k-flatidx count-idx]
 
-  (section-externval ctx
-                     :wasm/funcsec
-                     :wasm.flatidx/func
-                     :wasm.count/funcsec
-                     (partial func
-                              (get-in ctx
-                                      [:wasm/write
-                                       :wasm.flatidx/type]))))
-
-
-;;;;;;;;;; Sections / Global
-
-
-(defn global'
-
-  [flatidx global]
-
-  (+ (globaltype' global)
-     (expr' flatidx
-            (global :wasm/expr))))
-
+  (let [count-idx-2 (comp count-idx
+                          (ctx-write k-flatidx))]
+    (reduce-kv (fn [ctx-write-2 idx name+]
+                 (let [n-byte-exportdesc (+ byte'
+                                            (count-idx-2 idx))]
+                   (reduce (fn [ctx-write-3 {buffer :wasm/name}]
+                             (let [n-byte-name (count buffer)]
+                               (update ctx-write-3
+                                       :wasm.count/exportsec
+                                       #(+ % n-byte-exportdesc
+                                           (u32' n-byte-name)
+                                           n-byte-name))))
+                           ctx-write-2
+                           name+)))
+               (update ctx-write
+                       :wasm.export/n
+                       #(+ %
+                           (count space)))
+               space)))
 
 
-(defn globalsec'
-
-  [ctx]
-
-  (section-externval ctx
-                     :wasm/globalsec
-                     :wasm.flatidx/global
-                     :wasm.count/globalsec
-                     (partial global'
-                              (ctx :wasm/write))))
-
-
-;;;;;;;;;; Sections / Import
-
-
-(defn importdesc
-
-  ""
-
-  [ctx-write space k-flatidx f-item]
-
-  (if (seq space)
-    (-> (reduce-kv (fn [ctx-write-2 idx hmap]
-                     (-> ctx-write-2
-                         (update k-flatidx
-                                 (fn [flatidx]
-                                   (assoc flatidx
-                                          idx
-                                          (count flatidx))))
-                         (update :wasm.count/importsec
-                                 #(+ %
-                                     (name' (hmap :wasm.import/module))
-                                     (name' (hmap :wasm.import/name))
-                                     1  ;; byte specifying importdesc type
-                                     (f-item hmap)))))
-                   ctx-write
-                   space)
-        (update :wasm.import/n
-                #(+ %
-                    (count space))))
-    ctx-write))
-
-
-
-(defn importsec'
-
-  [{:as        ctx
-    :wasm/keys [importsec]}]
-
-  (let [ctx-write   (ctx :wasm/write)
-        ctx-write-2 (-> ctx-write
-                        (assoc :wasm.count/importsec 0
-                               :wasm.import/n        0)
-                        (importdesc (importsec :wasm.import/func)
-                                    :wasm.flatidx/func
-                                    (partial func
-                                             (ctx-write :wasm.flatidx/type)))
-                        (importdesc (importsec :wasm.import/global)
-                                    :wasm.flatidx/global
-                                    globaltype')
-                        (importdesc (importsec :wasm.import/mem)
-                                    :wasm.flatidx/mem
-                                    memtype')
-                        (importdesc (importsec :wasm.import/table)
-                                    :wasm.flatidx/table
-                                    tabletype'))]
-    (assoc ctx
-           :wasm/write
-           (update ctx-write-2
-                   :wasm.count/importsec
-                   (fn [n-byte]
-                     (if (zero? n-byte)
-                       0
-                       (+ (u32 (ctx-write-2 :wasm.import/n))
-                          n-byte)))))))
-
-
-;;;;;;;;;; Sections / Mem
-
-
-(defn memsec'
-
-  [ctx]
-
-  (section-externval ctx
-                     :wasm/memsec
-                     :wasm.flatidx/mem
-                     :wasm.count/memsec
-                     memtype'))
-
-
-;;;;;;;;;; Sections / Start
+;;;;;;;;;; Modules / Start Section
 
 
 (defn startsec'
@@ -950,79 +886,185 @@
     ctx))
 
 
-;;;;;;;;;; Sections / Table
+;;;;;;;;;; Modules / Element Section
 
 
-(defn tablesec'
-
-  [ctx]
-
-  (section-externval ctx
-                     :wasm/tablesec
-                     :wasm.flatidx/table
-                     :wasm.count/tablesec
-                     tabletype'))
-
-
-;;;;;;;;;; Sections / Type
-
-
-(defn typesec
-
-  [{:as        ctx
-    :wasm/keys [typesec]}]
-
-  (let [n (count typesec)]
-    (if (pos? n)
-      (loop [idx-real                    0
-             idx-resolve                 {}
-             n-byte                      0
-             [[idx
-               {:wasm/keys [signature]}]
-              & typesec-2]               typesec]
-        (let [idx-resolve-2 (assoc idx-resolve
-                                   idx
-                                   idx-real)
-              n-byte-2      (+ n-byte
-                               (functype signature))]
-          (if typesec-2
-            (recur (inc idx-real)
-                   idx-resolve-2
-                   n-byte-2
-                   typesec-2)
-            (update ctx
-                    :wasm/write
-                    #(assoc %
-                            :wasm.count/typesec (+ (u32 n)
-                                                   n-byte-2)
-                            :wasm.flatidx/type  idx-resolve-2)))))
-      ctx)))
-
-
-;;;;;;;;;; Sections / Main
- 
-
-(def section-id
-     1)
-
-
-
-(defn section'
+(defn elemsec'
 
   ""
 
-  [n-byte]
+  [{:as        ctx
+    :wasm/keys [elemsec]}]
 
-  (if (and n-byte
-           (pos? n-byte))
-    (+ section-id
-       (u32 n-byte)
-       n-byte)
-    0))
+  (if (seq elemsec)
+    (update ctx
+            :wasm/write
+            (fn [{:as           ctx-write
+                  flatidx-func  :wasm.flatidx/func
+                  flatidx-table :wasm.flatidx/table}]
+              (let [ctx-write-2 (reduce-kv (fn [ctx-write-2 tableidx elem+]
+                                             (let [n-byte-tableidx (-> tableidx
+                                                                       flatidx-table
+                                                                       tableidx')
+                                                   funcidx'2       (comp funcidx'
+                                                                         flatidx-func)
+                                                   n-elem          (count elem+)]
+                                               (reduce (fn [ctx-write-3 {:wasm/keys [funcidx+
+                                                                                     offset]}]
+                                                         (update ctx-write-3
+                                                                 :wasm.count/elemsec
+                                                                 #(+ %
+                                                                     n-byte-tableidx
+                                                                     (expr' ctx-write
+                                                                            offset)
+                                                                     (u32' n-elem)
+                                                                     (reduce (fn [sum funcidx]
+                                                                               (+ sum
+                                                                                  (funcidx'2 funcidx)))
+                                                                             0
+                                                                             funcidx+))))
+                                                       (update ctx-write-2
+                                                               :wasm.elem/n
+                                                               #(+ %
+                                                                   n-elem))
+                                                       elem+)))
+                                           (assoc ctx-write
+                                                  :wasm.count/elemsec 0
+                                                  :wasm.elem/n        0)
+                                           elemsec)]
+                (update ctx-write-2
+                        :wasm.count/elemsec
+                        #(+ (u32' (ctx-write-2 :wasm.elem/n))
+                            %)))))
+    ctx))
+
+
+;;;;;;;;;; Modules / Code Section
+
+
+(defn codesec'
+
+  ""
+
+  [{:as        ctx
+    :wasm/keys [codesec]}]
+
+  (if (seq codesec)
+    (update ctx
+            :wasm/write
+            (fn [ctx-write]
+              (reduce code'
+                      (assoc ctx-write
+                             :wasm.codesec/func-size []
+                             :wasm.count/codesec     (u32' (count codesec)))
+                      (vals codesec))))
+    ctx))
 
 
 
-(defn section+
+(defn code'
+
+  ""
+
+  [ctx-write code]
+
+  (let [n-byte (func' ctx-write
+                      code)]
+    (-> ctx-write
+        (update :wasm.count/codesec
+                #(+ %
+                    (u32' n-byte)
+                    n-byte))
+        (update :wasm.codesec/func-size
+                conj
+                n-byte))))
+
+
+
+(defn func'
+
+  [flatidx {:wasm/keys [expr
+                        local+]}]
+
+  (+ (u32' (count local+))
+     (locals' local+)
+     (expr' flatidx
+            expr)))
+
+
+
+(defn locals'
+
+  [local+]
+
+  (reduce (fn [sum [n _valtype]]
+            (+ sum
+               (u32' n)
+               valtype'))
+          0
+          local+))
+
+
+;;;;;;;;;; Modules / Data Section
+
+
+(defn datasec'
+
+  ""
+
+  [{:as        ctx
+    :wasm/keys [datasec]}]
+
+  (if (seq datasec)
+    (update ctx
+            :wasm/write
+            (fn [{:as         ctx-write
+                  flatidx-mem :wasm.flatidx/mem}]
+              (let [ctx-write-2 (reduce-kv (fn [ctx-write-2 memidx data+]
+                                             (let [n-byte-memidx (-> memidx
+                                                                     flatidx-mem
+                                                                     memidx')]
+                                               (reduce (fn [ctx-write-3 {:wasm/keys [data
+                                                                                     offset]}]
+                                                         (let [n-byte-data (count data)]
+                                                           (update ctx-write-3
+                                                                   :wasm.count/datasec
+                                                                   #(+ %
+                                                                       n-byte-memidx
+                                                                       (expr' ctx-write-3
+                                                                              offset)
+                                                                       (u32' n-byte-data)
+                                                                       n-byte-data))))
+                                                       (update ctx-write-2
+                                                               :wasm.data/n
+                                                               #(+ %
+                                                                   (count data+)))
+                                                       data+)))
+                                           (assoc ctx-write
+                                                  :wasm.count/datasec 0
+                                                  :wasm.data/n        0)
+                                           datasec)]
+                (update ctx-write-2
+                        :wasm.count/datasec
+                        #(+ %
+                            (u32' (ctx-write-2 :wasm.data/n)))))))
+    ctx))
+
+
+;;;;;;;;;; Modules / Modules
+ 
+
+(def magic'
+     4)
+
+
+
+(def version'
+     4)
+
+
+
+(defn section'+
 
   ""
 
@@ -1055,18 +1097,6 @@
            startsec
            tablesec
            typesec]))
-  
-
-;;;;;;;;;; Module
-
-
-(def magic'
-     4)
-
-
-
-(def version'
-     4)
 
 
 
@@ -1077,7 +1107,7 @@
   [ctx]
 
   (let [ctx-2 (-> ctx
-                  typesec
+                  typesec'
                   importsec'
                   funcsec'
                   tablesec'
@@ -1093,4 +1123,4 @@
                :wasm.count/module]
               (+ magic'
                  version'
-                 (section+ ctx-2)))))
+                 (section'+ ctx-2)))))
