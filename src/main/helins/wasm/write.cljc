@@ -1334,6 +1334,26 @@
   view)
 
 
+;;;;;;;;;; Modules / Data Count Section
+
+
+(defn datacountsec'
+
+  ""
+
+  [view {:as        ctx
+         :wasm/keys [datacountsec]}]
+
+  (when datacountsec
+    (-> view
+        (section-id wasm.bin/section-id-datacount)
+        (u32' (get-in ctx
+                      [:wasm/write
+                       :wasm.count/datacountsec]))
+        (u32' (datacountsec :wasm.data/n-seg))))
+  view)
+
+
 ;;;;;;;;;; Modules / Modules
 
 

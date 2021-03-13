@@ -1235,6 +1235,25 @@
                         n-byte-data)))))
                       
 
+;;;;;;;;;; Modules / Data Count Section
+
+
+(defn datacountsec'
+
+  ""
+
+  [ctx]
+
+  (if-some [n-seg (get-in ctx
+                          [:wasm/datacountsec
+                           :wasm.data/n-seg])]
+    (assoc-in ctx
+              [:wasm/write
+               :wasm.count/datacountsec]
+              (u32' n-seg))
+    ctx))
+
+
 ;;;;;;;;;; Modules / Modules
  
 
@@ -1254,6 +1273,7 @@
 
   [{{:wasm.count/keys [codesec
                        datasec
+                       datacountsec
                        elemsec
                        exportsec
                        funcsec
@@ -1272,6 +1292,7 @@
           0
           [codesec
            datasec
+           datacountsec
            elemsec
            exportsec
            funcsec
@@ -1301,7 +1322,8 @@
                   startsec'
                   elemsec'
                   codesec'
-                  datasec')]
+                  datasec'
+                  datacountsec')]
     (assoc-in ctx-2
               [:wasm/write
                :wasm.count/module]

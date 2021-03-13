@@ -1641,6 +1641,20 @@
                                               (u32' view))))))))
 
 
+;;;;;;;;;; Modules / Data Count Section
+
+
+(defn datacountsec'
+
+  ""
+
+  [ctx view]
+
+  (assoc ctx
+         :wasm/datacountsec
+         {:wasm.data/n-seg (u32' view)}))
+
+
 ;;;;;;;;;; Modules / Modules
 
 
@@ -1687,17 +1701,18 @@
                                   view))
               ((condp =
                       id
-                  wasm.bin/section-id-type   typesec'
-                  wasm.bin/section-id-import importsec'
-                  wasm.bin/section-id-func   funcsec'
-                  wasm.bin/section-id-table  tablesec'
-                  wasm.bin/section-id-mem    memsec'
-                  wasm.bin/section-id-global globalsec'
-                  wasm.bin/section-id-export exportsec'
-                  wasm.bin/section-id-start  startsec'
-                  wasm.bin/section-id-elem   elemsec'
-                  wasm.bin/section-id-code   codesec'
-                  wasm.bin/section-id-data   datasec')
+                  wasm.bin/section-id-type      typesec'
+                  wasm.bin/section-id-import    importsec'
+                  wasm.bin/section-id-func      funcsec'
+                  wasm.bin/section-id-table     tablesec'
+                  wasm.bin/section-id-mem       memsec'
+                  wasm.bin/section-id-global    globalsec'
+                  wasm.bin/section-id-export    exportsec'
+                  wasm.bin/section-id-start     startsec'
+                  wasm.bin/section-id-elem      elemsec'
+                  wasm.bin/section-id-code      codesec'
+                  wasm.bin/section-id-data      datasec'
+                  wasm.bin/section-id-datacount datacountsec')
                ctx-2
                view)))
           ctx
