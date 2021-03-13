@@ -1311,18 +1311,26 @@
       (-> view
           (section-id wasm.bin/section-id-data)
           (u32' (ctx-write :wasm.count/datasec))
-          (u32' (ctx-write :wasm.data/n)))
-      (doseq [[memidx
-               data+] datasec]
-        (let [memidx-2 (flatidx-mem memidx)]
-          (doseq [{:wasm/keys [data
-                               offset]} data+]
-            (-> view
-                (memidx' memidx-2)
-                (expr' ctx-write
-                       offset)
-                (u32' (count data))
-                (binf/wr-buffer data)))))))
+          (u32' (count datasec)))
+      (doseq [{:wasm/keys [data
+                           memidx
+                           offset]} (vals datasec)]
+        (byte' view
+               (if offset
+                 (if memidx
+                   0x02
+                   0x00)
+                 0x01))
+        (when offset
+          (when memidx
+            (memidx' view
+                     (flatidx-mem memidx)))
+          (expr' view
+                 ctx-write
+                 offset))
+        (-> view
+            (u32' (count data))
+            (binf/wr-buffer data)))))
   view)
 
 
