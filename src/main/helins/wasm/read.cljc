@@ -284,47 +284,23 @@
 ;;;;;;;;;; Types / Limits
 
 
-(defn limits-min
-
-  ""
-
-  [hmap view]
-
-  (assoc hmap
-         :wasm.limit/min
-         (u32' view)))
-
-
-
-(defn limits-minmax
-
-  ""
-
-  [hmap view]
-
-  (assoc (limits-min hmap
-                     view)
-         :wasm.limit/max
-         (u32' view)))
-
-
-
 (defn limits'
 
   ""
 
   [hmap view]
 
-  (let [flag (byte' view)
-        f    (condp =
-               flag
-          wasm.bin/limits-min    limits-min
-          wasm.bin/limits-minmax limits-minmax
-          (throw (ex-info (str "Unknown limit type: "
-                               flag)
-                          {})))]
-    (f hmap
-       view)))
+  (let [flag (byte' view)]
+    (condp =
+           flag
+      wasm.bin/limits-min    (wasm.ir/limits' hmap
+                                              (u32' view))
+      wasm.bin/limits-minmax (wasm.ir/limits' hmap
+                                              (u32' view)
+                                              (u32' view))
+      (throw (ex-info (str "Unknown limit type: "
+                           flag)
+                      {})))))
 
 
 ;;;;;;;;;; Types / Memory Types
@@ -349,10 +325,10 @@
 
   [hmap view]
 
-  (-> hmap
-      (assoc :wasm/reftype
-             (reftype' view))
-      (limits' view)))
+  (let [reftype (reftype' view)]
+    (wasm.ir/tabletype' (limits' hmap
+                                 view)
+                        reftype)))
 
 
 ;;;;;;;;;; Types / Global types
@@ -364,9 +340,9 @@
 
   [hmap view]
 
-  (assoc hmap
-         :wasm/valtype  (valtype' view)
-         :wasm/mutable? (mut' view)))
+  (wasm.ir/globaltype' hmap
+                       (valtype' view)
+                       (mut' view)))
 
 
 
@@ -971,9 +947,8 @@
 
   [hmap view]
 
-  (assoc hmap
-         :wasm/typeidx
-         (typeidx' view)))
+  (wasm.ir/func hmap
+                (typeidx' view)))
 
 
 ;;;;;;;;;; Modules / Custom Section
@@ -1018,7 +993,8 @@
   (vec' ctx
         (fn [ctx-2 view]
           (wasm.ir/assoc-type ctx-2
-                              {:wasm/signature (functype' view)}))
+                              (wasm.ir/type-signature {}
+                                                      (functype' view))))
         view))
 
 
@@ -1045,8 +1021,9 @@
 
   (importdesc' ctx
                view
-               {:wasm.import/module (name' view)
-                :wasm.import/name   (name' view)}))
+               (wasm.ir/import' {}
+                                (name' view)
+                                (name' view))))
 
 
 
@@ -1366,10 +1343,9 @@
 
   [ctx view]
 
-  (assoc ctx
-         :wasm/startsec
-         (start' {}
-                 view)))
+  (wasm.ir/startsec' ctx
+                     (start' {}
+                             view)))
 
 
 
@@ -1379,9 +1355,8 @@
 
   [hmap view]
 
-  (assoc hmap
-         :wasm/funcidx
-         (funcidx' view)))
+  (wasm.ir/start' hmap
+                  (funcidx' view)))
 
 
 ;;;;;;;;;; Modules / Element Section
@@ -1414,27 +1389,27 @@
               inc)
       (assoc-in [:wasm/elemsec
                  (ctx :wasm/elemidx)]
-                (let [flag   (byte' view)
-                      _      (when-not (<= 0x00
-                                           flag
-                                           0x07)
-                               (throw (ex-info (str "Element segment flag is not in [0;7]: "
-                                                    flag)
-                                               {})))
-                      hmap   (if (even? flag)
-                               (-> (if (or (= flag
-                                              0x02)
-                                           (= flag
-                                              0x06))
-                                     {:wasm/tableidx (tableidx' view)}
-                                     {})
-                                   (assoc :wasm/offset    (expr' ctx
-                                                                 view)
-                                          :wasm.elem/mode :active))
-                               {:wasm.elem/mode (if (pos? (bit-and flag
-                                                                   2r010))
-                                                  :declarative
-                                                  :passive)})]
+                (let [flag (byte' view)
+                      _    (when-not (<= 0x00
+                                         flag
+                                         0x07)
+                             (throw (ex-info (str "Element segment flag is not in [0;7]: "
+                                                  flag)
+                                             {})))
+                      hmap (if (even? flag)
+                             (-> (if (or (= flag
+                                            0x02)
+                                         (= flag
+                                            0x06))
+                                   {:wasm/tableidx (tableidx' view)}
+                                   {})
+                                 (assoc :wasm/offset    (expr' ctx
+                                                               view)
+                                        :wasm.elem/mode :active))
+                             {:wasm.elem/mode (if (pos? (bit-and flag
+                                                                 2r010))
+                                                :declarative
+                                                :passive)})]
                   (if (pos? (bit-and flag
                                      2r100))
                     (-> (if (= flag
@@ -1636,9 +1611,8 @@
 
   [ctx view]
 
-  (assoc ctx
-         :wasm/datacountsec
-         {:wasm.data/n-seg (u32' view)}))
+  (wasm.ir/datacountsec' ctx
+                         (u32' view)))
 
 
 ;;;;;;;;;; Modules / Modules

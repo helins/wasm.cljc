@@ -32,8 +32,7 @@
    :extra-paths ["src/test"]}}
 
  :deps
- {io.helins/binf                    {:git/url "https://github.com/helins/binf.cljc"
-                                     :sha     "f5abb1346216738191adab55c0dc2880876c4316"}
+ {io.helins/binf                    {:mvn/version "1.0.0-beta1"}
   metosin/malli                     {:mvn/version "0.3.0"}
   org.wasmer/wasmer-jni-amd64-linux {:local/root "runtime/wasmer-jni-amd64-linux-0.3.0.jar"}}
 

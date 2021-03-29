@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+
+clojure -X:jar && clojure -X:deploy && rm release.jar
