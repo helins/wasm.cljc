@@ -9,15 +9,12 @@
 
   {:author "Adam"}
 
-  (:require [clojure.spec.alpha              :as s]
-            [clojure.spec.gen.alpha          :as sgen]
-            [clojure.test                    :as t]
+  (:require [clojure.test                    :as t]
             [clojure.test.check.clojure-test :as tc.ct]
             [clojure.test.check.properties   :as tc.prop]
             [helins.binf                     :as binf]
             [helins.wasm.count               :as wasm.count]
             [helins.wasm.decompile           :as wasm.decompile]
-            [helins.wasm.spec]
             [helins.wasm.write               :as wasm.write]))
 
 
@@ -36,14 +33,3 @@
       binf/backing-buffer
       wasm.decompile/main
       (dissoc :wasm/source)))
-
-
-;;;;;;;;;;
-
-
-#_(tc.ct/defspec module
-  
-  (tc.prop/for-all [m (s/gen :wasm/module)]
-    (wasm.count/module m)
-    #_(= m
-       (compile-cycle m))))

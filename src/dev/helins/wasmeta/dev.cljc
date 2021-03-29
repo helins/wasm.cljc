@@ -12,8 +12,6 @@
   (:require [clojure.data]
             #?(:clj [clojure.edn])
             [clojure.pprint]
-            [clojure.spec.alpha     :as s]
-            [clojure.spec.gen.alpha :as sgen]
             [helins.binf            :as binf]
             [helins.binf.buffer     :as binf.buffer]
             [helins.binf.int        :as binf.int]
@@ -24,7 +22,6 @@
             [helins.wasm.count      :as wasm.count]
             [helins.wasm.ir         :as wasm.ir]
             [helins.wasm.read       :as wasm.read]
-            [helins.wasm.spec       :as wasm.spec]
             [helins.wasm.write      :as wasm.write]
             [helins.wasmer.fn       :as wasmer.fn]
             [helins.wasmer.instance :as wasmer.instance]
@@ -129,90 +126,4 @@
 
 
 
-
-
-
-
-  (s/valid? :wasm/module
-            *1)
-
-
-  (sgen/generate (s/gen :wasm/module))
-
-
-
-
-
-  (def *reg
-       (atom (assoc (malli/default-schemas)
-                    :test-string (malli/-string-schema)
-                    :foo       [:int
-                                {:gen/gen (sgen/fmap (fn [x]
-                                                       (swap! *reg
-                                                              assoc
-                                                              :vecstring
-                                                              :boolean)
-                                                       (println :got x)
-                                                       x)
-                                                     (s/gen int?))}]
-                    :vecstring (malli/schema [:vector :string]))))
-
-
-  (malli/validate [:vector
-                   {:registry (malli.registry/mutable-registry (atom {:test-string (malli/-string-schema)}))}
-                   :test-string]
-                  ["ok"])
-
-                  ;{:registry (malli.registry/mutable-registry *reg)})
-
-  (malli/validate [:vector
-                 ;  {:registry (malli.registry/mutable-registry (atom {:test-string :string}))
-                   :test-string]
-                  {:registry (malli.registry/mutable-registry *reg)})
-
-
-  (def sch
-       (malli/schema [:vector
-                      :test-string
-                      ]
-                     {:registry (malli.registry/mutable-registry *reg)}))
-
-
-
-(def registry*
-  (atom {:string (malli/-string-schema)
-         :maybe (malli/-maybe-schema)
-         :map (malli/-map-schema)}))
-
-
-  (malli/validate :foo
-                  42
-                  {:registry (malli.registry/mutable-registry *reg)})
-
-       
-
-
-  (malli/validate sch
-                 {:a 42
-                  :b 24}
-                 {:registry (malli.registry/mutable-registry *reg)
-                  
-                  #_malli/default-registry})
-
-
-  (malli.util/get-in sch
-                     [:a
-                      :registry])
-
-
-  (malli.provider/provide [{:a 32}
-                           {:b "ok"}
-                           [:ok 'ok]])
-
-
-  (malli.gen/generate [:cat :vecstring
-                            :foo
-                            :vecstring]
-                      {:registry (malli.registry/mutable-registry *reg)})
-  
   )
