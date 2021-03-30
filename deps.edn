@@ -33,7 +33,7 @@
 
  :deps
  {io.helins/binf                    {:mvn/version "1.0.0-beta1"}
-  metosin/malli                     {:mvn/version "0.3.0"}
+  metosin/malli                     {:mvn/version "0.3.1"}
   org.wasmer/wasmer-jni-amd64-linux {:local/root "runtime/wasmer-jni-amd64-linux-0.3.0.jar"}}
 
  :paths

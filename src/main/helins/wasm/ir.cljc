@@ -7,7 +7,11 @@
 
   ""
 
-  {:author "Adam Helinski"})
+  {:author "Adam Helinski"}
+
+  (:require [helins.wasm.bin :as wasm.bin]
+            [malli.core      :as malli]
+            [malli.generator :as malli.gen]))
 
 
 ;;;;;;;;;; Private - Miscellaneous helpers
@@ -470,3 +474,102 @@
   (assoc ctx
          :wasm/version
          1))
+
+
+;;;;;;;;;; Schema
+
+
+(def registry
+
+  ""
+
+  {;; Values / Byte
+
+   :wasm/byte [:int
+               {:max 255
+                :min 0}]
+
+
+   ;; Values / Integers
+
+   :wasm/u32  [:int
+               {:max 4294967295
+                :min 0}]
+
+
+   ;; Types / Number Types
+
+   :wasm/numtype [:enum
+                  wasm.bin/numtype-i32
+                  wasm.bin/numtype-i64
+                  wasm.bin/numtype-f32
+                  wasm.bin/numtype-f64]
+
+
+   ;; Types / Reference Type
+
+   :wasm/reftype [:enum
+                  wasm.bin/funcref
+                  wasm.bin/externref]
+
+
+   ;; Types / Value types
+
+   :wasm/valtype [:or
+                  :wasm/numtype
+                  :wasm/reftype]
+
+
+   ;; Types / Result Types
+
+   :wasm/resulttype [:maybe
+                     [:vector
+                      {:min 1}
+                      :wasm/valtype]]
+
+
+   ;; Types / Function Types
+
+   :wasm/functype [:tuple
+                   :wasm/resulttype
+                   :wasm/resulttype]
+
+
+   ;; Modules / Indices
+
+   :wasm/funcidx :wasm/idx
+
+   :wasm/idx     :wasm/u32
+
+
+   ;; Module / Type Section
+
+   :wasm/typesec   [:map-of
+                    :wasm/funcidx
+                    :wasm/type]
+
+   :wasm/type      [:map
+                    :wasm/signature]
+
+   :wasm/signature :wasm/functype
+   })
+
+
+
+
+
+(comment
+
+
+  (malli/validate [:and
+                   {:registry registry}
+                   :wasm/funcidx]
+                  420
+                  )
+
+
+  (malli.gen/sample [:and
+                     {:registry registry}
+                     :wasm/typesec])
+
+  )
