@@ -21,6 +21,7 @@
             [helins.wasm.count               :as wasm.count]
             [helins.wasm.ir                  :as wasm.ir]
             [helins.wasm.read                :as wasm.read]
+            [helins.wasm.schema              :as wasm.schema]
             [helins.wasm.write               :as wasm.write]
             [malli.generator                 :as malli.gen]))
 
@@ -53,7 +54,7 @@
   [schema]
 
   (malli.gen/generator [:and
-                        {:registry wasm.ir/registry}
+                        {:registry wasm.schema/registry}
                         schema]))
 
 

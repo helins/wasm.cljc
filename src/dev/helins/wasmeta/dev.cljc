@@ -22,6 +22,7 @@
             [helins.wasm.count      :as wasm.count]
             [helins.wasm.ir         :as wasm.ir]
             [helins.wasm.read       :as wasm.read]
+            [helins.wasm.schema     :as wasm.schema]
             [helins.wasm.write      :as wasm.write]
             [helins.wasmer.fn       :as wasmer.fn]
             [helins.wasmer.instance :as wasmer.instance]
