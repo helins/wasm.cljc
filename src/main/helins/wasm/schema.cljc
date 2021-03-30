@@ -287,6 +287,20 @@
       :wasm/func])
 
 
+;;;;;;;;;; Modules / Table Section
+
+
+(def tablesec'
+     [:map-of
+      :wasm/tableidx
+      :wasm/table])
+
+
+
+(def table'
+     :wasm/tabletype)
+
+
 ;;;;;;;;;; Registry
 
 
@@ -313,7 +327,9 @@
           :wasm/reftype       reftype'
           :wasm/resulttype    resulttype'
           :wasm/signature     signature
+          :wasm/table         table'
           :wasm/tableidx      tableidx'
+          :wasm/tablesec      tablesec'
           :wasm/tabletype     tabletype'
           :wasm/type          type-
           :wasm/typeidx       typeidx'
