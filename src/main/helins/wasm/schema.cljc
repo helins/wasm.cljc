@@ -19,20 +19,6 @@
             [malli.util]))
 
 
-;;;;;;;;;; Setup
-
-
-(alter-var-root #'wasm.count/-flatten-idx
-                (constantly (fn [_hmap idx]
-                              idx)))
-
-
-
-(alter-var-root #'wasm.write/-flatten-idx
-                (constantly (fn [_hmap idx]
-                              idx)))
-
-
 ;;;;;;;;;; Values / Byte
 
 
@@ -292,6 +278,15 @@
                             imported-table]]])
 
 
+;;;;;;;;;; Modules / Function Section
+
+
+(def funcsec'
+     [:map-of
+      :wasm/funcidx
+      :wasm/func])
+
+
 ;;;;;;;;;; Registry
 
 
@@ -303,6 +298,7 @@
          (malli.util/schemas)
          {
           :wasm/byte          byte'
+          :wasm/func          func
           :wasm/funcidx       funcidx'
           :wasm/functype      functype'
           :wasm/globalidx     globalidx'
@@ -340,7 +336,7 @@
 
 
 
-  (malli.gen/generate imported-mem
+  (malli.gen/generate funcsec'
                       {:registry registry})
 
 

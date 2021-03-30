@@ -27,6 +27,20 @@
             [malli.generator                 :as malli.gen]))
 
 
+;;;;;;;;;; Setup
+
+
+(alter-var-root #'wasm.count/-flatten-idx
+                (constantly (fn [_hmap idx]
+                              idx)))
+
+
+
+(alter-var-root #'wasm.write/-flatten-idx
+                (constantly (fn [_hmap idx]
+                              idx)))
+
+
 ;;;;;;;;;;
 
 
@@ -73,10 +87,45 @@
                        x))))
 
 
+
+(defn test-section
+
+  ""
+
+  [section-id gen f-count k-count f-write f-read]
+
+  (tc.prop/for-all [ctx gen]
+    (let [ctx-2  (f-count ctx)
+          n-byte (get-in ctx-2
+                         [:wasm/write
+                          k-count])]
+      (if (and n-byte
+               (pos? n-byte))
+        (let [view (-> (wasm.count/section' n-byte)
+                        binf.buffer/alloc
+                        binf/view)]
+           (f-write view
+                    ctx-2)
+           (binf/seek view
+                      0)
+           (let [section-id (wasm.read/section-id' view)
+                 n-byte-2   (wasm.read/u32' view)
+                 diff       (clojure.data/diff ctx
+                                               (f-read wasm/ctx
+                                                       view))]
+             (= [section-id
+                 n-byte
+                 (nth diff
+                      0)]
+                [section-id
+                 n-byte-2
+                 (nth diff
+                      1)])))
+        true))))
+
+
 ;;;;;;;;;;
 
-
-(comment
 
 (tc.ct/defspec byte'
 
@@ -136,90 +185,69 @@
 
 (tc.ct/defspec typesec'
 
-  (tc.prop/for-all [type+ (tc.gen/vector (generator :wasm/type))]
-    (let [ctx    (reduce wasm.ir/assoc-type
-                         wasm/ctx
-                         type+)
-          ctx-2  (wasm.count/typesec' ctx)
-          n-byte (get-in ctx-2
-                         [:wasm/write
-                          :wasm.count/typesec])]
-      (if n-byte
-         (let [view (-> (wasm.count/section' n-byte)
-                        binf.buffer/alloc
-                        binf/view)]
-           (wasm.write/typesec' view
-                                ctx-2)
-           (binf/seek view
-                      0)
-           (= [wasm.bin/section-id-type
-               n-byte
-               ctx]
-              [(wasm.read/section-id' view)
-               (wasm.read/u32' view)
-               (wasm.read/typesec' wasm/ctx
-                                   view)]))
-        true))))
+  (test-section wasm.bin/section-id-type
+                (tc.gen/fmap (fn [type+]
+                               (reduce wasm.ir/assoc-type
+                                       wasm/ctx
+                                       type+))
+                             (tc.gen/vector (generator :wasm/type)))
+                wasm.count/typesec'
+                :wasm.count/typesec
+                wasm.write/typesec'
+                wasm.read/typesec'))
 
-
-)
 
 ;;;;;;;;;; Modules / Import Section
 
 
 (tc.ct/defspec importsec'
 
-  (tc.prop/for-all [ctx (tc.gen/fmap (fn [[func+
-                                           global+
-                                           mem+
-                                           table+]]
-                                       (as-> wasm/ctx
-                                             ctx  
-                                         (reduce wasm.ir/import-func
-                                                 ctx
-                                                 func+)
-                                         (reduce wasm.ir/import-global
-                                                 ctx
-                                                 global+)
-                                         (reduce wasm.ir/import-mem
-                                                 ctx
-                                                 mem+)
-                                         (reduce wasm.ir/import-table
-                                                 ctx
-                                                 table+)))
-                                     (tc.gen/tuple
-                                       (tc.gen/vector (malli.gen/generator wasm.schema/imported-func
-                                                      {:registry wasm.schema/registry}))
-                                       (tc.gen/vector (malli.gen/generator wasm.schema/imported-global
-                                                      {:registry wasm.schema/registry}))
-                                       (tc.gen/vector (malli.gen/generator wasm.schema/imported-mem
-                                                      {:registry wasm.schema/registry}))
-                                       (tc.gen/vector (malli.gen/generator wasm.schema/imported-table
-                                                      {:registry wasm.schema/registry}))))]
-    (let [ctx-2  (wasm.count/importsec' ctx)
-          n-byte (get-in ctx-2
-                         [:wasm/write
-                          :wasm.count/importsec])]
-      (if (and n-byte
-               (pos? n-byte))
-         (let [view (-> (wasm.count/section' n-byte)
-                        binf.buffer/alloc
-                        binf/view)]
-           (wasm.write/importsec' view
-                                  ctx-2)
-           (binf/seek view
-                      0)
-           (let [section-id (wasm.read/section-id' view)
-                 n-byte-2   (wasm.read/u32' view)
-                 diff       (clojure.data/diff ctx
-                                               (wasm.read/importsec' wasm/ctx
-                                                                     view))]
-             (= [wasm.bin/section-id-import
-                 n-byte
-                 (nth diff
-                      0)]
-                [section-id
-                 n-byte-2
-                 (nth diff
-                      1)])))
-        true))))
+  (test-section wasm.bin/section-id-import
+                (tc.gen/fmap (fn [[func+
+                                   global+
+                                   mem+
+                                   table+]]
+                               (as-> wasm/ctx
+                                     ctx  
+                                 (reduce wasm.ir/import-func
+                                         ctx
+                                         func+)
+                                 (reduce wasm.ir/import-global
+                                         ctx
+                                         global+)
+                                 (reduce wasm.ir/import-mem
+                                         ctx
+                                         mem+)
+                                 (reduce wasm.ir/import-table
+                                         ctx
+                                         table+)))
+                             (tc.gen/tuple
+                               (tc.gen/vector (malli.gen/generator wasm.schema/imported-func
+                                              {:registry wasm.schema/registry}))
+                               (tc.gen/vector (malli.gen/generator wasm.schema/imported-global
+                                              {:registry wasm.schema/registry}))
+                               (tc.gen/vector (malli.gen/generator wasm.schema/imported-mem
+                                              {:registry wasm.schema/registry}))
+                               (tc.gen/vector (malli.gen/generator wasm.schema/imported-table
+                                              {:registry wasm.schema/registry}))))
+                wasm.count/importsec'
+                :wasm.count/importsec
+                wasm.write/importsec'
+                wasm.read/importsec'))
+
+
+;;;;;;;;;; Modules / Function Section
+
+
+(tc.ct/defspec funcsec'
+
+  (test-section wasm.bin/section-id-func
+                (tc.gen/fmap (fn [type+]
+                               (reduce wasm.ir/assoc-func
+                                       wasm/ctx
+                                       type+))
+                             (tc.gen/vector (generator :wasm/func)))
+                wasm.count/funcsec'
+                :wasm.count/funcsec
+                wasm.write/funcsec'
+                wasm.read/funcsec'))
