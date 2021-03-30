@@ -9,9 +9,12 @@
 
   {:author "Adam Helinski"}
 
-  (:require [helins.wasm.bin :as wasm.bin]
-            [malli.core      :as malli]
-            [malli.generator :as malli.gen]))
+  (:require [clojure.test.check.generators :as tc.gen]
+            [helins.binf.string            :as binf.string]
+            [helins.wasm.bin               :as wasm.bin]
+            [malli.core                    :as malli]
+            [malli.generator               :as malli.gen]
+            [malli.util]))
 
 
 ;;;;;;;;;; Values / Byte
@@ -41,6 +44,20 @@
       wasm.bin/numtype-i64
       wasm.bin/numtype-f32
       wasm.bin/numtype-f64])
+
+
+;;;;;;;;;; Values / Names
+
+
+(def name'
+     (malli/-simple-schema {:pred            #?(:clj  (let [klass (class (byte-array 0))]
+                                                        #(instance? klass
+                                                                    %))
+                                                :cljs nil)
+                            :type            :wasm/name
+                            :type-properties {:error/message "Must be BinF buffer"
+                                              :gen/gen       (tc.gen/fmap binf.string/encode
+                                                                          tc.gen/string)}}))
 
 
 ;;;;;;;;;; Types / Reference Types
@@ -80,6 +97,53 @@
       :wasm/resulttype])
 
 
+;;;;;;;;;; Types / Limits
+
+
+(def limits'
+     [:and
+
+      [:map
+       [:wasm.limit/min
+        :wasm/u32]
+       [:wasm.limit/max
+        {:optional true}
+        :wasm/u32]]
+
+      [:fn (fn [{:wasm.limit/keys [max
+                                   min]}]
+             (if max
+               (>= max
+                   min)
+               true))]])
+
+
+;;;;;;;;;; Types / Memory Types
+
+
+(def memtype'
+     :wasm/limits)
+
+
+;;;;;;;;;; Types / Memory Types
+
+
+(def tabletype'
+     [:merge
+      limits'
+      [:map
+       :wasm/reftype]])
+
+
+;;;;;;;;;; Types / Global types
+
+
+(def globaltype'
+     [:map
+      :wasm/mutable?
+      :wasm/valtype])
+
+
 ;;;;;;;;;; Modules / Indices
 
 
@@ -92,6 +156,18 @@
 
 
 (def funcidx'
+     idx)
+
+(def globalidx'
+     idx)
+
+(def memidx'
+     idx)
+
+(def tableidx'
+     idx)
+
+(def typeidx'
      idx)
 
 
@@ -118,6 +194,83 @@
      :wasm/functype)
 
 
+;;;;;;;;;; Modules / Import Section
+
+
+(def func
+
+  ""
+  
+  [:map
+   :wasm/typeidx])
+
+
+
+(def imported-base
+
+  ""
+
+  [:map
+   :wasm.import/module
+   :wasm.import/name])
+
+
+
+(def imported-function
+
+  ""
+
+  [:merge
+   imported-base
+   func])
+
+
+(def imported-global
+
+  ""
+
+  [:merge
+   imported-base
+   globaltype'])
+
+
+
+(def imported-mem
+
+  ""
+
+  [:merge
+   imported-base
+   memtype'])
+
+
+
+(def imported-table
+
+  ""
+
+  [:merge
+   imported-base
+   tabletype'])
+   
+
+
+(def importsec'
+     [:map
+      [:wasm.import/func   [:map-of
+                            :wasm/funcidx
+                            imported-function]]
+      [:wasm.import/global [:map-of
+                            :wasm/globalidx
+                            imported-global]]
+      [:wasm.import/mem    [:map-of
+                            :wasm/memidx
+                            imported-mem]]
+      [:wasm.import/table  [:map-of
+                            :wasm/tableidx
+                            imported-table]]])
+
+
 ;;;;;;;;;; Registry
 
 
@@ -125,20 +278,34 @@
 
   "Registry gathering all schemas related to WASM."
 
-  {
-   :wasm/byte       byte'
-   :wasm/funcidx    funcidx'
-   :wasm/functype   functype'
-   :wasm/idx        idx
-   :wasm/numtype    numtype'
-   :wasm/reftype    reftype'
-   :wasm/resulttype resulttype'
-   :wasm/signature  signature
-   :wasm/type       type-
-   :wasm/typesec    typesec'
-   :wasm/u32        u32'
-   :wasm/valtype    valtype'
-   })
+  (merge (malli/default-schemas)
+         (malli.util/schemas)
+         {
+          :wasm/byte          byte'
+          :wasm/funcidx       funcidx'
+          :wasm/functype      functype'
+          :wasm/globalidx     globalidx'
+          :wasm/idx           idx
+          :wasm/importsec     importsec'
+          :wasm/limits        limits'
+          :wasm/memidx        memidx'
+          :wasm/memtype       memtype'
+          :wasm/mutable?      :boolean
+          :wasm/name          name'
+          :wasm/numtype       numtype'
+          :wasm/reftype       reftype'
+          :wasm/resulttype    resulttype'
+          :wasm/signature     signature
+          :wasm/tableidx      tableidx'
+          :wasm/tabletype     tabletype'
+          :wasm/type          type-
+          :wasm/typeidx       typeidx'
+          :wasm/typesec       typesec'
+          :wasm/u32           u32'
+          :wasm/valtype       valtype'
+          :wasm.import/module name'
+          :wasm.import/name   name'
+          }))
 
 
 
@@ -154,11 +321,16 @@
                   )
 
 
-  (malli.gen/sample [:and
-                     {:registry registry}
-                     :wasm/typesec])
+
+  (malli.gen/sample :wasm/importsec
+                    {:registry registry})
+
+
 
   (malli.gen/generator [:and
                         {:registry registry}
-                        :wasm/functype])
+                        :wasm/name])
+
+
+
   )

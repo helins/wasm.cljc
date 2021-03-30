@@ -53,9 +53,8 @@
 
   [schema]
 
-  (malli.gen/generator [:and
-                        {:registry wasm.schema/registry}
-                        schema]))
+  (malli.gen/generator schema
+                       {:registry wasm.schema/registry}))
 
 
 
@@ -118,15 +117,6 @@
                wasm.count/functype'
                wasm.write/functype'
                wasm.read/functype'))
-
-
-
-(tc.ct/defspec funcidx'
-
-  (test-direct :wasm/funcidx
-               wasm.count/funcidx'
-               wasm.write/funcidx'
-               wasm.read/funcidx'))
 
 
 
