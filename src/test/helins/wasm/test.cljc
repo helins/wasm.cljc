@@ -268,3 +268,20 @@
                 :wasm.count/tablesec
                 wasm.write/tablesec'
                 wasm.read/tablesec'))
+
+
+;;;;;;;;;; Modules / Memory Section
+
+
+(tc.ct/defspec memsec'
+
+  (test-section wasm.bin/section-id-table
+                (tc.gen/fmap (fn [mem+]
+                               (reduce wasm.ir/assoc-mem
+                                       wasm/ctx
+                                       mem+))
+                             (tc.gen/vector (generator :wasm/mem)))
+                wasm.count/memsec'
+                :wasm.count/memsec
+                wasm.write/memsec'
+                wasm.read/memsec'))

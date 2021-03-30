@@ -301,6 +301,20 @@
      :wasm/tabletype)
 
 
+;;;;;;;;;; Modules / Memory Section
+
+
+(def memsec'
+     [:map-of
+      :wasm/memidx
+      :wasm/mem])
+
+
+
+(def mem'
+     :wasm/memtype)
+
+
 ;;;;;;;;;; Registry
 
 
@@ -319,7 +333,9 @@
           :wasm/idx           idx
           :wasm/importsec     importsec'
           :wasm/limits        limits'
+          :wasm/mem           mem'
           :wasm/memidx        memidx'
+          :wasm/memsec        memsec'
           :wasm/memtype       memtype'
           :wasm/mutable?      :boolean
           :wasm/name          name'
