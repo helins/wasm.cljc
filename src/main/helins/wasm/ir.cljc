@@ -522,10 +522,12 @@
 
    ;; Types / Result Types
 
-   :wasm/resulttype [:maybe
+   :wasm/resulttype ;[:maybe
                      [:vector
                       {:min 1}
-                      :wasm/valtype]]
+                      :wasm/valtype]
+                     ;]
+                     
 
 
    ;; Types / Function Types
@@ -572,4 +574,7 @@
                      {:registry registry}
                      :wasm/typesec])
 
+  (malli.gen/generator [:and
+                        {:registry registry}
+                        :wasm/functype])
   )

@@ -917,13 +917,23 @@
 ;;;;;;;;;; Modules / Sections
 
 
+(defn section-id'
+
+  ""
+
+  [view]
+
+  (byte' view))
+
+
+
 (defn section'
 
   ""
 
   [view]
 
-  (let [id (byte' view)]
+  (let [id (section-id' view)]
     (when-not (wasm.bin/section-id? id)
       (throw (ex-info (str "Unknown section ID: "
                            id)
