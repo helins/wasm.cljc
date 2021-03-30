@@ -12,10 +12,25 @@
 
 ;;;;;;;;;; Private - Miscellaneous helpers
 
+(defn -assoc-import
+
+  ;;
+
+  [ctx k-import-type k-idx hmap]
+
+  (-> ctx
+      (assoc-in [:wasm/importsec
+                k-import-type
+                (ctx k-idx)]
+                hmap)
+      (update k-idx
+              inc)))
+  
+
 
 (defn -assoc-resource
 
-  ""
+  ;;
 
   [ctx k-section k-idx externval]
 
@@ -131,6 +146,58 @@
   (assoc hmap
          :wasm.import/module buffer-module
          :wasm.import/name   buffer-name))
+
+
+
+(defn import-func
+
+  ""
+
+  [ctx func]
+
+  (-assoc-import ctx
+                 :wasm.import/func
+                 :wasm/funcidx
+                 func))
+
+
+
+(defn import-global
+
+  ""
+
+  [ctx global]
+
+  (-assoc-import ctx
+                 :wasm.import/gobal
+                 :wasm/globalidx
+                 global))
+
+
+
+(defn import-mem
+
+  ""
+
+  [ctx mem]
+
+  (-assoc-import ctx
+                 :wasm.import/mem
+                 :wasm/memidx
+                 mem))
+
+
+
+(defn import-table
+
+  ""
+
+  [ctx table]
+
+  (-assoc-import ctx
+                 :wasm.import/table
+                 :wasm/tableidx
+                 table))
 
 
 ;;;;;;;;;; Modules / Function Section

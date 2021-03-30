@@ -1037,33 +1037,15 @@
 
 
 
-(defn importdesc-any
-
-  ""
-
-  [ctx hmap k-import-type k-idx]
-  
-  (-> ctx
-      (assoc-in [:wasm/importsec
-                k-import-type
-                (ctx k-idx)]
-               hmap)
-      (update k-idx
-              inc)))
-
-
-
 (defn importdesc-func
 
   ""
 
   [ctx view hmap]
 
-  (importdesc-any ctx
-                  (func hmap
-                        view)
-                  :wasm.import/func
-                  :wasm/funcidx))
+  (wasm.ir/import-func ctx
+                       (func hmap
+                             view)))
 
 
 
@@ -1073,11 +1055,9 @@
 
   [ctx view hmap]
 
-  (importdesc-any ctx
-                  (tabletype' hmap
-                              view)
-                  :wasm.import/table
-                  :wasm/tableidx))
+  (wasm.ir/import-table ctx
+                        (tabletype' hmap
+                                    view)))
 
 
 
@@ -1087,11 +1067,9 @@
 
   [ctx view hmap]
 
-  (importdesc-any ctx
-                  (memtype' hmap
-                            view)
-                  :wasm.import/mem
-                  :wasm/memidx))
+  (wasm.ir/import-mem ctx
+                      (memtype' hmap
+                                view)))
 
 
 
@@ -1101,11 +1079,10 @@
 
   [ctx view hmap]
 
-  (importdesc-any ctx
-                  (globaltype' hmap
-                               view)
-                  :wasm.import/global
-                  :wasm/globalidx))
+  (wasm.ir/import-global ctx
+                         (globaltype' hmap
+                                      view)))
+
 
 
 (defn importdesc'
