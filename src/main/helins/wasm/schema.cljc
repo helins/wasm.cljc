@@ -151,6 +151,115 @@
       :wasm/valtype])
 
 
+;;;;;;;;;; Instructions / Control Instructions
+
+
+(def blocktype'
+     [:or
+      :nil
+      [:tuple
+       [:= :wasm/valtype]
+       :wasm/valtype]
+      [:tuple
+       [:= :wasm/typeidx]
+       :wasm/typeidx]])
+
+
+
+(def block'
+     [:tuple
+      [:= wasm.bin/block]
+      blocktype'
+      :wasm/instr+])
+
+
+
+(def loop'
+     [:tuple
+      [:= wasm.bin/loop-]
+      blocktype'
+      :wasm/instr+])
+
+
+
+(def if'
+     [:cat
+      {:gen/fmap vec}
+      [:= wasm.bin/if-]
+      blocktype'
+      :wasm/instr+
+      [:repeat
+       {:max 1
+        :min 0}
+       :wasm/instr+]])
+
+
+
+(def br'
+     [:tuple
+      [:= wasm.bin/br]
+      :wasm/labelidx])
+
+
+
+(def br_if'
+     [:tuple
+      [:= wasm.bin/br_if]
+      :wasm/labelidx])
+
+
+
+(def br_table'
+     [:cat
+      {:gen/fmap vec}
+      [:= wasm.bin/br_table]
+      [:+ :wasm/labelidx]])
+
+
+
+(def call'
+     [:tuple
+      [:= wasm.bin/call]
+      :wasm/funcidx])
+
+
+
+(def call_indirect'
+     [:tuple
+      [:= wasm.bin/call_indirect]
+      :wasm/typeidx
+      :wasm/tableidx])
+
+
+;;;;;;;;;; Instructions / Expressions
+
+
+(def instr'
+     [:multi
+      {:dispatch first}
+      ;[wasm.bin/block block']
+      ;[wasm.bin/loop- loop']
+      ;[wasm.bin/if-   if']
+      [wasm.bin/br    br']
+      [wasm.bin/br_if br_if']
+      [wasm.bin/br_table br_table']
+      [wasm.bin/call call']
+      [wasm.bin/call_indirect call_indirect']
+      ])
+
+
+
+(def instr+
+  instr'
+     #_[:vector
+      :wasm/instr])
+
+
+
+(def expr'
+     instr+)
+
+
 ;;;;;;;;;; Modules / Indices
 
 
@@ -166,6 +275,9 @@
      idx)
 
 (def globalidx'
+     idx)
+
+(def labelidx'
      idx)
 
 (def memidx'
@@ -325,13 +437,26 @@
   (merge (malli/default-schemas)
          (malli.util/schemas)
          {
+          :wasm/block         block'  
+          :wasm/blocktype     blocktype'
+          :wasm/br            br'
+          :wasm/br_if         br_if'
+          :wasm/br_table      br_table'
           :wasm/byte          byte'
+          :wasm/call          call'
+          :wasm/call_indirect call_indirect'
+          :wasm/expr          expr'
           :wasm/func          func
           :wasm/funcidx       funcidx'
           :wasm/functype      functype'
           :wasm/globalidx     globalidx'
           :wasm/idx           idx
+          :wasm/if            if'
+          :wasm/instr         instr'
+          :wasm/instr+        instr+
           :wasm/importsec     importsec'
+          :wasm/labelidx      labelidx'
+          :wasm/loop          loop'
           :wasm/limits        limits'
           :wasm/mem           mem'
           :wasm/memidx        memidx'
@@ -363,12 +488,12 @@
 (comment
 
 
-  (malli/validate [:map]
-                  {})
+  (malli/validate nil
+                  [1 2])
 
 
 
-  (malli.gen/generate funcsec'
+  (malli.gen/generate instr'
                       {:registry registry})
 
 
