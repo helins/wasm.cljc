@@ -33,6 +33,19 @@
          u32')
 
 
+;;;;;;;;;; Private - Miscellaneous
+
+
+(defn ^:no-doc -flatten-idx
+
+  ;; Indirection so that tests can handle non-existing indices by altering this function.
+
+  [hmap idx]
+
+  (get hmap
+       idx))
+
+
 ;;;;;;;;;; Conventions
 
 
@@ -315,8 +328,8 @@
 
   [flatidx opvec]
 
-  (funcidx' ((flatidx :wasm.flatidx/func)
-             (opvec 1))))
+  (funcidx' (-flatten-idx (flatidx :wasm.flatidx/func)
+                          (opvec 1))))
 
 
 
@@ -324,8 +337,8 @@
 
   [flatidx opvec]
 
-  (+ (typeidx' ((flatidx :wasm.flatidx/type)
-                (opvec 1)))
+  (+ (typeidx' (-flatten-idx (flatidx :wasm.flatidx/type)
+                             (opvec 1)))
      byte'))
 
 
@@ -345,8 +358,8 @@
 
   [flatidx opvec]
 
-  (funcidx' ((flatidx :wasm.flatidx/funcidx)
-             (opvec 1))))
+  (funcidx' (-flatten-idx (flatidx :wasm.flatidx/funcidx)
+                          (opvec 1))))
 
 
 ;;;;;;;;;; Instructions / Parametric Instructions
@@ -380,8 +393,8 @@
   
   [flatidx opvec]
 
-  (globalidx' ((flatidx :wasm.flatidx/global)
-               (opvec 1))))
+  (globalidx' (-flatten-idx (flatidx :wasm.flatidx/global)
+                            (opvec 1))))
 
 
 ;;;;;;;;;; Instructions / Table Instructions
@@ -393,8 +406,8 @@
 
   [flatidx opvec]
 
-  (tableidx' ((flatidx :wasm.flatidx/table)
-              (opvec 1))))
+  (tableidx' (-flatten-idx (flatidx :wasm.flatidx/table)
+                           (opvec 1))))
 
 
 
@@ -404,8 +417,8 @@
 
   [flatidx opvec]
 
-  (tableidx' ((flatidx :wasm.flatidx/table)
-              (opvec 2))))
+  (tableidx' (-flatten-idx (flatidx :wasm.flatidx/table)
+                           (opvec 2))))
 
 
 
@@ -415,10 +428,10 @@
 
   [flatidx opvec]
 
-  (+ (elemidx' ((flatidx :wasm.flatidx/elem)
-                (opvec 2)))
-     (tableidx' ((flatidx :wasm.flatidx/table)
-                 (opvec 3)))))
+  (+ (elemidx' (-flatten-idx (flatidx :wasm.flatidx/elem)
+                             (opvec 2)))
+     (tableidx' (-flatten-idx (flatidx :wasm.flatidx/table)
+                              (opvec 3)))))
 
 
 
@@ -428,8 +441,8 @@
 
   [flatidx opvec]
 
-  (elemidx' ((flatidx :wasm.flatidx/elem)
-             (opvec 2))))
+  (elemidx' (-flatten-idx (flatidx :wasm.flatidx/elem)
+                          (opvec 2))))
 
 
 
@@ -440,8 +453,10 @@
   [flatidx opvec]
   
   (let [flatidx-table (flatidx :wasm.flatidx/table)]
-    (+ (tableidx' (flatidx-table (opvec 2)))
-       (tableidx' (flatidx-table (opvec 3))))))
+    (+ (tableidx' (-flatten-idx flatidx-table
+                                (opvec 2)))
+       (tableidx' (-flatten-idx flatidx-table
+                                (opvec 3))))))
 
 
 ;;;;;;;;;; Instructions / Memory Instructions
@@ -474,8 +489,8 @@
 
   [flatidx opvec]
 
-  (memidx' ((flatidx :wasm.flatidx/mem)
-            (opvec 1))))
+  (memidx' (-flatten-idx (flatidx :wasm.flatidx/mem)
+                         (opvec 1))))
 
 
 
@@ -485,8 +500,8 @@
 
   [flatidx opvec]
 
-  (+ (dataidx' ((flatidx :wasm.flatidx/data)
-                (opvec 2)))
+  (+ (dataidx' (-flatten-idx (flatidx :wasm.flatidx/data)
+                             (opvec 2)))
      byte'))
 
 
@@ -497,8 +512,8 @@
 
   [flatidx opvec]
 
-  (dataidx' ((flatidx :wasm.flatidx/data)
-             (opvec 2))))
+  (dataidx' (-flatten-idx (flatidx :wasm.flatidx/data)
+                          (opvec 2))))
 
 
 
@@ -796,7 +811,8 @@
 
   [flatidx-type {:wasm/keys [typeidx]}]
 
-  (typeidx' (flatidx-type typeidx)))
+  (typeidx' (-flatten-idx flatidx-type
+                          typeidx)))
 
 
 
@@ -888,7 +904,7 @@
                         (importdesc' (importsec :wasm.import/func)
                                      :wasm.flatidx/func
                                      (partial func
-                                              (ctx-write :wasm.flatidx/type)))
+                                              (:wasm.flatidx/type ctx-write)))
                         (importdesc' (importsec :wasm.import/global)
                                      :wasm.flatidx/global
                                      globaltype')
@@ -1090,9 +1106,8 @@
             (fn [ctx-write]
               (assoc ctx-write
                      :wasm.count/startsec
-                     (funcidx' (get-in ctx-write
-                                       [:wasm.flatidx/func
-                                        (startsec :wasm/funcidx)])))))
+                     (funcidx' (-flatten-idx (:wasm.flatidx/func ctx-write)
+                                             (startsec :wasm/funcidx))))))
     ctx))
 
 
@@ -1119,8 +1134,8 @@
                    (+ byte'       ;;  flag
                       (if offset  ;;  if active
                         (+ (if-some [tableidx (hmap :wasm/tableidx)]
-                             (tableidx' ((ctx-write :wasm.flatidx/table)
-                                         tableidx))
+                             (tableidx' (-flatten-idx (ctx-write :wasm.flatidx/table)
+                                                      tableidx))
                              0)
                            (expr' ctx-write
                                   offset))
@@ -1226,9 +1241,8 @@
                           (+ (expr' ctx-write
                                     offset)
                              (if-some [memidx (hmap :wasm/memidx)]
-                               (-> memidx
-                                   flatidx-mem
-                                   memidx')
+                               (memidx' (-flatten-idx flatidx-mem
+                                                      memidx))
                                0))
                           0)
                         (u32' n-byte-data)

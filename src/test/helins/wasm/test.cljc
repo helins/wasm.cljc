@@ -9,7 +9,8 @@
 
   {:author "Adam"}
 
-  (:require [clojure.pprint]
+  (:require [clojure.data]
+            [clojure.pprint]
             [clojure.test                    :as t]
             [clojure.test.check.clojure-test :as tc.ct]
             [clojure.test.check.generators   :as tc.gen]
@@ -75,6 +76,8 @@
 ;;;;;;;;;;
 
 
+(comment
+
 (tc.ct/defspec byte'
 
   (test-direct :wasm/byte
@@ -128,6 +131,8 @@
                wasm.read/idx))
 
 
+;;;;;;;;;; Modules / Type Section
+
 
 (tc.ct/defspec typesec'
 
@@ -154,4 +159,67 @@
                (wasm.read/u32' view)
                (wasm.read/typesec' wasm/ctx
                                    view)]))
+        true))))
+
+
+)
+
+;;;;;;;;;; Modules / Import Section
+
+
+(tc.ct/defspec importsec'
+
+  (tc.prop/for-all [ctx (tc.gen/fmap (fn [[func+
+                                           global+
+                                           mem+
+                                           table+]]
+                                       (as-> wasm/ctx
+                                             ctx  
+                                         (reduce wasm.ir/import-func
+                                                 ctx
+                                                 func+)
+                                         (reduce wasm.ir/import-global
+                                                 ctx
+                                                 global+)
+                                         (reduce wasm.ir/import-mem
+                                                 ctx
+                                                 mem+)
+                                         (reduce wasm.ir/import-table
+                                                 ctx
+                                                 table+)))
+                                     (tc.gen/tuple
+                                       (tc.gen/vector (malli.gen/generator wasm.schema/imported-func
+                                                      {:registry wasm.schema/registry}))
+                                       (tc.gen/vector (malli.gen/generator wasm.schema/imported-global
+                                                      {:registry wasm.schema/registry}))
+                                       (tc.gen/vector (malli.gen/generator wasm.schema/imported-mem
+                                                      {:registry wasm.schema/registry}))
+                                       (tc.gen/vector (malli.gen/generator wasm.schema/imported-table
+                                                      {:registry wasm.schema/registry}))))]
+    (let [ctx-2  (wasm.count/importsec' ctx)
+          n-byte (get-in ctx-2
+                         [:wasm/write
+                          :wasm.count/importsec])]
+      (if (and n-byte
+               (pos? n-byte))
+         (let [view (-> (wasm.count/section' n-byte)
+                        binf.buffer/alloc
+                        binf/view)]
+           (wasm.write/importsec' view
+                                  ctx-2)
+           (binf/seek view
+                      0)
+           (let [section-id (wasm.read/section-id' view)
+                 n-byte-2   (wasm.read/u32' view)
+                 diff       (clojure.data/diff ctx
+                                               (wasm.read/importsec' wasm/ctx
+                                                                     view))]
+             (= [wasm.bin/section-id-import
+                 n-byte
+                 (nth diff
+                      0)]
+                [section-id
+                 n-byte-2
+                 (nth diff
+                      1)])))
         true))))

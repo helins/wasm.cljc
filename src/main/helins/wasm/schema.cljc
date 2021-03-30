@@ -12,9 +12,25 @@
   (:require [clojure.test.check.generators :as tc.gen]
             [helins.binf.string            :as binf.string]
             [helins.wasm.bin               :as wasm.bin]
+            [helins.wasm.count             :as wasm.count]
+            [helins.wasm.write             :as wasm.write]
             [malli.core                    :as malli]
             [malli.generator               :as malli.gen]
             [malli.util]))
+
+
+;;;;;;;;;; Setup
+
+
+(alter-var-root #'wasm.count/-flatten-idx
+                (constantly (fn [_hmap idx]
+                              idx)))
+
+
+
+(alter-var-root #'wasm.write/-flatten-idx
+                (constantly (fn [_hmap idx]
+                              idx)))
 
 
 ;;;;;;;;;; Values / Byte
@@ -57,7 +73,10 @@
                             :type            :wasm/name
                             :type-properties {:error/message "Must be BinF buffer"
                                               :gen/gen       (tc.gen/fmap binf.string/encode
-                                                                          tc.gen/string)}}))
+                                                                          (malli.gen/generator [:string
+                                                                                                {:min 1}])
+
+                                                                          #_tc.gen/string)}}))
 
 
 ;;;;;;;;;; Types / Reference Types
@@ -110,7 +129,9 @@
         {:optional true}
         :wasm/u32]]
 
-      [:fn (fn [{:wasm.limit/keys [max
+      ;(malli/-simple-schema {:pred
+
+      #_[:fn (fn [{:wasm.limit/keys [max
                                    min]}]
              (if max
                (>= max
@@ -216,7 +237,7 @@
 
 
 
-(def imported-function
+(def imported-func
 
   ""
 
@@ -259,7 +280,7 @@
      [:map
       [:wasm.import/func   [:map-of
                             :wasm/funcidx
-                            imported-function]]
+                            imported-func]]
       [:wasm.import/global [:map-of
                             :wasm/globalidx
                             imported-global]]
@@ -314,16 +335,13 @@
 (comment
 
 
-  (malli/validate [:and
-                   {:registry registry}
-                   :wasm/funcidx]
-                  420
-                  )
+  (malli/validate [:map]
+                  {})
 
 
 
-  (malli.gen/sample :wasm/importsec
-                    {:registry registry})
+  (malli.gen/generate imported-mem
+                      {:registry registry})
 
 
 

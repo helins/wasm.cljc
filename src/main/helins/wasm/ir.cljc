@@ -169,7 +169,7 @@
   [ctx global]
 
   (-assoc-import ctx
-                 :wasm.import/gobal
+                 :wasm.import/global
                  :wasm/globalidx
                  global))
 
