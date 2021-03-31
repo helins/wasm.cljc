@@ -24,6 +24,8 @@
             [helins.wasm.read                :as wasm.read]
             [helins.wasm.schema              :as wasm.schema]
             [helins.wasm.write               :as wasm.write]
+            [malli.core                      :as malli]
+            [malli.util]
             [malli.generator                 :as malli.gen]))
 
 
@@ -39,6 +41,13 @@
 (alter-var-root #'wasm.write/-flatten-idx
                 (constantly (fn [_hmap idx]
                               idx)))
+
+
+
+(def registry
+     (-> (merge (malli/default-schemas)
+                (malli.util/schemas))
+         wasm.schema/registry))
 
 
 ;;;;;;;;;;
@@ -69,7 +78,7 @@
   [schema]
 
   (malli.gen/generator schema
-                       {:registry wasm.schema/registry}))
+                       {:registry registry}))
 
 
 
@@ -222,14 +231,14 @@
                                          ctx
                                          table+)))
                              (tc.gen/tuple
-                               (tc.gen/vector (malli.gen/generator wasm.schema/imported-func
-                                              {:registry wasm.schema/registry}))
-                               (tc.gen/vector (malli.gen/generator wasm.schema/imported-global
-                                              {:registry wasm.schema/registry}))
-                               (tc.gen/vector (malli.gen/generator wasm.schema/imported-mem
-                                              {:registry wasm.schema/registry}))
-                               (tc.gen/vector (malli.gen/generator wasm.schema/imported-table
-                                              {:registry wasm.schema/registry}))))
+                               (tc.gen/vector (malli.gen/generator :wasm.import/func
+                                                                   {:registry registry}))
+                               (tc.gen/vector (malli.gen/generator :wasm.import/global
+                                                                   {:registry registry}))
+                               (tc.gen/vector (malli.gen/generator :wasm.import/mem
+                                                                   {:registry registry}))
+                               (tc.gen/vector (malli.gen/generator :wasm.import/table
+                                                                   {:registry registry}))))
                 wasm.count/importsec'
                 :wasm.count/importsec
                 wasm.write/importsec'

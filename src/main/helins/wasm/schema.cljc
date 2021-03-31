@@ -10,580 +10,404 @@
   {:author "Adam Helinski"}
 
   (:require [clojure.test.check.generators :as tc.gen]
-            [helins.binf.gen		       :as binf.gen]
+            #?(:cljs [helins.binf.gen	   :as binf.gen])
             [helins.binf.string            :as binf.string]
             [helins.wasm.bin               :as wasm.bin]
             [malli.core                    :as malli]
+            [malli.error]
             [malli.generator               :as malli.gen]
             [malli.util]))
-
-
-;;;;;;;;;; Values / Byte
-
-
-(def byte'
-     [:int
-      {:max 255
-       :min 0}])
-
-
-;;;;;;;;;; Values / Integers
-
-(def s32'
-     [:int
-	  {:max 2147483647
-	   :min -2147483648}])
-      
-
-
-(def i32'
-	 s32')
-
-
-
-(def u32'
-     [:int
-      {:max 4294967295
-       :min 0}])
-
-
-
-(def s64'
-     #?(:clj  int?
-	    :cljs [:fn
-			   {:gen/gen binf.gen/i64}
-			   #(and (instance? js/BigInt
-			   			   	    %)
-					 (<= (js/BigInt. "-9223372036854775808")
-					 	 %
-						 (js/BigInt. "9223372036854775807")))]))
-
-
-
-(def i64'
-	 s64')
-
-
-
-(def u64'
-     #?(:clj  int?
-	    :cljs [:fn
-			   {:gen/gen binf.gen/u64}
-			   #(and (instance? js/BigInt
-			   			   	    %)
-					 (<= (js/BigInt. 0)
-					 	 %
-						 (js/BigInt. "18446744073709551615")))]))
-
-
-;;;;;;;;;; Values / Floating-Point
-
-
-(def f32'
-     :double)
-
-
-
-(def f64'
-     :double)
-
-
-;;;;;;;;;; Types / Number Types
-
-
-(def numtype'
-     [:enum
-      wasm.bin/numtype-i32
-      wasm.bin/numtype-i64
-      wasm.bin/numtype-f32
-      wasm.bin/numtype-f64])
-
-
-;;;;;;;;;; Values / Names
-
-
-(def name'
-     (malli/-simple-schema {:pred            #?(:clj  (let [klass (class (byte-array 0))]
-                                                        #(instance? klass
-                                                                    %))
-                                                :cljs nil)
-                            :type            :wasm/name
-                            :type-properties {:error/message "Must be BinF buffer"
-                                              :gen/gen       (tc.gen/fmap binf.string/encode
-                                                                          (malli.gen/generator [:string
-                                                                                                {:min 1}]))}}))
-
-
-;;;;;;;;;; Types / Reference Types
-
-
-(def reftype'
-     [:enum
-      wasm.bin/funcref
-      wasm.bin/externref])
-
-
-;;;;;;;;;; Types / Value Types
-
-
-(def valtype'
-     [:or
-      :wasm/numtype
-      :wasm/reftype])
-
-
-;;;;;;;;;; Types / Result Types
-
-
-(def resulttype'
-     [:maybe
-      [:vector
-       {:min 1}
-       :wasm/valtype]])
-
-
-;;;;;;;;;; Types / Function Types
-
-
-(def functype'
-     [:tuple
-      :wasm/resulttype
-      :wasm/resulttype])
-
-
-;;;;;;;;;; Types / Limits
-
-
-(def limits'
-     [:and
-
-      [:map
-       [:wasm.limit/min
-        :wasm/u32]
-       [:wasm.limit/max
-        {:optional true}
-        :wasm/u32]]
-
-      [:fn (fn [{:wasm.limit/keys [max
-                                   min]}]
-             (if max
-               (>= max
-                   min)
-               true))]])
-
-
-;;;;;;;;;; Types / Memory Types
-
-
-(def memtype'
-     :wasm/limits)
-
-
-;;;;;;;;;; Types / Memory Types
-
-
-(def tabletype'
-     [:merge
-      limits'
-      [:map
-       :wasm/reftype]])
-
-
-;;;;;;;;;; Types / Global types
-
-
-(def globaltype'
-     [:map
-      :wasm/mutable?
-      :wasm/valtype])
-
-
-;;;;;;;;;; Instructions / Control Instructions
-
-
-(def blocktype'
-     [:or
-      :nil
-      [:tuple
-       [:= :wasm/valtype]
-       :wasm/valtype]
-      [:tuple
-       [:= :wasm/typeidx]
-       :wasm/typeidx]])
-
-
-
-(def block'
-     [:tuple
-      [:= wasm.bin/block]
-      blocktype'
-      [:ref :wasm/instr+]])
-
-
-
-(def loop'
-     [:tuple
-      [:= wasm.bin/loop-]
-      blocktype'
-      [:ref :wasm/instr+]])
-
-
-
-(def if'
-     [:cat
-      {:gen/fmap vec}
-      [:= wasm.bin/if-]
-      blocktype'
-      [:ref :wasm/instr+]
-      [:repeat
-       {:max 1
-        :min 0}
-       [:ref :wasm/instr+]]])
-
-
-
-(def br'
-     [:tuple
-      [:= wasm.bin/br]
-      :wasm/labelidx])
-
-
-
-(def br_if'
-     [:tuple
-      [:= wasm.bin/br_if]
-      :wasm/labelidx])
-
-
-
-(def br_table'
-     [:cat
-      {:gen/fmap vec}
-      [:= wasm.bin/br_table]
-      [:+ :wasm/labelidx]])
-
-
-
-(def call'
-     [:tuple
-      [:= wasm.bin/call]
-      :wasm/funcidx])
-
-
-
-(def call_indirect'
-     [:tuple
-      [:= wasm.bin/call_indirect]
-      :wasm/typeidx
-      :wasm/tableidx])
-
-
-;;;;;;;;;; Instructions / Numeric Instructions
-
-
-(def i32-const'
-     [:tuple
-	  [:= wasm.bin/i32-const]
-	  :wasm/i32])
-
-
-
-(def i64-const'
-     [:tuple
-	  [:= wasm.bin/i64-const]
-	  :wasm/i64])
-
-
-
-(def f32-const'
-	 [:tuple
-	  [:= wasm.bin/f32-const]
-	  :wasm/f32])
-
-
-
-(def f64-const'
-     [:tuple
-	  [:= wasm.bin/f64-const]
-	  :wasm/f64])
-
-
-;;;;;;;;;; Instructions / Expressions
-
-
-(def instr'
-     (reduce (fn [multi opcode]
-               (conj multi
-                     [opcode
-                      [:tuple
-                       [:= opcode]]]))
-             [:multi
-              {:dispatch first}
-
-			  ;; Currently does not work, see: https://github.com/metosin/malli/issues/408
-			  ;
-              ;[wasm.bin/block block']
-              ;[wasm.bin/loop- loop']
-              ;[wasm.bin/if-   if']
-
-              [wasm.bin/br    br']
-              [wasm.bin/br_if br_if']
-              [wasm.bin/br_table br_table']
-              [wasm.bin/call call']
-              [wasm.bin/call_indirect call_indirect']
-
-			  [wasm.bin/i32-const i32-const']
-			  [wasm.bin/i64-const i64-const']
-			  ]
-             (into [wasm.bin/ref-is_null
-					wasm.bin/drop
-				    wasm.bin/select]
-                   (range 0x45
-                          (inc 0xC4)))))
-
-
-
-(def instr+
-     [:vector
-      :wasm/instr])
-
-
-
-(def expr'
-     instr+)
-
-
-
-
-
-
-;;;;;;;;;; Modules / Indices
-
-
-(def idx
-  
-  ""
-
-  :wasm/u32)
-
-
-
-(def funcidx'
-     idx)
-
-(def globalidx'
-     idx)
-
-(def labelidx'
-     idx)
-
-(def memidx'
-     idx)
-
-(def tableidx'
-     idx)
-
-(def typeidx'
-     idx)
-
-
-;;;;;;;;;; Modules / Type Section
-
-
-(def typesec'
-     [:map-of
-      :wasm/funcidx
-      :wasm/type])
-
-
-
-(def type-
-  
-  ""
-
-  [:map
-   :wasm/signature])
-
-
-
-(def signature
-     :wasm/functype)
-
-
-;;;;;;;;;; Modules / Import Section
-
-
-(def func
-
-  ""
-  
-  [:map
-   :wasm/typeidx])
-
-
-
-(def imported-base
-
-  ""
-
-  [:map
-   :wasm.import/module
-   :wasm.import/name])
-
-
-
-(def imported-func
-
-  ""
-
-  [:merge
-   imported-base
-   func])
-
-
-(def imported-global
-
-  ""
-
-  [:merge
-   imported-base
-   globaltype'])
-
-
-
-(def imported-mem
-
-  ""
-
-  [:merge
-   imported-base
-   memtype'])
-
-
-
-(def imported-table
-
-  ""
-
-  [:merge
-   imported-base
-   tabletype'])
-   
-
-
-(def importsec'
-     [:map
-      [:wasm.import/func   [:map-of
-                            :wasm/funcidx
-                            imported-func]]
-      [:wasm.import/global [:map-of
-                            :wasm/globalidx
-                            imported-global]]
-      [:wasm.import/mem    [:map-of
-                            :wasm/memidx
-                            imported-mem]]
-      [:wasm.import/table  [:map-of
-                            :wasm/tableidx
-                            imported-table]]])
-
-
-;;;;;;;;;; Modules / Function Section
-
-
-(def funcsec'
-     [:map-of
-      :wasm/funcidx
-      :wasm/func])
-
-
-;;;;;;;;;; Modules / Table Section
-
-
-(def tablesec'
-     [:map-of
-      :wasm/tableidx
-      :wasm/table])
-
-
-
-(def table'
-     :wasm/tabletype)
-
-
-;;;;;;;;;; Modules / Memory Section
-
-
-(def memsec'
-     [:map-of
-      :wasm/memidx
-      :wasm/mem])
-
-
-
-(def mem'
-     :wasm/memtype)
 
 
 ;;;;;;;;;; Registry
 
 
-(def registry
+(defn registry
 
-  "Registry gathering all schemas related to WASM."
+  "Registry gathering all schemas related to WASM.
+  
+   Either created from scratch or by upgrading the given one.
+  
+   Must be used alongside `malli.core/default-schemas` and `malli.util/schemas`."
 
-  (merge (malli/default-schemas)
-         (malli.util/schemas)
-         {
-          :wasm/block         block'  
-          :wasm/blocktype     blocktype'
-          :wasm/br            br'
-          :wasm/br_if         br_if'
-          :wasm/br_table      br_table'
-          :wasm/byte          byte'
-          :wasm/call          call'
-          :wasm/call_indirect call_indirect'
-          :wasm/expr          expr'
-		  :wasm/f32			  f32'
-		  :wasm/f64			  f64'
-          :wasm/func          func
-          :wasm/funcidx       funcidx'
-          :wasm/functype      functype'
-          :wasm/globalidx     globalidx'
-		  :wasm/i32			  i32'
-		  :wasm/i64			  i64'
-          :wasm/idx           idx
-          :wasm/if            if'
-          :wasm/instr         instr'
-          :wasm/instr+        instr+
-          :wasm/importsec     importsec'
-          :wasm/labelidx      labelidx'
-          :wasm/loop          loop'
-          :wasm/limits        limits'
-          :wasm/mem           mem'
-          :wasm/memidx        memidx'
-          :wasm/memsec        memsec'
-          :wasm/memtype       memtype'
-          :wasm/mutable?      :boolean
-          :wasm/name          name'
-          :wasm/numtype       numtype'
-          :wasm/reftype       reftype'
-          :wasm/resulttype    resulttype'
-		  :wasm/s32			  s32'
-		  :wasm/s64			  s64'
-          :wasm/signature     signature
-          :wasm/table         table'
-          :wasm/tableidx      tableidx'
-          :wasm/tablesec      tablesec'
-          :wasm/tabletype     tabletype'
-          :wasm/type          type-
-          :wasm/typeidx       typeidx'
-          :wasm/typesec       typesec'
-          :wasm/u32           u32'
-		  :wasm/u64			  u64'
-          :wasm/valtype       valtype'
-          :wasm.import/module name'
-          :wasm.import/name   name'
-          }))
+  
+  ([]
+
+   (registry nil))
+
+
+  ([registry]
+
+   (let [imported-base
+         [:map
+          :wasm.import/module
+          :wasm.import/name]
+         
+         
+         instr-without-immediate+
+         [[0x45 :wasm/i32.eqz]
+          [0x46 :wasm/i32.eq]
+          [0x47 :wasm/i32.ne]
+          [0x48 :wasm/i32.lt_s]
+          [0x49 :wasm/i32.lt_u]
+          [0x4A :wasm/i32.gt_s]
+          [0x4B :wasm/i32.gt_u]
+          [0x4C :wasm/i32.le_s]
+          [0x4D :wasm/i32.le_u]
+          [0x4E :wasm/i32.ge_s]
+          [0x4F :wasm/i32.ge_u]
+          [0x50 :wasm/i64.eqz]
+          [0x51 :wasm/i64.eq]
+          [0x52 :wasm/i64.ne]
+          [0x53 :wasm/i64.lt_s]
+          [0x54 :wasm/i64.lt_u]
+          [0x55 :wasm/i64.gt_s]
+          [0x56 :wasm/i64.gt_u]
+          [0x57 :wasm/i64.le_s]
+          [0x58 :wasm/i64.le_u]
+          [0x59 :wasm/i64.ge_s]
+          [0x5A :wasm/i64.ge_u]
+          [0x5B :wasm/f32.eq]
+          [0x5C :wasm/f32.be]
+          [0x5D :wasm/f32.lt]
+          [0x5E :wasm/f32.gt]
+          [0x5F :wasm/f32.le]
+          [0x60 :wasm/f32.ge]
+          [0x61 :wasm/f64.eq]
+          [0x62 :wasm/f64.be]
+          [0x63 :wasm/f64.lt]
+          [0x64 :wasm/f64.gt]
+          [0x65 :wasm/f64.le]
+          [0x66 :wasm/f64.ge]
+          [0x67 :wasm/i32.clz]
+          [0x68 :wasm/i32.ctz]
+          [0x69 :wasm/i32.popcnt]
+          [0x6A :wasm/i32.and]
+          [0x6B :wasm/i32.sub]
+          [0x6C :wasm/i32.mul]
+          [0x6D :wasm/i32.div_s]
+          [0x6E :wasm/i32.div_u]
+          [0x6F :wasm/i32.rem_s]
+          [0x70 :wasm/i32.rem_u]
+          [0x71 :wasm/i32.and]
+          [0x72 :wasm/i32.or]
+          [0x73 :wasm/i32.xor]
+          [0x74 :wasm/i32.shl]
+          [0x75 :wasm/i32.shr_s]
+          [0x76 :wasm/i32.shr_u]
+          [0x77 :wasm/i32.rotl]
+          [0x78 :wasm/i32.rotr]
+          [0x79 :wasm/i64.clz]
+          [0x7A :wasm/i64.ctz]
+          [0x7B :wasm/i64.popcnt]
+          [0x7C :wasm/i64.and]
+          [0x7D :wasm/i64.sub]
+          [0x7E :wasm/i64.mul]
+          [0x7F :wasm/i64.div_s]
+          [0x80 :wasm/i64.div_u]
+          [0x81 :wasm/i64.rem_s]
+          [0x82 :wasm/i64.rem_u]
+          [0x83 :wasm/i64.and]
+          [0x84 :wasm/i64.or]
+          [0x85 :wasm/i64.xor]
+          [0x86 :wasm/i64.shl]
+          [0x87 :wasm/i64.shr_s]
+          [0x88 :wasm/i64.shr_u]
+          [0x89 :wasm/i64.rotl]
+          [0x8A :wasm/i64.rotr]
+          [0x8B :wasm/f32.abs]
+          [0x8C :wasm/f32.neg]
+          [0x8D :wasm/f32.ceil]
+          [0x8E :wasm/f32.floor]
+          [0x8F :wasm/f32.trunc]
+          [0x90 :wasm/f32.nearest]
+          [0x91 :wasm/f32.sqrt]
+          [0x92 :wasm/f32.add]
+          [0x93 :wasm/f32.sub]
+          [0x94 :wasm/f32.mul]
+          [0x95 :wasm/f32.div]
+          [0x96 :wasm/f32.min]
+          [0x97 :wasm/f32.max]
+          [0x98 :wasm/f32.copysign]
+          [0x99 :wasm/f64.abs]
+          [0x9A :wasm/f64.neg]
+          [0x9B :wasm/f64.ceil]
+          [0x9C :wasm/f64.floor]
+          [0x9D :wasm/f64.trunc]
+          [0x9E :wasm/f64.nearest]
+          [0x9F :wasm/f64.sqrt]
+          [0xA0 :wasm/f64.add]
+          [0xA1 :wasm/f64.sub]
+          [0xA2 :wasm/f64.mul]
+          [0xA3 :wasm/f64.div]
+          [0xA4 :wasm/f64.min]
+          [0xA5 :wasm/f64.max]
+          [0xA6 :wasm/f64.copysign]
+          [0xA7 :wasm/i32.wrap_i64]
+          [0xA8 :wasm/i32.trunc_f32_s]
+          [0xA9 :wasm/i32.trunc_f32_u]
+          [0xAA :wasm/i32.trunc_f64_s]
+          [0xAB :wasm/i32.trunc_f64_u]
+          [0xAC :wasm/i64.extend_i32_s]
+          [0xAD :wasm/i64.extend_i32_u]
+          [0xAE :wasm/i64.trunc_f32_s]
+          [0xAF :wasm/i64.trunc_f32_u]
+          [0xB0 :wasm/i64.trunc_f64_s]
+          [0xB1 :wasm/i64.trunc_f64_u]
+          [0xB2 :wasm/f32.convert_i32_s]
+          [0xB3 :wasm/f32.convert_i32_u]
+          [0xB4 :wasm/f32.convert_i64_s]
+          [0xB5 :wasm/f32.convert_i64_u]
+          [0xB6 :wasm/f32.demote_f64]
+          [0xB7 :wasm/f64.convert_i32_s]
+          [0xB8 :wasm/f64.convert_i32_u]
+          [0xB9 :wasm/f64.convert_i64_s]
+          [0xBA :wasm/f64.convert_i64_u]
+          [0xBB :wasm/f64.promote_f32]
+          [0xBC :wasm/i32.reinterpret_f32]
+          [0xBD :wasm/i64.reinterpret_f64]
+          [0xBE :wasm/f32.reinterpret_i32]
+          [0xBF :wasm/f32.reinterpret_i64]
+          [0xC0 :wasm/i32.extend8_s]
+          [0xC1 :wasm/i32.extend16_s]
+          [0xC2 :wasm/i64.extend8_s]
+          [0xC3 :wasm/i64.extend16_s]
+          [0xC4 :wasm/i64.extend32_s]
+          [0xD1 :wasm/ref.is_null]]
+
+         registry-2
+         (reduce (fn [registry-2 [opcode kw]]
+                   (assoc registry-2
+                          kw
+                          [:tuple
+                           [:= opcode]]))
+                 registry
+                 instr-without-immediate+)
+
+         registry-3
+         (assoc registry-2
+                :wasm/block         [:tuple
+                                     [:= wasm.bin/block]
+                                     :wasm/blocktype
+                                     [:ref :wasm/instr+]]
+                :wasm/blocktype     [:or
+                                     :nil
+                                     [:tuple
+                                      [:= :wasm/valtype]
+                                      :wasm/valtype]
+                                     [:tuple
+                                      [:= :wasm/typeidx]
+                                      :wasm/typeidx]]
+                :wasm/br            [:tuple
+                                     [:= wasm.bin/br]
+                                     :wasm/labelidx]
+                :wasm/br_if         [:tuple
+                                     [:= wasm.bin/br_if]
+                                     :wasm/labelidx]
+                :wasm/br_table      [:cat
+                                     {:gen/fmap vec}
+                                     [:= wasm.bin/br_table]
+                                     [:+ :wasm/labelidx]]
+                :wasm/byte          [:int
+                                     {:max 255
+                                      :min 0}]
+                :wasm/call          [:tuple
+                                     [:= wasm.bin/call]
+                                     :wasm/funcidx]
+                :wasm/call_indirect [:tuple
+                                     [:= wasm.bin/call_indirect]
+                                     :wasm/typeidx
+                                     :wasm/tableidx]
+                :wasm/expr          :wasm/instr+
+                :wasm/f32           :double
+                :wasm/f32.const     [:tuple
+	                                 [:= wasm.bin/f32-const]
+	                                 :wasm/f32]
+                :wasm/f64           :double
+                :wasm/f64.const     [:tuple
+	                                 [:= wasm.bin/f64-const]
+	                                 :wasm/f64]
+                :wasm/func          [:map
+                                     :wasm/typeidx]
+                :wasm/funcidx       :wasm/idx
+                :wasm/funcsec       [:map-of
+                                     :wasm/funcidx
+                                     :wasm/func]
+                :wasm/functype      [:tuple
+                                     :wasm/resulttype
+                                     :wasm/resulttype]
+                :wasm/globalidx     :wasm/idx
+                :wasm/globaltype    [:map
+                                     :wasm/mutable?
+                                     :wasm/valtype]
+                :wasm/i32           :wasm/s32
+                :wasm/i32.const     [:tuple
+	                                 [:= wasm.bin/i32-const]
+	                                 :wasm/i32]
+                :wasm/i64           :wasm/s64
+                :wasm/i64.const     [:tuple
+	                                 [:= wasm.bin/i64-const]
+	                                 :wasm/i64]
+                :wasm/idx           :wasm/u32
+                :wasm/if            [:cat
+                                     {:gen/fmap vec}
+                                     [:= wasm.bin/if-]
+                                     :wasm/blocktype
+                                     [:ref :wasm/instr+]
+                                     [:repeat
+                                      {:max 1
+                                       :min 0}
+                                      [:ref :wasm/instr+]]]
+                :wasm/instr         (into [:multi
+                                           {:dispatch first}
+
+			                               ;; Currently does not work, see: https://github.com/metosin/malli/issues/408
+			                               ;;
+                                           ;; [wasm.bin/block :wasm/block]
+                                           ;; [wasm.bin/loop- :wasm/loop]
+                                           ;; [wasm.bin/if-   :wasm/if]
+
+                                           [wasm.bin/br    :wasm/br]
+                                           [wasm.bin/br_if :wasm/br_if]
+                                           [wasm.bin/br_table :wasm/br_table]
+                                           [wasm.bin/call :wasm/call]
+                                           [wasm.bin/call_indirect :wasm/call_indirect]
+			                               [wasm.bin/i32-const :wasm/i32.const]
+			                               [wasm.bin/i64-const :wasm/i32.const]
+			                               ]
+                                          instr-without-immediate+)
+                :wasm/instr+         [:vector
+                                      :wasm/instr]
+                :wasm/importsec     [:map
+                                     [:wasm.import/func   [:map-of
+                                                           :wasm/funcidx
+                                                           :wasm.import/func]]
+                                     [:wasm.import/global [:map-of
+                                                           :wasm/globalidx
+                                                           :wasm.import/global]]
+                                     [:wasm.import/mem    [:map-of
+                                                           :wasm/memidx
+                                                           :wasm.import/mem]]
+                                     [:wasm.import/table  [:map-of
+                                                           :wasm/tableidx
+                                                           :wasm.import/table]]]
+                :wasm/labelidx      :wasm/idx
+                :wasm/loop          [:tuple
+                                     [:= wasm.bin/loop-]
+                                     :wasm/blocktype
+                                     [:ref :wasm/instr+]]
+                :wasm/limits        [:and
+                                     [:map
+                                      [:wasm.limit/min
+                                       :wasm/u32]
+                                      [:wasm.limit/max
+                                       {:optional true}
+                                       :wasm/u32]]
+                                     [:fn
+                                      {:error/message "Max limit must be >= min limit"}
+                                      (fn [{:wasm.limit/keys [max
+                                                              min]}]
+                                        (if max
+                                          (>= max
+                                              min)
+                                          true))]]
+                :wasm/mem           :wasm/memtype
+                :wasm/memidx        :wasm/idx
+                :wasm/memsec        [:map-of
+                                     :wasm/memidx
+                                     :wasm/mem]
+                :wasm/memtype       :wasm/limits
+                :wasm/mutable?      :boolean
+                :wasm/name          [:fn
+                                     {:error/message "Must be BinF buffer"
+                                      :gen/gen       (tc.gen/fmap binf.string/encode
+                                                                  (malli.gen/generator [:string
+                                                                                        {:min 1}]))}
+                                     #?(:clj  (let [klass (class (byte-array 0))]
+                                                #(instance? klass
+                                                            %))
+                                        :cljs (if (exists? js/SharedArrayBuffer)
+                                                #(or (instance? js/ArrayBuffer
+                                                                %)
+                                                     (instance? js/SharedArrayBuffer
+                                                                %))
+                                                #(instance? js/ArrayBuffer
+                                                            %)))]
+                :wasm/numtype       [:enum
+                                     wasm.bin/numtype-i32
+                                     wasm.bin/numtype-i64
+                                     wasm.bin/numtype-f32
+                                     wasm.bin/numtype-f64]
+                :wasm/reftype       [:enum
+                                     wasm.bin/funcref
+                                     wasm.bin/externref]
+                :wasm/resulttype    [:maybe
+                                     [:vector
+                                      {:min 1}
+                                      :wasm/valtype]]
+                :wasm/s32           [:int
+	                                 {:max 2147483647
+	                                  :min -2147483648}]
+                :wasm/s64           #?(:clj  int?
+	                                   :cljs [:fn
+	                               	     	  {:gen/gen binf.gen/i64}
+	                               	     	  #(and (instance? js/BigInt
+	                               	       	            	   %)
+	                               	           	    (<= (js/BigInt. "-9223372036854775808")
+	                               	           		    %
+	                               	           	        (js/BigInt. "9223372036854775807")))])
+                :wasm/signature     :wasm/functype
+                :wasm/table         :wasm/tabletype
+                :wasm/tableidx      :wasm/idx
+                :wasm/tablesec      [:map-of
+                                     :wasm/tableidx
+                                     :wasm/table]
+                :wasm/tabletype     [:merge
+                                     :wasm/limits
+                                     [:map
+                                      :wasm/reftype]]
+                :wasm/type          [:map
+                                     :wasm/signature]
+                :wasm/typeidx       :wasm/idx
+                :wasm/typesec       [:map
+                                     :wasm/signature]
+                :wasm/u32           [:int
+                                     {:max 4294967295
+                                      :min 0}]
+                :wasm/u64           #?(:clj  int?
+	                                   :cljs [:fn
+	                               		      {:gen/gen binf.gen/u64}
+	                               		      #(and (instance? js/BigInt
+	                               		   	     		   	   %)
+	                               				    (<= (js/BigInt. 0)
+	                               				 	    %
+	                               					    (js/BigInt. "18446744073709551615")))])
+                :wasm/valtype       [:or
+                                     :wasm/numtype
+                                     :wasm/reftype]
+                :wasm.expr/const    [:multi
+	                                 {:dispatch first}
+	                                 [wasm.bin/i32-const :wasm/i32.const]
+	                                 [wasm.bin/i64-const :wasm/i64.const]
+	                                 [wasm.bin/f32-const :wasm/f32.const]
+	                                 [wasm.bin/f64-const :wasm/f64.const]
+	                                 ]
+                :wasm.import/func   [:merge
+                                     imported-base
+                                     :wasm/func]
+                :wasm.import/global [:merge
+                                     imported-base
+                                     :wasm/globaltype]
+                :wasm.import/mem    [:merge
+                                     imported-base
+                                     :wasm/memtype]
+                :wasm.import/module :wasm/name
+                :wasm.import/name   :wasm/name
+                :wasm.import/table  [:merge
+                                     imported-base
+                                     :wasm/tabletype])
+         ]
+  registry-3)))
 
 
 
@@ -592,13 +416,19 @@
 (comment
 
 
-  (malli/validate nil
-                  [1 2])
+  (-> (malli/explain :wasm/name
+                     (byte-array 4)
+                     {:registry (-> (merge (malli/default-schemas)
+                                           (malli.util/schemas))
+                                    registry)})
+      malli.error/humanize)
 
 
 
-  (malli.gen/generate :wasm.expr/const
-                      {:registry registry})
+  (malli.gen/generate :wasm/funcsec
+                      {:registry (-> (merge (malli/default-schemas)
+                                            (malli.util/schemas))
+                                     registry)})
 
 
 
