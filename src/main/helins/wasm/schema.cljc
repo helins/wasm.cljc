@@ -10,6 +10,7 @@
   {:author "Adam Helinski"}
 
   (:require [clojure.test.check.generators :as tc.gen]
+            [helins.binf.gen		       :as binf.gen]
             [helins.binf.string            :as binf.string]
             [helins.wasm.bin               :as wasm.bin]
             [malli.core                    :as malli]
@@ -28,11 +29,63 @@
 
 ;;;;;;;;;; Values / Integers
 
+(def s32'
+     [:int
+	  {:max 2147483647
+	   :min -2147483648}])
+      
+
+
+(def i32'
+	 s32')
+
+
 
 (def u32'
      [:int
       {:max 4294967295
        :min 0}])
+
+
+
+(def s64'
+     #?(:clj  int?
+	    :cljs [:fn
+			   {:gen/gen binf.gen/i64}
+			   #(and (instance? js/BigInt
+			   			   	    %)
+					 (<= (js/BigInt. "-9223372036854775808")
+					 	 %
+						 (js/BigInt. "9223372036854775807")))]))
+
+
+
+(def i64'
+	 s64')
+
+
+
+(def u64'
+     #?(:clj  int?
+	    :cljs [:fn
+			   {:gen/gen binf.gen/u64}
+			   #(and (instance? js/BigInt
+			   			   	    %)
+					 (<= (js/BigInt. 0)
+					 	 %
+						 (js/BigInt. "18446744073709551615")))]))
+
+
+;;;;;;;;;; Values / Floating-Point
+
+
+(def f32'
+     :double)
+
+
+
+(def f64'
+     :double)
 
 
 ;;;;;;;;;; Types / Number Types
@@ -225,6 +278,36 @@
       :wasm/tableidx])
 
 
+;;;;;;;;;; Instructions / Numeric Instructions
+
+
+(def i32-const'
+     [:tuple
+	  [:= wasm.bin/i32-const]
+	  :wasm/i32])
+
+
+
+(def i64-const'
+     [:tuple
+	  [:= wasm.bin/i64-const]
+	  :wasm/i64])
+
+
+
+(def f32-const'
+	 [:tuple
+	  [:= wasm.bin/f32-const]
+	  :wasm/f32])
+
+
+
+(def f64-const'
+     [:tuple
+	  [:= wasm.bin/f64-const]
+	  :wasm/f64])
+
+
 ;;;;;;;;;; Instructions / Expressions
 
 
@@ -247,7 +330,11 @@
               [wasm.bin/br_if br_if']
               [wasm.bin/br_table br_table']
               [wasm.bin/call call']
-              [wasm.bin/call_indirect call_indirect']]
+              [wasm.bin/call_indirect call_indirect']
+
+			  [wasm.bin/i32-const i32-const']
+			  [wasm.bin/i64-const i64-const']
+			  ]
              (into [wasm.bin/ref-is_null
 					wasm.bin/drop
 				    wasm.bin/select]
@@ -264,6 +351,10 @@
 
 (def expr'
      instr+)
+
+
+
+
 
 
 ;;;;;;;;;; Modules / Indices
@@ -452,10 +543,14 @@
           :wasm/call          call'
           :wasm/call_indirect call_indirect'
           :wasm/expr          expr'
+		  :wasm/f32			  f32'
+		  :wasm/f64			  f64'
           :wasm/func          func
           :wasm/funcidx       funcidx'
           :wasm/functype      functype'
           :wasm/globalidx     globalidx'
+		  :wasm/i32			  i32'
+		  :wasm/i64			  i64'
           :wasm/idx           idx
           :wasm/if            if'
           :wasm/instr         instr'
@@ -473,6 +568,8 @@
           :wasm/numtype       numtype'
           :wasm/reftype       reftype'
           :wasm/resulttype    resulttype'
+		  :wasm/s32			  s32'
+		  :wasm/s64			  s64'
           :wasm/signature     signature
           :wasm/table         table'
           :wasm/tableidx      tableidx'
@@ -482,6 +579,7 @@
           :wasm/typeidx       typeidx'
           :wasm/typesec       typesec'
           :wasm/u32           u32'
+		  :wasm/u64			  u64'
           :wasm/valtype       valtype'
           :wasm.import/module name'
           :wasm.import/name   name'
@@ -499,7 +597,7 @@
 
 
 
-  (malli.gen/generate instr'
+  (malli.gen/generate :wasm.expr/const
                       {:registry registry})
 
 
