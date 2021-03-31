@@ -482,7 +482,7 @@
 
   (conj opvec
         (typeidx' view)
-        (byte' view)))
+        (tableidx' view)))
 
 
 ;;;;;;;;; Instructions / Reference Instructions

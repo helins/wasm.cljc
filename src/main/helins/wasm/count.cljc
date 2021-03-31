@@ -339,8 +339,7 @@
 
   (+ (typeidx' (-flatten-idx (flatidx :wasm.flatidx/type)
                              (opvec 1)))
-     byte'))
-
+     (tableidx' (opvec 2))))
 
 
 ;;;;;;;;; Instructions / Reference Instructions

@@ -415,7 +415,7 @@
   (-> view
       (typeidx' (-flatten-idx (flatidx :wasm.flatidx/type)
                               (opvec 1)))
-      (binf/wr-b8 0)))
+      (tableidx' (opvec 2))))
 
 
 ;;;;;;;;; Instructions / Reference Instructions
