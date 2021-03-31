@@ -230,6 +230,10 @@
                                      :wasm/typeidx
                                      :wasm/tableidx]
                 :wasm/dataidx       :wasm/idx
+                :wasm/elem.drop     [:tuple
+                                     :wasm.opcode/misc
+                                     [:= wasm.bin/elem-drop]
+                                     :wasm/elemidx]
                 :wasm/elemidx       :wasm/idx
                 :wasm/expr          :wasm/instr+
                 :wasm/f32           :double
@@ -295,6 +299,14 @@
                                            [wasm.bin/local-tee     :wasm/local.tee]
                                            [wasm.bin/global-get    :wasm/global.get]
                                            [wasm.bin/global-set    :wasm/global.set]
+                                           [wasm.bin/table-get     :wasm/table.get]
+                                           [wasm.bin/table-set     :wasm/table.set]
+                                           [wasm.bin/table-init    :wasm/table.init]
+                                           [wasm.bin/elem-drop     :wasm/elem.drop]
+                                           [wasm.bin/table-copy    :wasm/table.copy]
+                                           [wasm.bin/table-grow    :wasm/table.grow]
+                                           [wasm.bin/table-size    :wasm/table.size]
+                                           [wasm.bin/table-fill    :wasm/table.fill]
 
 			                               [wasm.bin/i32-const     :wasm/i32.const]
 			                               [wasm.bin/i64-const     :wasm/i32.const]
@@ -395,6 +407,34 @@
                                      [:vector
                                       :wasm/valtype]]
                 :wasm/signature     :wasm/functype
+                :wasm/table.copy    [:tuple
+                                     :wasm.opcode/misc
+                                     [:= wasm.bin/table-copy]
+                                     :wasm/tableidx
+                                     :wasm/tableidx]
+                :wasm/table.fill    [:tuple
+                                     :wasm.opcode/misc
+                                     [:= wasm.bin/table-fill]
+                                     :wasm/tableidx]
+                :wasm/table.get     [:tuple
+                                     [:= wasm.bin/table-get]
+                                     :wasm/tableidx]
+                :wasm/table.grow    [:tuple
+                                     :wasm.opcode/misc
+                                     [:= wasm.bin/table-grow]
+                                     :wasm/tableidx]
+                :wasm/table.init    [:tuple
+                                     :wasm.opcode/misc
+                                     [:= wasm.bin/table-init]
+                                     :wasm/elemidx
+                                     :wasm/tableidx]
+                :wasm/table.set     [:tuple
+                                     [:= wasm.bin/table-set]
+                                     :wasm/tableidx]
+                :wasm/table.size    [:tuple
+                                     :wasm.opcode/misc
+                                     [:= wasm.bin/table-size]
+                                     :wasm/tableidx]
                 :wasm/table         :wasm/tabletype
                 :wasm/tableidx      :wasm/idx
                 :wasm/tablesec      [:map-of
@@ -443,7 +483,8 @@
                 :wasm.import/name   :wasm/name
                 :wasm.import/table  [:merge
                                      imported-base
-                                     :wasm/tabletype])
+                                     :wasm/tabletype]
+                :wasm.opcode/misc   [:= wasm.bin/misc])
          ]
   registry-3)))
 
