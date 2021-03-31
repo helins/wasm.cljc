@@ -12,8 +12,6 @@
   (:require [clojure.test.check.generators :as tc.gen]
             [helins.binf.string            :as binf.string]
             [helins.wasm.bin               :as wasm.bin]
-            [helins.wasm.count             :as wasm.count]
-            [helins.wasm.write             :as wasm.write]
             [malli.core                    :as malli]
             [malli.generator               :as malli.gen]
             [malli.util]))
@@ -60,9 +58,7 @@
                             :type-properties {:error/message "Must be BinF buffer"
                                               :gen/gen       (tc.gen/fmap binf.string/encode
                                                                           (malli.gen/generator [:string
-                                                                                                {:min 1}])
-
-                                                                          #_tc.gen/string)}}))
+                                                                                                {:min 1}]))}}))
 
 
 ;;;;;;;;;; Types / Reference Types
@@ -115,9 +111,7 @@
         {:optional true}
         :wasm/u32]]
 
-      ;(malli/-simple-schema {:pred
-
-      #_[:fn (fn [{:wasm.limit/keys [max
+      [:fn (fn [{:wasm.limit/keys [max
                                    min]}]
              (if max
                (>= max
@@ -170,7 +164,7 @@
      [:tuple
       [:= wasm.bin/block]
       blocktype'
-      :wasm/instr+])
+      [:ref :wasm/instr+]])
 
 
 
@@ -178,7 +172,7 @@
      [:tuple
       [:= wasm.bin/loop-]
       blocktype'
-      :wasm/instr+])
+      [:ref :wasm/instr+]])
 
 
 
@@ -187,11 +181,11 @@
       {:gen/fmap vec}
       [:= wasm.bin/if-]
       blocktype'
-      :wasm/instr+
+      [:ref :wasm/instr+]
       [:repeat
        {:max 1
         :min 0}
-       :wasm/instr+]])
+       [:ref :wasm/instr+]]])
 
 
 
@@ -235,23 +229,35 @@
 
 
 (def instr'
-     [:multi
-      {:dispatch first}
-      ;[wasm.bin/block block']
-      ;[wasm.bin/loop- loop']
-      ;[wasm.bin/if-   if']
-      [wasm.bin/br    br']
-      [wasm.bin/br_if br_if']
-      [wasm.bin/br_table br_table']
-      [wasm.bin/call call']
-      [wasm.bin/call_indirect call_indirect']
-      ])
+     (reduce (fn [multi opcode]
+               (conj multi
+                     [opcode
+                      [:tuple
+                       [:= opcode]]]))
+             [:multi
+              {:dispatch first}
+
+			  ;; Currently does not work, see: https://github.com/metosin/malli/issues/408
+			  ;
+              ;[wasm.bin/block block']
+              ;[wasm.bin/loop- loop']
+              ;[wasm.bin/if-   if']
+
+              [wasm.bin/br    br']
+              [wasm.bin/br_if br_if']
+              [wasm.bin/br_table br_table']
+              [wasm.bin/call call']
+              [wasm.bin/call_indirect call_indirect']]
+             (into [wasm.bin/ref-is_null
+					wasm.bin/drop
+				    wasm.bin/select]
+                   (range 0x45
+                          (inc 0xC4)))))
 
 
 
 (def instr+
-  instr'
-     #_[:vector
+     [:vector
       :wasm/instr])
 
 
@@ -501,6 +507,7 @@
   (malli.gen/generator [:and
                         {:registry registry}
                         :wasm/name])
+
 
 
 
