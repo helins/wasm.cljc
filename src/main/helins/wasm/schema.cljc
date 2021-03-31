@@ -43,7 +43,6 @@
           :wasm.import/module
           :wasm.import/name]
          
-         
          instr-without-immediate+
          [[0x45 :wasm/i32.eqz]
           [0x46 :wasm/i32.eq]
@@ -175,6 +174,18 @@
           [0xC4 :wasm/i64.extend32_s]
           [0xD1 :wasm/ref.is_null]]
 
+         instr-local
+         (fn [opcode]
+           [:tuple
+            [:= opcode]
+            :wasm/localidx])
+
+         instr-global
+         (fn [opcode]
+           [:tuple
+            [:= opcode]
+            :wasm/globalidx])
+
          registry-2
          (reduce (fn [registry-2 [opcode kw]]
                    (assoc registry-2
@@ -218,6 +229,8 @@
                                      [:= wasm.bin/call_indirect]
                                      :wasm/typeidx
                                      :wasm/tableidx]
+                :wasm/dataidx       :wasm/idx
+                :wasm/elemidx       :wasm/idx
                 :wasm/expr          :wasm/instr+
                 :wasm/f32           :double
                 :wasm/f32.const     [:tuple
@@ -236,6 +249,8 @@
                 :wasm/functype      [:tuple
                                      :wasm/resulttype
                                      :wasm/resulttype]
+                :wasm/global.get    (instr-global wasm.bin/global-get)
+                :wasm/global.set    (instr-global wasm.bin/global-set)
                 :wasm/globalidx     :wasm/idx
                 :wasm/globaltype    [:map
                                      :wasm/mutable?
@@ -267,13 +282,22 @@
                                            ;; [wasm.bin/loop- :wasm/loop]
                                            ;; [wasm.bin/if-   :wasm/if]
 
-                                           [wasm.bin/br    :wasm/br]
-                                           [wasm.bin/br_if :wasm/br_if]
-                                           [wasm.bin/br_table :wasm/br_table]
-                                           [wasm.bin/call :wasm/call]
+                                           [wasm.bin/br            :wasm/br]
+                                           [wasm.bin/br_if         :wasm/br_if]
+                                           [wasm.bin/br_table      :wasm/br_table]
+                                           [wasm.bin/call          :wasm/call]
                                            [wasm.bin/call_indirect :wasm/call_indirect]
-			                               [wasm.bin/i32-const :wasm/i32.const]
-			                               [wasm.bin/i64-const :wasm/i32.const]
+                                           [wasm.bin/ref-null      :wasm/ref.null]
+                                           [wasm.bin/ref-func      :wasm/ref.func]
+                                           [wasm.bin/select-t      :wasm/select-t]
+                                           [wasm.bin/local-get     :wasm/local.get]
+                                           [wasm.bin/local-set     :wasm/local.set]
+                                           [wasm.bin/local-tee     :wasm/local.tee]
+                                           [wasm.bin/global-get    :wasm/global.get]
+                                           [wasm.bin/global-set    :wasm/global.set]
+
+			                               [wasm.bin/i32-const     :wasm/i32.const]
+			                               [wasm.bin/i64-const     :wasm/i32.const]
 			                               ]
                                           instr-without-immediate+)
                 :wasm/instr+         [:vector
@@ -292,6 +316,10 @@
                                                            :wasm/tableidx
                                                            :wasm.import/table]]]
                 :wasm/labelidx      :wasm/idx
+                :wasm/local.get     (instr-local wasm.bin/local-get)
+                :wasm/local.set     (instr-local wasm.bin/local-set)
+                :wasm/local.tee     (instr-local wasm.bin/local-tee)
+                :wasm/localidx      :wasm/idx
                 :wasm/loop          [:tuple
                                      [:= wasm.bin/loop-]
                                      :wasm/blocktype
@@ -338,6 +366,12 @@
                                      wasm.bin/numtype-i64
                                      wasm.bin/numtype-f32
                                      wasm.bin/numtype-f64]
+                :wasm/ref.null      [:tuple
+                                     [:= wasm.bin/ref-null]
+                                     :wasm/reftype]
+                :wasm/ref.func      [:tuple
+                                     [:= wasm.bin/ref-func]
+                                     :wasm/funcidx]
                 :wasm/reftype       [:enum
                                      wasm.bin/funcref
                                      wasm.bin/externref]
@@ -356,6 +390,10 @@
 	                               	           	    (<= (js/BigInt. "-9223372036854775808")
 	                               	           		    %
 	                               	           	        (js/BigInt. "9223372036854775807")))])
+                :wasm/select-t      [:tuple
+                                     [:= wasm.bin/select-t]
+                                     [:vector
+                                      :wasm/valtype]]
                 :wasm/signature     :wasm/functype
                 :wasm/table         :wasm/tabletype
                 :wasm/tableidx      :wasm/idx
@@ -416,6 +454,12 @@
 (comment
 
 
+  (def reg
+       (-> (merge (malli/default-schemas)
+                  (malli.util/schemas))
+           registry))
+
+
   (-> (malli/explain :wasm/name
                      (byte-array 4)
                      {:registry (-> (merge (malli/default-schemas)
@@ -425,7 +469,7 @@
 
 
 
-  (malli.gen/generate :wasm/funcsec
+  (malli.gen/generate :wasm/instr
                       {:registry (-> (merge (malli/default-schemas)
                                             (malli.util/schemas))
                                      registry)})

@@ -40,6 +40,11 @@
 
 (comment
 
+  (def registry
+       (-> (merge (malli/default-schemas)
+                  (malli.util/schemas))
+           wasm.schema/registry))
+
 
   (defn f
 
