@@ -645,16 +645,18 @@
            wasm.bin/misc)
       (let [opcode-2 (opvec 1)]
         (if-some [f-2 (op-misc->f opcode-2)]
-          (f-2 flatidx
-               opvec)
-            (do
-              (when-not (contains? wasm.bin/opcode-misc->opsym
-                                   opcode-2)
-                (throw (ex-info (str "Unknown immediate to miscellaneous opcode: "
-                                   opcode-2)
-                              {})))
-              (+ opcode'
-                 (u32' opcode-2)))))
+          (+ opcode'
+             (u32' opcode-2)
+             (f-2 flatidx
+                  opvec))
+          (do
+            (when-not (contains? wasm.bin/opcode-misc->opsym
+                                 opcode-2)
+              (throw (ex-info (str "Unknown immediate to miscellaneous opcode: "
+                                 opcode-2)
+                            {})))
+            (+ opcode'
+               (u32' opcode-2)))))
       (if-some [f (op-main->f opcode)]
         (+ opcode'
            (f flatidx

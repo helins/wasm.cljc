@@ -106,8 +106,7 @@
   [view s33]
 
   (binf.leb128/wr-i64 view
-                      (binf.int64/i* s33)
-                      33))
+                      (binf.int64/i* s33)))
 
 
 
@@ -394,7 +393,8 @@
     (doseq [labelidx choice+]
       (labelidx' view
                  labelidx))
-    (labelidx' (opvec 2))))
+    (labelidx' view
+               (opvec 2))))
 
 
 

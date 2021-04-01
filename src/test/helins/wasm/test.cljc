@@ -70,6 +70,24 @@
 
 
 
+(defn compile-instr
+
+  ""
+
+  [value]
+
+  (compile-direct (partial wasm.count/instr'
+                           {})
+                  (fn write [view opvec]
+                    (wasm.write/instr' view
+                                       {}
+                                       opvec))
+                  (fn read [view]
+                    (wasm.read/instr' wasm/ctx
+                                      view))
+                  value))
+
+
 
 (defn generator
 
@@ -187,6 +205,24 @@
                wasm.count/idx
                wasm.write/idx
                wasm.read/idx))
+
+
+;;;;;;;;;; Instructions
+
+
+(tc.ct/defspec instr'
+               2000
+
+  (test-direct :wasm/instr
+               (partial wasm.count/instr'
+                        {})
+               (fn write [view opvec]
+                 (wasm.write/instr' view
+                                    {}
+                                    opvec))
+               (fn read [view]
+                 (wasm.read/instr' wasm/ctx
+                                   view))))
 
 
 ;;;;;;;;;; Modules / Type Section

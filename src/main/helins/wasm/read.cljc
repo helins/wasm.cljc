@@ -769,36 +769,44 @@
 
   ""
 
-  [ctx opcode view]
 
-  (let [opvec [opcode]]
-    (if (= opcode
-           wasm.bin/misc)
-      (let [opcode-2 (u32' view)
-            opvec-2  (conj opvec 
-                           opcode-2)]
-        (if-some [f-2 (op-misc->f opcode-2)]
-          (f-2 opvec-2
-               ctx
-               view)
-          (do
-            (when-not (contains? wasm.bin/opcode-misc->opsym
-                                 opcode-2)
-              (throw (ex-info (str "Secondary opcode for miscellaneous opcode is not a recognized instruction: "
-                                   opcode-2)
-                              {})))
-            opvec-2)))
-      (if-some [f (op-main->f opcode)]
-        (f opvec
-           ctx
-           view)
-        (do
-          (when-not (contains? wasm.bin/opcode-main->opsym
-                               opcode)
-            (throw (ex-info (str "This opcode is not a recognized instruction: "
-                                 opcode)
-                            {})))
-          opvec)))))
+  ([ctx view]
+
+   (instr' ctx
+           (byte' view)
+           view))
+
+
+  ([ctx opcode view]
+
+   (let [opvec [opcode]]
+     (if (= opcode
+            wasm.bin/misc)
+       (let [opcode-2 (u32' view)
+             opvec-2  (conj opvec 
+                            opcode-2)]
+         (if-some [f-2 (op-misc->f opcode-2)]
+           (f-2 opvec-2
+                ctx
+                view)
+           (do
+             (when-not (contains? wasm.bin/opcode-misc->opsym
+                                  opcode-2)
+               (throw (ex-info (str "Secondary opcode for miscellaneous opcode is not a recognized instruction: "
+                                    opcode-2)
+                               {})))
+             opvec-2)))
+       (if-some [f (op-main->f opcode)]
+         (f opvec
+            ctx
+            view)
+         (do
+           (when-not (contains? wasm.bin/opcode-main->opsym
+                                opcode)
+             (throw (ex-info (str "This opcode is not a recognized instruction: "
+                                  opcode)
+                             {})))
+           opvec))))))
 
 
 

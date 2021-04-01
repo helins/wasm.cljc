@@ -199,6 +199,98 @@
             :wasm.opcode/misc
             [:= opcode-2]])
 
+         instr
+         (into [:multi
+                {:dispatch (fn [opvec]
+                             (let [opcode (opvec 0)]
+                               (if (= opcode
+                                      wasm.bin/misc)
+                                 [opcode
+                                  (opvec 1)]
+                                 opcode)))}
+                [wasm.bin/block                 :wasm/block]
+                [wasm.bin/loop-                 :wasm/loop]
+                [wasm.bin/if-                   :wasm/if]
+                [wasm.bin/br                    :wasm/br]
+                [wasm.bin/br_if                 :wasm/br_if]
+                [wasm.bin/br_table              :wasm/br_table]
+                [wasm.bin/call                  :wasm/call]
+                [wasm.bin/call_indirect         :wasm/call_indirect]
+                [wasm.bin/ref-null              :wasm/ref.null]
+                [wasm.bin/ref-func              :wasm/ref.func]
+                [wasm.bin/select-t              :wasm/select-t]
+                [wasm.bin/local-get             :wasm/local.get]
+                [wasm.bin/local-set             :wasm/local.set]
+                [wasm.bin/local-tee             :wasm/local.tee]
+                [wasm.bin/global-get            :wasm/global.get]
+                [wasm.bin/global-set            :wasm/global.set]
+                [wasm.bin/table-get             :wasm/table.get]
+                [wasm.bin/table-set             :wasm/table.set]
+                [[wasm.bin/misc
+                  wasm.bin/table-init]          :wasm/table.init]
+                [[wasm.bin/misc
+                  wasm.bin/elem-drop]           :wasm/elem.drop]
+                [[wasm.bin/misc
+                  wasm.bin/table-copy]          :wasm/table.copy]
+                [[wasm.bin/misc
+                  wasm.bin/table-grow]          :wasm/table.grow]
+                [[wasm.bin/misc
+                  wasm.bin/table-size]          :wasm/table.size]
+                [[wasm.bin/misc
+                  wasm.bin/table-fill]          :wasm/table.fill]
+                [wasm.bin/i32-load              :wasm/i32.load]
+                [wasm.bin/i64-load              :wasm/i64.load]
+                [wasm.bin/f32-load              :wasm/f32.load]
+                [wasm.bin/f64-load              :wasm/f64.load]
+                [wasm.bin/i32-load8_s           :wasm/i32.load8_s]
+                [wasm.bin/i32-load8_u           :wasm/i32.load8_u]
+                [wasm.bin/i32-load16_s          :wasm/i32.load16_s]
+                [wasm.bin/i32-load16_u          :wasm/i32.load16_u]
+                [wasm.bin/i64-load8_s           :wasm/i64.load8_s]
+                [wasm.bin/i64-load8_u           :wasm/i64.load8_u]
+                [wasm.bin/i64-load16_s          :wasm/i64.load16_s]
+                [wasm.bin/i64-load16_u          :wasm/i64.load16_u]
+                [wasm.bin/i64-load32_s          :wasm/i64.load32_s]
+                [wasm.bin/i64-load32_u          :wasm/i64.load32_u]
+                [wasm.bin/i32-store             :wasm/i32.store]
+                [wasm.bin/i64-store             :wasm/i64.store]
+                [wasm.bin/f32-store             :wasm/f32.store]
+                [wasm.bin/f64-store             :wasm/f64.store]
+                [wasm.bin/i32-store8            :wasm/i32.store8]
+                [wasm.bin/i32-store16           :wasm/i32.store16]
+                [wasm.bin/i64-store8            :wasm/i64.store8]
+                [wasm.bin/i64-store16           :wasm/i64.store16]
+                [wasm.bin/i64-store32           :wasm/i64.store32]
+                [wasm.bin/memory-size           :wasm/memory.size]
+                [wasm.bin/memory-grow           :wasm/memory.grow]
+                [[wasm.bin/misc
+                  wasm.bin/memory-init]         :wasm/memory.init]
+                [[wasm.bin/misc
+                  wasm.bin/data-drop]           :wasm/data.drop]
+                [[wasm.bin/misc
+                  wasm.bin/memory-copy]         :wasm/memory.copy]
+                [[wasm.bin/misc
+                  wasm.bin/memory-fill]         :wasm/memory.fill]
+			    [wasm.bin/i32-const             :wasm/i32.const]
+			    [wasm.bin/i64-const             :wasm/i32.const]
+                [[wasm.bin/misc
+                  wasm.bin/i32-trunc_sat_f32_s] :wasm/i32.trunc_sat_f32_s]
+                [[wasm.bin/misc
+                  wasm.bin/i32-trunc_sat_f32_u] :wasm/i32.trunc_sat_f32_u]
+                [[wasm.bin/misc
+                  wasm.bin/i32-trunc_sat_f64_s] :wasm/i32.trunc_sat_f64_s]
+                [[wasm.bin/misc
+                  wasm.bin/i32-trunc_sat_f64_u] :wasm/i32.trunc_sat_f64_u]
+                [[wasm.bin/misc
+                  wasm.bin/i64-trunc_sat_f32_s] :wasm/i64.trunc_sat_f32_s]
+                [[wasm.bin/misc
+                  wasm.bin/i64-trunc_sat_f32_u] :wasm/i64.trunc_sat_f32_u]
+                [[wasm.bin/misc
+                  wasm.bin/i64-trunc_sat_f64_s] :wasm/i64.trunc_sat_f64_s]
+                [[wasm.bin/misc
+                  wasm.bin/i64-trunc_sat_f64_u] :wasm/i64.trunc_sat_f64_u]]
+               instr-without-immediate+)
+
          registry-2
          (reduce (fn [registry-2 [opcode kw]]
                    (assoc registry-2
@@ -228,10 +320,11 @@
                 :wasm/br_if               [:tuple
                                            [:= wasm.bin/br_if]
                                            :wasm/labelidx]
-                :wasm/br_table            [:cat
-                                           {:gen/fmap vec}
+                :wasm/br_table            [:tuple
                                            [:= wasm.bin/br_table]
-                                           [:+ :wasm/labelidx]]
+                                           [:vector
+                                            :wasm/labelidx]
+                                           :wasm/labelidx]
                 :wasm/byte                [:int
                                            {:max 255
                                             :min 0}]
@@ -316,108 +409,14 @@
                 :wasm/i64.trunc_sat_f64_s (instr-trunc-sat wasm.bin/i64-trunc_sat_f64_s)
                 :wasm/i64.trunc_sat_f64_u (instr-trunc-sat wasm.bin/i64-trunc_sat_f64_u)
                 :wasm/idx                 :wasm/u32
-                :wasm/if                  [:cat
-                                           {:gen/fmap vec}
+                :wasm/if                  [:tuple
                                            [:= wasm.bin/if-]
                                            :wasm/blocktype
                                            [:ref :wasm/instr+]
-                                           [:repeat
-                                            {:max 1
-                                             :min 0}
-                                            [:ref :wasm/instr+]]]
-                :wasm/instr               (into [:multi
-                                                 {:dispatch (fn [opvec]
-                                                              (let [opcode (opvec 0)]
-                                                                (if (= opcode
-                                                                       wasm.bin/misc)
-                                                                  [opcode
-                                                                   (opvec 1)]
-                                                                  opcode)))}
-                                                 [wasm.bin/block                 :wasm/block]
-                                                 [wasm.bin/loop-                 :wasm/loop]
-                                                 [wasm.bin/if-                   :wasm/if]
-                                                 [wasm.bin/br                    :wasm/br]
-                                                 [wasm.bin/br_if                 :wasm/br_if]
-                                                 [wasm.bin/br_table              :wasm/br_table]
-                                                 [wasm.bin/call                  :wasm/call]
-                                                 [wasm.bin/call_indirect         :wasm/call_indirect]
-                                                 [wasm.bin/ref-null              :wasm/ref.null]
-                                                 [wasm.bin/ref-func              :wasm/ref.func]
-                                                 [wasm.bin/select-t              :wasm/select-t]
-                                                 [wasm.bin/local-get             :wasm/local.get]
-                                                 [wasm.bin/local-set             :wasm/local.set]
-                                                 [wasm.bin/local-tee             :wasm/local.tee]
-                                                 [wasm.bin/global-get            :wasm/global.get]
-                                                 [wasm.bin/global-set            :wasm/global.set]
-                                                 [wasm.bin/table-get             :wasm/table.get]
-                                                 [wasm.bin/table-set             :wasm/table.set]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/table-init]          :wasm/table.init]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/elem-drop]           :wasm/elem.drop]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/table-copy]          :wasm/table.copy]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/table-grow]          :wasm/table.grow]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/table-size]          :wasm/table.size]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/table-fill]          :wasm/table.fill]
-                                                 [wasm.bin/i32-load              :wasm/i32.load]
-                                                 [wasm.bin/i64-load              :wasm/i64.load]
-                                                 [wasm.bin/f32-load              :wasm/f32.load]
-                                                 [wasm.bin/f64-load              :wasm/f64.load]
-                                                 [wasm.bin/i32-load8_s           :wasm/i32.load8_s]
-                                                 [wasm.bin/i32-load8_u           :wasm/i32.load8_u]
-                                                 [wasm.bin/i32-load16_s          :wasm/i32.load16_s]
-                                                 [wasm.bin/i32-load16_u          :wasm/i32.load16_u]
-                                                 [wasm.bin/i64-load8_s           :wasm/i64.load8_s]
-                                                 [wasm.bin/i64-load8_u           :wasm/i64.load8_u]
-                                                 [wasm.bin/i64-load16_s          :wasm/i64.load16_s]
-                                                 [wasm.bin/i64-load16_u          :wasm/i64.load16_u]
-                                                 [wasm.bin/i64-load32_s          :wasm/i64.load32_s]
-                                                 [wasm.bin/i64-load32_u          :wasm/i64.load32_u]
-                                                 [wasm.bin/i32-store             :wasm/i32.store]
-                                                 [wasm.bin/i64-store             :wasm/i64.store]
-                                                 [wasm.bin/f32-store             :wasm/f32.store]
-                                                 [wasm.bin/f64-store             :wasm/f64.store]
-                                                 [wasm.bin/i32-store8            :wasm/i32.store8]
-                                                 [wasm.bin/i32-store16           :wasm/i32.store16]
-                                                 [wasm.bin/i64-store8            :wasm/i64.store8]
-                                                 [wasm.bin/i64-store16           :wasm/i64.store16]
-                                                 [wasm.bin/i64-store32           :wasm/i64.store32]
-                                                 [wasm.bin/memory-size           :wasm/memory.size]
-                                                 [wasm.bin/memory-grow           :wasm/memory.grow]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/memory-init]         :wasm/memory.init]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/data-drop]           :wasm/data.drop]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/memory-copy]         :wasm/memory.copy]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/memory-fill]         :wasm/memory.fill]
-			                                     [wasm.bin/i32-const             :wasm/i32.const]
-			                                     [wasm.bin/i64-const             :wasm/i32.const]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/i32-trunc_sat_f32_s] :wasm/i32.trunc_sat_f32_s]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/i32-trunc_sat_f32_u] :wasm/i32.trunc_sat_f32_u]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/i32-trunc_sat_f64_s] :wasm/i32.trunc_sat_f64_s]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/i32-trunc_sat_f64_u] :wasm/i32.trunc_sat_f64_u]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/i64-trunc_sat_f32_s] :wasm/i64.trunc_sat_f32_s]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/i64-trunc_sat_f32_u] :wasm/i64.trunc_sat_f32_u]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/i64-trunc_sat_f64_s] :wasm/i64.trunc_sat_f64_s]
-                                                 [[wasm.bin/misc
-                                                   wasm.bin/i64-trunc_sat_f64_u] :wasm/i64.trunc_sat_f64_u]
-			                                     ]
-                                                instr-without-immediate+)
-                :wasm/instr+               [:vector
-                                            :wasm/instr]
+                                           [:ref :wasm/instr+]]
+                :wasm/instr               instr
+                :wasm/instr+              [:vector
+                                           :wasm/instr]
                 :wasm/importsec           [:map
                                            [:wasm.import/func   [:map-of
                                                                  :wasm/funcidx
@@ -587,13 +586,17 @@
                 :wasm/valtype             [:or
                                            :wasm/numtype
                                            :wasm/reftype]
-                :wasm.expr/const          [:multi
+                :wasm.const/expr          [:vector
+                                           :wasm.const/instr]
+                :wasm.const/instr         [:multi
 	                                       {:dispatch first}
-	                                       [wasm.bin/i32-const :wasm/i32.const]
-	                                       [wasm.bin/i64-const :wasm/i64.const]
-	                                       [wasm.bin/f32-const :wasm/f32.const]
-	                                       [wasm.bin/f64-const :wasm/f64.const]
-	                                       ]
+	                                       [wasm.bin/i32-const  :wasm/i32.const]
+	                                       [wasm.bin/i64-const  :wasm/i64.const]
+	                                       [wasm.bin/f32-const  :wasm/f32.const]
+	                                       [wasm.bin/f64-const  :wasm/f64.const]
+                                           [wasm.bin/ref-null   :wasm/ref.null]
+                                           [wasm.bin/ref-func   :wasm/ref.func]
+                                           [wasm.bin/global-get :wasm/global.get]]
                 :wasm.import/func         [:merge
                                            imported-base
                                            :wasm/func]
@@ -636,7 +639,7 @@
 
 
 
-  (malli.gen/generate :wasm/instr
+  (malli.gen/generate :wasm.expr/const
                       {:registry (-> (merge (malli/default-schemas)
                                             (malli.util/schemas))
                                      registry)})
