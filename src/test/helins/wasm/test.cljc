@@ -139,17 +139,23 @@
                       0)
            (let [section-id (wasm.read/section-id' view)
                  n-byte-2   (wasm.read/u32' view)
+                 ctx-3      (f-read wasm/ctx
+                                    view)
                  diff       (clojure.data/diff ctx
-                                               (f-read wasm/ctx
-                                                       view))]
+                                               ctx-3)
+                 diff-A     (nth diff
+                                 0)
+                 diff-B     (nth diff
+                                 1)]
+             (when (not= diff-A
+                         diff-B)
+               (clojure.pprint/pprint [:a ctx-2 :b ctx-3 :diff diff]))
              (= [section-id
                  n-byte
-                 (nth diff
-                      0)]
+                 diff-A]
                 [section-id
                  n-byte-2
-                 (nth diff
-                      1)])))
+                 diff-B])))
         true))))
 
 
@@ -349,3 +355,22 @@
                 :wasm.count/globalsec
                 wasm.write/globalsec'
                 wasm.read/globalsec'))
+
+
+;;;;;;;;;; Modules / Export Section
+
+
+(tc.ct/defspec exportsec'
+
+  (test-section wasm.bin/section-id-table
+                (tc.gen/fmap (fn [exportsec]
+                               (update wasm/ctx
+                                      :wasm/exportsec
+                                      merge
+                                      (into (sorted-map)
+                                            exportsec)))
+                             (generator :wasm/exportsec))
+                wasm.count/exportsec'
+                :wasm.count/exportsec
+                wasm.write/exportsec'
+                wasm.read/exportsec'))

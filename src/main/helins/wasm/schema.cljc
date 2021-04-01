@@ -346,6 +346,23 @@
                                            [:= wasm.bin/elem-drop]
                                            :wasm/elemidx]
                 :wasm/elemidx             :wasm/idx
+                :wasm/exportsec           [:map
+                                           [:wasm.export/func
+                                            [:map-of
+                                             :wasm/funcidx
+                                             :wasm.export/base]]
+                                           #_[:wasm.export/global
+                                            [:map-of
+                                             :wasm/globalidx
+                                             :wasm.export/base]]
+                                           #_[:wasm.export/mem
+                                            [:map-of
+                                             :wasm/memidx
+                                             :wasm.export/base]]
+                                           #_[:wasm.export/table
+                                            [:map-of
+                                             :wasm/tableidx
+                                             :wasm.export/base]]]
                 :wasm/expr                :wasm/instr+
                 :wasm/f32                 [:double
                                            {:gen/fmap binf.float/f32
@@ -608,6 +625,10 @@
                                            [wasm.bin/ref-null   :wasm/ref.null]
                                            [wasm.bin/ref-func   :wasm/ref.func]
                                            [wasm.bin/global-get :wasm/global.get]]
+                :wasm.export/base         [:vector
+                                           {:min 1}
+                                           [:map
+                                            :wasm/name]]
                 :wasm.import/func         [:merge
                                            imported-base
                                            :wasm/func]
@@ -650,7 +671,7 @@
 
 
 
-  (malli.gen/generate :wasm/f32
+  (malli.gen/generate :wasm/exportsec
                       {:registry (-> (merge (malli/default-schemas)
                                             (malli.util/schemas))
                                      registry)})
