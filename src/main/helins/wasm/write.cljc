@@ -1121,12 +1121,12 @@
 
   (doseq [[idx
            name+] space]
-    (let [idx-2 (flatidx idx)]
-      (doseq [{buffer :wasm/name} name+]
-        (-> view
-            (name' buffer)
-            (binf/wr-b8 bin-export-type)
-            (compile-idx idx-2)))))
+    (doseq [{buffer :wasm/name} name+]
+      (-> view
+          (name' buffer)
+          (binf/wr-b8 bin-export-type)
+          (compile-idx (-flatten-idx flatidx
+                                     idx)))))
   view)
 
 

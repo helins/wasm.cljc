@@ -1072,24 +1072,25 @@
 
   [ctx-write space k-flatidx count-idx]
 
-  (let [count-idx-2 (comp count-idx
-                          (ctx-write k-flatidx))]
+  (let [flatidx     (ctx-write k-flatidx)
+        count-idx-2 (fn [idx]
+                      (count-idx (-flatten-idx flatidx
+                                               idx)))]
     (reduce-kv (fn [ctx-write-2 idx name+]
                  (let [n-byte-exportdesc (+ byte'
                                             (count-idx-2 idx))]
                    (reduce (fn [ctx-write-3 {buffer :wasm/name}]
-                             (let [n-byte-name (count buffer)]
-                               (update ctx-write-3
-                                       :wasm.count/exportsec
-                                       #(+ % n-byte-exportdesc
-                                           (u32' n-byte-name)
-                                           n-byte-name))))
-                           ctx-write-2
+                             (update ctx-write-3
+                                     :wasm.count/exportsec
+                                     #(+ %
+                                         n-byte-exportdesc
+                                         (name' buffer))))
+                           (update ctx-write-2
+                                   :wasm.export/n
+                                   #(+ %
+                                       (count name+)))
                            name+)))
-               (update ctx-write
-                       :wasm.export/n
-                       #(+ %
-                           (count space)))
+               ctx-write
                space)))
 
 

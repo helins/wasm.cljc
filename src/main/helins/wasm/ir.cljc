@@ -28,7 +28,7 @@
   
 
 
-(defn -assoc-resource
+(defn ^:no-doc -assoc-resource
 
   ;;
 

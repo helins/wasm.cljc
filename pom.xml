@@ -6,7 +6,7 @@
   <version>0.0.0-alpha0</version>
   <name>wasmeta</name>
   <description>Metaprogramming in WebAssembly</description>
-  <url>https://github.com/helins-io/wasmeta.cljc</url>
+  <url>https://github.com/helins/wasmeta.cljc</url>
   <licenses>
     <license>
       <name>Mozilla Public License Version 2.0</name>
@@ -15,16 +15,23 @@
   </licenses>
   <developers>
     <developer>
-        <name>Adam Helinski</name>
+      <name>Adam Helinski</name>
+      <email>adam@helins.io</email>
+      <url>http://www.helins.io</url>
     </developer>
   </developers>
   <scm>
-      <url>https://github.com/helins-io/wasmeta.cljc</url>
-      <connection>scm:git:git://github.com/helins-io/wasmeta.cljc.git</connection>
-      <developerConnection>scm:git:ssh://git@github.com/helins-io/wasmeta.cljc.git</developerConnection>
+    <url>https://github.com/helins/wasmeta.cljc</url>
+    <connection>scm:git:git://github.com/helins/wasmeta.cljc.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/helins/wasmeta.cljc.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
   <dependencies>
+    <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>clojure</artifactId>
+      <version>1.10.2</version>
+    </dependency>
   </dependencies>
   <build>
     <sourceDirectory>src/main</sourceDirectory>

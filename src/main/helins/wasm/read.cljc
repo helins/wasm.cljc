@@ -1290,7 +1290,7 @@
 
   (exportdesc-any ctx
                   hmap
-                  :wasm.export/memsec
+                  :wasm.export/mem
                   (memidx' view)))
 
 
@@ -1303,7 +1303,7 @@
 
   (exportdesc-any ctx
                   hmap
-                  :wasm.export/globalsec
+                  :wasm.export/global
                   (globalidx' view)))
 
 
