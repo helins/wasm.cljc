@@ -34,7 +34,7 @@
  :deps
  {io.helins/binf                    {:mvn/version "1.0.0-beta1"}
   metosin/malli                     {:git/url "https://github.com/metosin/malli"
-                                     :sha     "9246d7b00c77f05fdf178f4327a675d13df396e9"}
+                                     :sha     "0e5e3f1ee9bc8d6ea60dc16e59abf9cc295ab510"}
   org.wasmer/wasmer-jni-amd64-linux {:local/root "runtime/wasmer-jni-amd64-linux-0.3.0.jar"}}
 
  :paths
