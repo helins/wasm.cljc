@@ -10,6 +10,7 @@
   {:author "Adam Helinski"}
 
   (:require [clojure.test.check.generators :as tc.gen]
+            [helins.binf.float             :as binf.float]
             #?(:cljs [helins.binf.gen	   :as binf.gen])
             [helins.binf.string            :as binf.string]
             [helins.wasm.bin               :as wasm.bin]
@@ -346,7 +347,10 @@
                                            :wasm/elemidx]
                 :wasm/elemidx             :wasm/idx
                 :wasm/expr                :wasm/instr+
-                :wasm/f32                 :double
+                :wasm/f32                 [:double
+                                           {:gen/fmap binf.float/f32
+                                            :max      3.402823466e38
+                                            :min      1.175494351e-38}]
                 :wasm/f32.const           [:tuple
 	                                       [:= wasm.bin/f32-const]
 	                                       :wasm/f32]
@@ -367,9 +371,16 @@
                 :wasm/functype            [:tuple
                                            :wasm/resulttype
                                            :wasm/resulttype]
+                :wasm/global              [:merge
+                                           :wasm/globaltype
+                                           [:map
+                                            [:wasm/expr :wasm.const/expr]]]
                 :wasm/global.get          (instr-global wasm.bin/global-get)
                 :wasm/global.set          (instr-global wasm.bin/global-set)
                 :wasm/globalidx           :wasm/idx
+                :wasm/globalsec           [:map-of
+                                           :wasm/globalidx
+                                           :wasm/global]
                 :wasm/globaltype          [:map
                                            :wasm/mutable?
                                            :wasm/valtype]
@@ -639,7 +650,7 @@
 
 
 
-  (malli.gen/generate :wasm.expr/const
+  (malli.gen/generate :wasm/f32
                       {:registry (-> (merge (malli/default-schemas)
                                             (malli.util/schemas))
                                      registry)})

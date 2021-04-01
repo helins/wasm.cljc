@@ -122,7 +122,9 @@
   [section-id gen f-count k-count f-write f-read]
 
   (tc.prop/for-all [ctx gen]
-    (let [ctx-2  (f-count ctx)
+    (let [ctx-2  (f-count (assoc ctx
+                                 :wasm/write
+                                 {}))
           n-byte (get-in ctx-2
                          [:wasm/write
                           k-count])]
@@ -330,3 +332,20 @@
                 :wasm.count/memsec
                 wasm.write/memsec'
                 wasm.read/memsec'))
+
+
+;;;;;;;;;; Modules / Global Section
+
+
+(tc.ct/defspec globalsec'
+
+  (test-section wasm.bin/section-id-table
+                (tc.gen/fmap (fn [global+]
+                               (reduce wasm.ir/assoc-global
+                                       wasm/ctx
+                                       global+))
+                             (tc.gen/vector (generator :wasm/global)))
+                wasm.count/globalsec'
+                :wasm.count/globalsec
+                wasm.write/globalsec'
+                wasm.read/globalsec'))
