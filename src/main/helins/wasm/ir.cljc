@@ -333,7 +333,7 @@
   [hmap funcidx]
 
   (assoc hmap
-         :wasm/funcidc
+         :wasm/funcidx
          funcidx))
 
 

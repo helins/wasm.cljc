@@ -149,7 +149,7 @@
                                  1)]
              (when (not= diff-A
                          diff-B)
-               (clojure.pprint/pprint [:a ctx-2 :b ctx-3 :diff diff]))
+               (clojure.pprint/pprint [:ctx ctx :ctx-3 ctx-3 :diff diff]))
              (= [section-id
                  n-byte
                  diff-A]
@@ -374,3 +374,20 @@
                 :wasm.count/exportsec
                 wasm.write/exportsec'
                 wasm.read/exportsec'))
+
+
+;;;;;;;;;; Modules / Start Section
+
+
+(tc.ct/defspec startsec'
+
+  (test-section wasm.bin/section-id-table
+                (tc.gen/fmap (fn [startsec]
+                               (assoc wasm/ctx
+                                      :wasm/startsec
+                                      startsec))
+                             (generator :wasm/startsec))
+                wasm.count/startsec'
+                :wasm.count/startsec
+                wasm.write/startsec'
+                wasm.read/startsec'))

@@ -351,15 +351,15 @@
                                             [:map-of
                                              :wasm/funcidx
                                              :wasm.export/base]]
-                                           #_[:wasm.export/global
+                                           [:wasm.export/global
                                             [:map-of
                                              :wasm/globalidx
                                              :wasm.export/base]]
-                                           #_[:wasm.export/mem
+                                           [:wasm.export/mem
                                             [:map-of
                                              :wasm/memidx
                                              :wasm.export/base]]
-                                           #_[:wasm.export/table
+                                           [:wasm.export/table
                                             [:map-of
                                              :wasm/tableidx
                                              :wasm.export/base]]]
@@ -553,6 +553,9 @@
 	                               	                 	    (<= (js/BigInt. "-9223372036854775808")
 	                               	                 		    %
 	                               	                 	        (js/BigInt. "9223372036854775807")))])
+                :wasm/start               [:map
+                                           :wasm/funcidx]
+                :wasm/startsec            :wasm/start
                 :wasm/select-t            [:tuple
                                            [:= wasm.bin/select-t]
                                            [:vector
@@ -671,7 +674,7 @@
 
 
 
-  (malli.gen/generate :wasm/exportsec
+  (malli.gen/generate :wasm/startsec
                       {:registry (-> (merge (malli/default-schemas)
                                             (malli.util/schemas))
                                      registry)})
