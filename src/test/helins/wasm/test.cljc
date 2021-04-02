@@ -391,3 +391,21 @@
                 :wasm.count/startsec
                 wasm.write/startsec'
                 wasm.read/startsec'))
+
+
+;;;;;;;;;; Modules / Element Section
+
+
+(tc.ct/defspec elemsec'
+
+  (test-section wasm.bin/section-id-table
+                (tc.gen/fmap (fn [elem+]
+                               (reduce wasm.ir/assoc-elem
+                                       wasm/ctx
+                                       elem+))
+                             (generator [:vector
+                                         :wasm/elem]))
+                wasm.count/elemsec'
+                :wasm.count/elemsec
+                wasm.write/elemsec'
+                wasm.read/elemsec'))

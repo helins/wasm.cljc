@@ -301,6 +301,25 @@
                  registry
                  instr-without-immediate+)
 
+         elem-not-active
+         (fn [kw-type]
+           (let [base [:map
+                       [:wasm.elem/mode [:= kw-type]]]]
+             [:multi
+              {:dispatch :wasm.elem/resolve}
+              [:expr
+               (conj base
+                     :wasm/reftype
+                     [:wasm.elem/resolve [:= :expr]]
+                     [:wasm.elem/vec [:vector
+                                      :wasm.const/expr]])]
+              [:idx
+               (conj base
+                     :wasm/elemkind
+                     [:wasm.elem/resolve [:= :idx]]
+                     [:wasm.elem/vec [:vector
+                                      :wasm/funcidx]])]]))
+
          registry-3
          (assoc registry-2
                 :wasm/block               [:tuple
@@ -341,11 +360,22 @@
                                            [:= wasm.bin/data-drop]
                                            :wasm/dataidx]
                 :wasm/dataidx             :wasm/idx
+                :wasm/elem                [:multi
+                                           {:dispatch    :wasm.elem/mode}
+                                           [:active      :wasm.elem/active]
+                                          ; [:declarative :wasm.elem/declarative]
+                                           [:passive     :wasm.elem/passive]
+                                           ]
                 :wasm/elem.drop           [:tuple
                                            :wasm.opcode/misc
                                            [:= wasm.bin/elem-drop]
                                            :wasm/elemidx]
                 :wasm/elemidx             :wasm/idx
+                :wasm/elemkind            [:enum
+                                           wasm.bin/elemkind-funcref]
+                :wasm/elemsec             [:map-of
+                                           :wasm/elemidx
+                                           :wasm/elem]
                 :wasm/exportsec           [:map
                                            [:wasm.export/func
                                             [:map-of
@@ -529,6 +559,7 @@
                                            wasm.bin/numtype-i64
                                            wasm.bin/numtype-f32
                                            wasm.bin/numtype-f64]
+                :wasm/offset              :wasm.const/expr
                 :wasm/ref.null            [:tuple
                                            [:= wasm.bin/ref-null]
                                            :wasm/reftype]
@@ -628,6 +659,39 @@
                                            [wasm.bin/ref-null   :wasm/ref.null]
                                            [wasm.bin/ref-func   :wasm/ref.func]
                                            [wasm.bin/global-get :wasm/global.get]]
+                :wasm.elem/active         (let [base [:map
+                                                      :wasm/offset
+                                                      [:wasm.elem/mode [:= :active]]]]
+                                            [:multi
+                                             {:dispatch :wasm/resolve}
+                                             [:expr
+                                              (let [base-2 (conj base
+                                                                 [:wasm.elem/resolve [:= :expr]]
+                                                                 [:wasm.elem/vec     [:vector
+                                                                                      :wasm.const/expr]])]
+                                                [:multi
+                                                 {:dispatch :wasm.elem/tableidx}
+                                                 [:nil
+                                                  base-2]
+                                                 [:malli/default
+                                                  (conj base-2
+                                                        :wasm/reftype
+                                                        :wasm/tableidx)]])]
+                                             [:idx
+                                              (let [base-2 (conj base
+                                                                 [:wasm.elem/resolve [:= :idx]]
+                                                                 [:wasm.elem/vec     [:vector
+                                                                                      :wasm/funcidx]])]
+                                                [:multi
+                                                 {:dispatch :wasm.elem/tableidx}
+                                                 [nil
+                                                  base-2]
+                                                 [:malli/default
+                                                  (conj base-2
+                                                        :wasm/elemkind
+                                                        :wasm/tableidx)]])]])
+                :wasm.elem/declarative    (elem-not-active :declarative)
+                :wasm.elem/passive        (elem-not-active :passive)
                 :wasm.export/base         [:vector
                                            {:min 1}
                                            [:map
@@ -665,8 +729,10 @@
            registry))
 
 
-  (-> (malli/explain :wasm/name
-                     (byte-array 4)
+  (-> (malli/explain [:merge
+                      [:map [:a :int]]
+                      [:or [:map [:b :string]]]]
+                     {:a 42 :b "ok"}
                      {:registry (-> (merge (malli/default-schemas)
                                            (malli.util/schemas))
                                     registry)})
@@ -674,7 +740,7 @@
 
 
 
-  (malli.gen/generate :wasm/startsec
+  (malli.gen/generate :wasm.elem/passive
                       {:registry (-> (merge (malli/default-schemas)
                                             (malli.util/schemas))
                                      registry)})
