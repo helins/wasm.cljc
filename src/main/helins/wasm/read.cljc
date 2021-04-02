@@ -1563,7 +1563,7 @@
                              (assoc :wasm/offset    (expr' ctx
                                                            view)
                                     :wasm.data/mode :active)))
-                       (assoc :wasm/data
+                       (assoc :wasm/buffer
                               (binf/rr-buffer view
                                               (u32' view))))))))
 

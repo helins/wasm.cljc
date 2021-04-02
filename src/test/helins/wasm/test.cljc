@@ -436,3 +436,21 @@
                                :wasm/source)
                       wasm.read/codesec'2
                       wasm.read/codesec')))
+
+
+;;;;;;;;;; Modules / Data Section
+
+
+(tc.ct/defspec datasec'
+
+  (test-section wasm.bin/section-id-table
+                (tc.gen/fmap (fn [data+]
+                               (reduce wasm.ir/assoc-data
+                                       wasm/ctx
+                                       data+))
+                             (generator [:vector
+                                         :wasm/data]))
+                wasm.count/datasec'
+                :wasm.count/datasec
+                wasm.write/datasec'
+                wasm.read/datasec'))

@@ -1304,7 +1304,7 @@
           (section-id wasm.bin/section-id-data)
           (u32' (ctx-write :wasm.count/datasec))
           (u32' (count datasec)))
-      (doseq [{:wasm/keys [data
+      (doseq [{:wasm/keys [buffer
                            memidx
                            offset]} (vals datasec)]
         (byte' view
@@ -1322,8 +1322,8 @@
                  ctx-write
                  offset))
         (-> view
-            (u32' (count data))
-            (binf/wr-buffer data)))))
+            (u32' (count buffer))
+            (binf/wr-buffer buffer)))))
   view)
 
 

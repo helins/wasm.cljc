@@ -345,6 +345,20 @@
                                            [:vector
                                             :wasm/labelidx]
                                            :wasm/labelidx]
+                :wasm/buffer              [:fn
+                                           {:error/message "Must be BinF buffer"
+                                            :gen/gen       (tc.gen/fmap binf.string/encode
+                                                                        (malli.gen/generator [:string]))}
+                                           #?(:clj  (let [klass (class (byte-array 0))]
+                                                      #(instance? klass
+                                                                  %))
+                                              :cljs (if (exists? js/SharedArrayBuffer)
+                                                      #(or (instance? js/ArrayBuffer
+                                                                      %)
+                                                           (instance? js/SharedArrayBuffer
+                                                                      %))
+                                                      #(instance? js/ArrayBuffer
+                                                                  %)))]
                 :wasm/byte                [:int
                                            {:max 255
                                             :min 0}]
@@ -361,15 +375,22 @@
                 :wasm/codesec             [:map-of
                                            :wasm/funcidx
                                            :wasm/code]
+                :wasm/data                [:multi
+                                           {:dispatch :wasm.data/mode}
+                                           [:active  :wasm.data/active]
+                                           [:passive :wasm.data/passive]]
                 :wasm/data.drop           [:tuple
                                            :wasm.opcode/misc
                                            [:= wasm.bin/data-drop]
                                            :wasm/dataidx]
                 :wasm/dataidx             :wasm/idx
+                :wasm/datasec             [:map-of
+                                           :wasm/dataidx
+                                           :wasm/data]
                 :wasm/elem                [:multi
                                            {:dispatch    :wasm.elem/mode}
                                            [:active      :wasm.elem/active]
-                                          ; [:declarative :wasm.elem/declarative]
+                                           [:declarative :wasm.elem/declarative]
                                            [:passive     :wasm.elem/passive]
                                            ]
                 :wasm/elem.drop           [:tuple
@@ -549,21 +570,7 @@
                                            :wasm/mem]
                 :wasm/memtype             :wasm/limits
                 :wasm/mutable?            :boolean
-                :wasm/name                [:fn
-                                           {:error/message "Must be BinF buffer"
-                                            :gen/gen       (tc.gen/fmap binf.string/encode
-                                                                        (malli.gen/generator [:string
-                                                                                              {:min 1}]))}
-                                           #?(:clj  (let [klass (class (byte-array 0))]
-                                                      #(instance? klass
-                                                                  %))
-                                              :cljs (if (exists? js/SharedArrayBuffer)
-                                                      #(or (instance? js/ArrayBuffer
-                                                                      %)
-                                                           (instance? js/SharedArrayBuffer
-                                                                      %))
-                                                      #(instance? js/ArrayBuffer
-                                                                  %)))]
+                :wasm/name                :wasm/buffer
                 :wasm/numtype             [:enum
                                            wasm.bin/numtype-i32
                                            wasm.bin/numtype-i64
@@ -669,6 +676,19 @@
                                            [wasm.bin/ref-null   :wasm/ref.null]
                                            [wasm.bin/ref-func   :wasm/ref.func]
                                            [wasm.bin/global-get :wasm/global.get]]
+
+
+                :wasm.data/active         [:map
+                                           :wasm/buffer
+                                           [:wasm/memidx
+                                            {:optional true}]
+                                           :wasm/offset
+                                           [:wasm.data/mode
+                                            [:= :active]]]
+                :wasm.data/passive        [:map
+                                           :wasm/buffer
+                                           [:wasm.data/mode
+                                            [:= :passive]]]
                 :wasm.elem/active         (let [base [:map
                                                       :wasm/offset
                                                       [:wasm.elem/mode [:= :active]]]]
@@ -750,7 +770,7 @@
 
 
 
-  (malli.gen/generate :wasm/code
+  (malli.gen/generate :wasm/data
                       {:registry (-> (merge (malli/default-schemas)
                                             (malli.util/schemas))
                                      registry)})

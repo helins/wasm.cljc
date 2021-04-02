@@ -1238,9 +1238,9 @@
                  :wasm.flatidx/data
                  :wasm.count/datasec
                  (fn [{:as        hmap
-                       :wasm/keys [data
+                       :wasm/keys [buffer
                                    offset]}]
-                   (let [n-byte-data (count data)]
+                   (let [n-byte-data (count buffer)]
                      (+ byte'  ;;  flag
                         (if offset
                           (+ (expr' ctx-write

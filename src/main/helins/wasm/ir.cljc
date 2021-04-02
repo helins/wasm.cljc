@@ -485,6 +485,19 @@
 ;;;;;;;;;; Modules / Data Section
 
 
+(defn assoc-data
+
+  ""
+
+  [ctx data]
+  
+  (-assoc-resource ctx
+                   :wasm/datasec
+                   :wasm/dataidx
+                   data))
+
+
+
 (defn data'00
 
   ""
