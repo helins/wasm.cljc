@@ -385,14 +385,14 @@
 
   ""
 
-  [hmap tableidx expr-offset _elemkind funcidx+]
+  [hmap tableidx expr-offset elemkind funcidx+]
 
   (assoc hmap
+         :wasm/elemkind     elemkind
          :wasm/offset       expr-offset
          :wasm/tableidx     tableidx
          :wasm.elem/mode    :active
          :wasm.elem/resolve :idx
-         :wasm.elem/type    :func
          :wasm.elem/vec     funcidx+))
 
 
@@ -401,12 +401,12 @@
 
   ""
 
-  [hmap _elemkind funcidx+]
+  [hmap elemkind funcidx+]
 
   (assoc hmap
+         :wasm/elemkind     elemkind
          :wasm.elem/mode    :declarative
          :wasm.elem/resolve :idx
-         :wasm.elem/type    :func
          :wasm.elem/vec     funcidx+))
 
 
@@ -429,12 +429,12 @@
 
   ""
 
-  [hmap _reftype expr-elem+]
+  [hmap reftype expr-elem+]
 
   (assoc hmap
+         :wasm/reftype      reftype
          :wasm.elem/mode    :passive
          :wasm.elem/resolve :expr
-         :wasm.elem/type    :func
          :wasm.elem/vec     expr-elem+))
 
 
@@ -443,14 +443,14 @@
 
   ""
 
-  [hmap tableidx expr-offset _reftype expr-elem+]
+  [hmap tableidx expr-offset reftype expr-elem+]
 
   (assoc hmap
          :wasm/offset       expr-offset
+         :wasm/reftype      reftype
          :wasm/tableidx     tableidx
          :wasm.elem/mode    :active
          :wasm.elem/resolve :expr
-         :wasm.elem/type    :func
          :wasm.elem/vec     expr-elem+))
 
 
@@ -459,12 +459,12 @@
 
   ""
 
-  [hmap _reftype expr-elem+]
+  [hmap reftype expr-elem+]
 
   (assoc hmap
+         :wasm/reftype      reftype
          :wasm.elem/mode    :declarative
          :wasm.elem/resolve :expr
-         :wasm.elem/type    :func
          :wasm.elem/vec     expr-elem+))
 
 
@@ -502,10 +502,10 @@
 
   ""
 
-  [hmap expr buffer-data]
+  [hmap expr buffer]
 
   (assoc hmap
-         :wasm/data      buffer-data
+         :wasm/buffer    buffer
          :wasm/expr      expr
          :wasm.data/mode :active))
 
@@ -515,10 +515,10 @@
 
   ""
 
-  [hmap buffer-data]
+  [hmap buffer]
 
   (assoc hmap
-         :wasm/data      buffer-data
+         :wasm/buffer    buffer
          :wasm.data/mode :passive))
 
 
@@ -527,10 +527,10 @@
 
   ""
 
-  [hmap memidx expr buffer-data]
+  [hmap memidx expr buffer]
 
   (assoc hmap
-         :wasm/data       buffer-data
+         :wasm/buffer     buffer
          :wasm/expr       expr
          :wasm/memidx     memidx
          :wasm.data/mode :active))
