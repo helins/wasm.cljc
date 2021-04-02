@@ -545,15 +545,18 @@
 
   [ctx {::keys [codesec]}]
 
-  (reduce (fn [ctx-2 code]
-            (update ctx-2
-                    :wasm/codesec
-                    (fn [codesec]
-                      (assoc codesec
-                             (count codesec)
-                             code))))
-          ctx
-          codesec))
+  (let [offset (or (ffirst (ctx :wasm/funcsec))
+                   0)]
+    (reduce (fn [ctx-2 code]
+              (update ctx-2
+                      :wasm/codesec
+                      (fn [codesec]
+                        (assoc codesec
+                               (+ offset
+                                  (count codesec))
+                               code))))
+            ctx
+            codesec)))
 
 
 
@@ -630,3 +633,52 @@
                 :wasm.count/datacountsec
                 wasm.write/datacountsec'
                 wasm.read/datacountsec'))
+
+
+;;;;;;;;;; Modules / Modules
+
+
+(tc.ct/defspec module'
+
+  (tc.prop/for-all [ctx (generator [:map
+                                    {:gen/fmap #(-> (assoc wasm/ctx
+                                                           :wasm/version
+                                                           1)
+                                                    (prepare-typesec %)
+                                                    (prepare-importsec %)
+                                                    (prepare-funcsec %)
+                                                    (prepare-tablesec %)
+                                                    (prepare-memsec %)
+                                                    (prepare-globalsec %)
+                                                    (prepare-exportsec %)
+                                                    (prepare-startsec %)
+                                                    (prepare-elemsec %)
+                                                    (prepare-codesec %)
+                                                    (prepare-datasec %)
+                                                    (prepare-datacountsec %))}
+                                    Typesec
+                                    Importsec
+                                    Funcsec
+                                    Tablesec
+                                    Memsec
+                                    Globalsec
+                                    Exportsec
+                                    Startsec
+                                    Elemsec
+                                    Codesec
+                                    Datasec
+                                    Datacountsec])]
+    (let [view   (wasm/compile ctx)
+          ctx-2  (wasm/decompile (binf/seek view
+                                            0))
+          diff   (clojure.data/diff ctx
+                                    ctx-2)
+          diff-A (nth diff
+                      0)
+          diff-B (nth diff
+                      1)]
+      #_(when (not= diff-A
+                  diff-B)
+        (clojure.pprint/pprint [:ctx ctx :ctx-2 ctx-2 :diff (take 2 diff)]))
+      (= diff-A
+         diff-B))))

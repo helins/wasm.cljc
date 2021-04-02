@@ -570,6 +570,33 @@
                                            :wasm/memidx
                                            :wasm/mem]
                 :wasm/memtype             :wasm/limits
+                :wasm/module              [:map
+                                           [:wasm/version
+                                            {:optional true}]
+                                           [:wasm/typesec
+                                            {:optional true}]
+                                           [:wasm/importsec
+                                            {:optional true}]
+                                           [:wasm/funcsec
+                                            {:optional true}]
+                                           [:wasm/tablesec
+                                            {:optional true}]
+                                           [:wasm/memsec
+                                            {:optional true}]
+                                           [:wasm/globalsec
+                                            {:optional true}]
+                                           [:wasm/exportsec
+                                            {:optional true}]
+                                           [:wasm/startsec
+                                            {:optional true}]
+                                           [:wasm/elemsec
+                                            {:optional true}]
+                                           [:wasm/datacountsec
+                                            {:optional true}]
+                                           [:wasm/codesec
+                                            {:optional true}]
+                                           [:wasm/datasec
+                                            {:optional true}]]
                 :wasm/mutable?            :boolean
                 :wasm/name                :wasm/buffer
                 :wasm/numtype             [:enum
@@ -666,6 +693,8 @@
                 :wasm/valtype             [:or
                                            :wasm/numtype
                                            :wasm/reftype]
+                :wasm/version             [:enum
+                                           1]
                 :wasm.const/expr          [:vector
                                            :wasm.const/instr]
                 :wasm.const/instr         [:multi
@@ -772,7 +801,7 @@
 
 
 
-  (malli.gen/generate :wasm/datacountsec
+  (malli.gen/generate :wasm/module
                       {:registry (-> (merge (malli/default-schemas)
                                             (malli.util/schemas))
                                      registry)})

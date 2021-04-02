@@ -1503,7 +1503,7 @@
   [ctx]
 
   (let [idx-offset (or (ffirst (ctx :wasm/funcsec))
-                       (ctx :wasm/funcidx))]
+                       0)]
     (update ctx
             :wasm/codesec
             (fn [codesec]
@@ -1655,13 +1655,16 @@
   [ctx view]
 
   (magic' view)
-  (-> ctx
-      (assoc :wasm/version
-             (version' view))
+  (let [ctx-2 (assoc ctx
+                     :wasm/version
+                     (version' view))]
+    (cond->
+      ctx-2
+      (pos? (binf/remaining view))
       (assoc-in [:wasm/source
                  :wasm.source/section+]
                 (loop [section+ []]
                   (if (pos? (binf/remaining view))
                     (recur (conj section+
                                  (section' view)))
-                    section+)))))
+                    section+))))))

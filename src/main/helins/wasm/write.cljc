@@ -1368,9 +1368,11 @@
   [view {:wasm/keys [version]}]
 
   (binf/wr-b32 view
-               (condp =
-                      version
-                 wasm.bin/version-1 wasm.bin/version-1)))
+               (if version
+                 (condp =
+                        version
+                   wasm.bin/version-1 wasm.bin/version-1)
+                 1)))
 
 
 
@@ -1391,7 +1393,8 @@
       (startsec' ctx)
       (elemsec' ctx)
       (codesec' ctx)
-      (datasec' ctx)))
+      (datasec' ctx)
+      (datacountsec' ctx)))
 
 
 
