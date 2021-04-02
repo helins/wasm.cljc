@@ -340,6 +340,19 @@
 ;;;;;;;;;; Modules / Element Section
 
 
+(defn assoc-elem
+
+  ""
+
+  [ctx elem]
+  
+  (-assoc-resource ctx
+                   :wasm/elemsec
+                   :wasm/elemidx
+                   elem))
+
+
+
 (defn elem'00
 
   ""

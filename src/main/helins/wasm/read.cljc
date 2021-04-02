@@ -21,7 +21,7 @@
          data'
          dataidx'
          elem'
-         elemkind'2
+         elemkind'
          elemidx'
          elemtype'
          export'
@@ -211,19 +211,6 @@
   [view]
 
   (byte' view))
-
-
-
-(defn reftype'2
-
-  ""
-
-  [view]
-
-  (condp =
-         (reftype' view)
-    wasm.bin/externref :extern
-    wasm.bin/funcref   :func))
 
 
 ;;;;;;;;;; Types / Value Types
@@ -1379,53 +1366,49 @@
 
   [ctx view]
 
-  (-> ctx
-      (update :wasm/elemidx
-              inc)
-      (assoc-in [:wasm/elemsec
-                 (ctx :wasm/elemidx)]
-                (let [flag (byte' view)
-                      _    (when-not (<= 0x00
-                                         flag
-                                         0x07)
-                             (throw (ex-info (str "Element segment flag is not in [0;7]: "
-                                                  flag)
-                                             {})))
-                      hmap (if (even? flag)
-                             (-> (if (or (= flag
-                                            0x02)
-                                         (= flag
-                                            0x06))
-                                   {:wasm/tableidx (tableidx' view)}
-                                   {})
-                                 (assoc :wasm/offset    (expr' ctx
-                                                               view)
-                                        :wasm.elem/mode :active))
-                             {:wasm.elem/mode (if (pos? (bit-and flag
-                                                                 2r010))
-                                                :declarative
-                                                :passive)})]
-                  (if (pos? (bit-and flag
-                                     2r100))
-                    (-> (if (= flag
-                               0x04)
-                          hmap
-                          (assoc hmap
-                                 :wasm.elem/type
-                                 (reftype'2 view)))
-                        (assoc :wasm.elem/resolve :expr
-                               :wasm.elem/vec     (vec' (partial expr'
-                                                                 ctx)
-                                                        view)))
-                    (-> (if (= flag
-                               0x00)
-                          hmap
-                          (assoc hmap
-                                 :wasm.elem/type
-                                 (elemkind'2 view)))
-                        (assoc :wasm.elem/resolve :idx
-                               :wasm.elem/vec     (vec' funcidx'
-                                                        view))))))))
+  (wasm.ir/assoc-elem ctx
+                      (let [flag (byte' view)
+                            _    (when-not (<= 0x00
+                                               flag
+                                               0x07)
+                                   (throw (ex-info (str "Element segment flag is not in [0;7]: "
+                                                        flag)
+                                                   {})))
+                            hmap (if (even? flag)
+                                   (-> (if (or (= flag
+                                                  0x02)
+                                               (= flag
+                                                  0x06))
+                                         {:wasm/tableidx (tableidx' view)}
+                                         {})
+                                       (assoc :wasm/offset    (expr' ctx
+                                                                     view)
+                                              :wasm.elem/mode :active))
+                                   {:wasm.elem/mode (if (pos? (bit-and flag
+                                                                       2r010))
+                                                      :declarative
+                                                      :passive)})]
+                        (if (pos? (bit-and flag
+                                           2r100))
+                          (-> (if (= flag
+                                     0x04)
+                                hmap
+                                (assoc hmap
+                                       :wasm/reftype
+                                       (reftype' view)))
+                              (assoc :wasm.elem/resolve :expr
+                                     :wasm.elem/vec     (vec' (partial expr'
+                                                                       ctx)
+                                                              view)))
+                          (-> (if (= flag
+                                     0x00)
+                                hmap
+                                (assoc hmap
+                                       :wasm/elemkind
+                                       (elemkind' view)))
+                              (assoc :wasm.elem/resolve :idx
+                                     :wasm.elem/vec     (vec' funcidx'
+                                                              view)))))))
 
 
 
@@ -1436,18 +1419,6 @@
   [view]
 
   (byte' view))
-
-
-
-(defn elemkind'2
-
-  ""
-
-  [view]
-
-  (condp =
-         (elemkind' view)
-    wasm.bin/elemkind-funcref :func))
 
 
 ;;;;;;;;;; Modules / Code Section

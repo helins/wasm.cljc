@@ -1142,14 +1142,17 @@
                            (expr' ctx-write
                                   offset))
                         0)
-                      (if etype
+                      (if (hmap (case eresolve
+                                  :expr :wasm/reftype
+                                  :idx  :wasm/elemkind))
                         byte'
                         0)
                       (vec' (case eresolve
                               :expr (partial expr' 
                                              ctx-write)
-                              :idx  (comp funcidx'
-                                          flatidx-func))
+                              :idx  (fn [idx]
+                                      (funcidx' (-flatten-idx flatidx-func
+                                                              idx))))
                             evec)))))
 
 

@@ -21,7 +21,7 @@
 (declare code'
          dataidx'
          elemidx'
-         elemkind'2
+         elemkind'
          elemtype'
          end'
          export'
@@ -163,19 +163,6 @@
 
   (binf/wr-b8 view
               reftype))
-
-
-
-(defn reftype'2
-
-  ""
-
-  [view kw-reftype]
-
-  (reftype' view
-            (case kw-reftype
-              :extern wasm.bin/externref
-              :func   wasm.bin/funcref)))
 
 
 ;;;;;;;;;; Types / Value Types
@@ -1166,10 +1153,10 @@
           (section-id wasm.bin/section-id-elem)
           (u32' (ctx-write :wasm.count/elemsec))
           (u32' (count elemsec)))
-      (doseq [{:wasm/keys      [offset
+      (doseq [{:as             elem
+               :wasm/keys      [offset
                                 tableidx]
                :wasm.elem/keys [mode]
-               etype           :wasm.elem/type
                eresolve        :wasm.elem/resolve
                evec            :wasm.elem/vec}    (vals elemsec)]
         (let [idx? (= eresolve
@@ -1187,7 +1174,7 @@
                        (if idx?
                          0x03
                          0x07)
-                       (if idx
+                       (if idx?
                          0x01
                          0x05)))]
           (byte' view
@@ -1204,11 +1191,11 @@
                            0x00)
                      (not= flag
                            0x04))
-            ((if idx?
-               reftype'2
-               elemkind'2)
-             view
-             etype))
+            (if idx?
+              (elemkind' view
+                         (elem :wasm/elemkind))
+              (reftype' view
+                        (elem :wasm/reftype))))
           (vec' view
                 (if idx?
                   (fn [view funcidx]
@@ -1232,18 +1219,6 @@
 
   (binf/wr-b8 view
               elemkind))
-
-
-
-(defn elemkind'2
-
-  ""
-
-  [view kw-elemkind]
-
-  (elemkind' view
-             (case kw-elemkind
-               :func wasm.bin/elemkind-funcref)))
 
 
 ;;;;;;;;;; Modules / Code Section
