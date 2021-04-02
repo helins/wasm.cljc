@@ -383,6 +383,8 @@
                                            :wasm.opcode/misc
                                            [:= wasm.bin/data-drop]
                                            :wasm/dataidx]
+                :wasm/datacountsec        [:map
+                                           :wasm.data/n-seg]
                 :wasm/dataidx             :wasm/idx
                 :wasm/datasec             [:map-of
                                            :wasm/dataidx
@@ -391,8 +393,7 @@
                                            {:dispatch    :wasm.elem/mode}
                                            [:active      :wasm.elem/active]
                                            [:declarative :wasm.elem/declarative]
-                                           [:passive     :wasm.elem/passive]
-                                           ]
+                                           [:passive     :wasm.elem/passive]]
                 :wasm/elem.drop           [:tuple
                                            :wasm.opcode/misc
                                            [:= wasm.bin/elem-drop]
@@ -685,6 +686,7 @@
                                            :wasm/offset
                                            [:wasm.data/mode
                                             [:= :active]]]
+                :wasm.data/n-seg          :wasm/u32
                 :wasm.data/passive        [:map
                                            :wasm/buffer
                                            [:wasm.data/mode
@@ -770,7 +772,7 @@
 
 
 
-  (malli.gen/generate :wasm/data
+  (malli.gen/generate :wasm/datacountsec
                       {:registry (-> (merge (malli/default-schemas)
                                             (malli.util/schemas))
                                      registry)})

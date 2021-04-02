@@ -454,3 +454,19 @@
                 :wasm.count/datasec
                 wasm.write/datasec'
                 wasm.read/datasec'))
+
+
+;;;;;;;;;; Modules / Data Count Section
+
+
+(tc.ct/defspec datacountsec'
+
+  (test-section wasm.bin/section-id-table
+                (tc.gen/fmap #(assoc wasm/ctx
+                                     :wasm/datacountsec
+                                     %)
+                             (generator :wasm/datacountsec))
+                wasm.count/datacountsec'
+                :wasm.count/datacountsec
+                wasm.write/datacountsec'
+                wasm.read/datacountsec'))
