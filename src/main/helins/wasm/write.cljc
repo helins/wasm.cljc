@@ -1265,11 +1265,11 @@
 (defn func'
 
   [view flatidx {:wasm/keys [expr
-                             local+]}]
+                             locals]}]
 
   (-> view
-      (u32' (count local+))
-      (locals' local+)
+      (u32' (count locals))
+      (locals' locals)
       (expr' flatidx
              expr)))
 
@@ -1277,10 +1277,10 @@
 
 (defn locals'
 
-  [view local+]
+  [view locals]
 
   (doseq [[n
-           valtype] local+]
+           valtype] locals]
     (-> view
         (u32' n)
         (valtype' valtype)))

@@ -409,3 +409,30 @@
                 :wasm.count/elemsec
                 wasm.write/elemsec'
                 wasm.read/elemsec'))
+
+
+;;;;;;;;;; Modules / Code Section
+
+
+(tc.ct/defspec codesec'
+
+  (test-section wasm.bin/section-id-table
+                (tc.gen/fmap (fn [code+]
+                               (reduce (fn [ctx-2 code]
+                                         (update ctx-2
+                                                 :wasm/codesec
+                                                 (fn [codesec]
+                                                   (assoc codesec
+                                                          (count codesec)
+                                                          code))))
+                                       wasm/ctx
+                                       code+))
+                             (generator [:vector
+                                         :wasm/code]))
+                wasm.count/codesec'
+                :wasm.count/codesec
+                wasm.write/codesec'
+                (comp #(dissoc %
+                               :wasm/source)
+                      wasm.read/codesec'2
+                      wasm.read/codesec')))

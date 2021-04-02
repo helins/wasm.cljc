@@ -1201,10 +1201,10 @@
 (defn func'
 
   [flatidx {:wasm/keys [expr
-                        local+]}]
+                        locals]}]
 
-  (+ (u32' (count local+))
-     (locals' local+)
+  (+ (u32' (count locals))
+     (locals' locals)
      (expr' flatidx
             expr)))
 

@@ -355,6 +355,12 @@
                                            [:= wasm.bin/call_indirect]
                                            :wasm/typeidx
                                            :wasm/tableidx]
+                :wasm/code                [:map
+                                           :wasm/expr
+                                           :wasm/locals]
+                :wasm/codesec             [:map-of
+                                           :wasm/funcidx
+                                           :wasm/code]
                 :wasm/data.drop           [:tuple
                                            :wasm.opcode/misc
                                            [:= wasm.bin/data-drop]
@@ -493,6 +499,10 @@
                 :wasm/local.set           (instr-local wasm.bin/local-set)
                 :wasm/local.tee           (instr-local wasm.bin/local-tee)
                 :wasm/localidx            :wasm/idx
+                :wasm/locals              [:vector
+                                           [:tuple
+                                            :wasm/u32
+                                            :wasm/valtype]]
                 :wasm/loop                [:tuple
                                            [:= wasm.bin/loop-]
                                            :wasm/blocktype
@@ -740,7 +750,7 @@
 
 
 
-  (malli.gen/generate :wasm.elem/passive
+  (malli.gen/generate :wasm/code
                       {:registry (-> (merge (malli/default-schemas)
                                             (malli.util/schemas))
                                      registry)})

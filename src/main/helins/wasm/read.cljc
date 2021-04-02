@@ -1467,7 +1467,7 @@
   [hmap ctx view]
 
   (-> hmap
-      (assoc :wasm/local+ (locals' view)
+      (assoc :wasm/locals (locals' view)
              :wasm/expr   (expr' ctx
                                  view))
       (dissoc :wasm/code)))
