@@ -119,9 +119,12 @@
 
   ""
 
-  [section-id gen f-count k-count f-write f-read]
+  [section-id kv-schema prepare f-count k-count f-write f-read]
 
-  (tc.prop/for-all [ctx gen]
+  (tc.prop/for-all [ctx (generator [:map
+                                    {:gen/fmap (partial prepare
+                                                        wasm/ctx)}
+                                    kv-schema])]
     (let [ctx-2  (f-count (assoc ctx
                                  :wasm/write
                                  {}))
@@ -147,7 +150,7 @@
                                  0)
                  diff-B     (nth diff
                                  1)]
-             (when (not= diff-A
+             #_(when (not= diff-A
                          diff-B)
                (clojure.pprint/pprint [:ctx ctx :ctx-3 ctx-3 :diff diff]))
              (= [section-id
@@ -236,14 +239,28 @@
 ;;;;;;;;;; Modules / Type Section
 
 
+(def Typesec
+     [::typesec
+      [:vector
+       :wasm/type]])
+
+
+
+(defn prepare-typesec
+
+  [ctx {::keys [typesec]}]
+
+  (reduce wasm.ir/assoc-type
+          ctx
+          typesec))
+
+
+
 (tc.ct/defspec typesec'
 
   (test-section wasm.bin/section-id-type
-                (tc.gen/fmap (fn [type+]
-                               (reduce wasm.ir/assoc-type
-                                       wasm/ctx
-                                       type+))
-                             (tc.gen/vector (generator :wasm/type)))
+                Typesec
+                prepare-typesec
                 wasm.count/typesec'
                 :wasm.count/typesec
                 wasm.write/typesec'
@@ -253,36 +270,45 @@
 ;;;;;;;;;; Modules / Import Section
 
 
+(def Importsec
+     [::importsec
+      [:tuple
+       [:vector :wasm.import/func]
+       [:vector :wasm.import/global]
+       [:vector :wasm.import/mem]
+       [:vector :wasm.import/table]]])
+
+
+
+(defn prepare-importsec
+
+  [ctx {[func+
+         global+
+         mem+
+         table+] ::importsec}]
+
+  (as-> ctx
+        ctx-2
+    (reduce wasm.ir/import-func
+            ctx-2
+            func+)
+    (reduce wasm.ir/import-global
+            ctx-2
+            global+)
+    (reduce wasm.ir/import-mem
+            ctx-2
+            mem+)
+    (reduce wasm.ir/import-table
+            ctx-2
+            table+)))
+
+
+
 (tc.ct/defspec importsec'
 
   (test-section wasm.bin/section-id-import
-                (tc.gen/fmap (fn [[func+
-                                   global+
-                                   mem+
-                                   table+]]
-                               (as-> wasm/ctx
-                                     ctx  
-                                 (reduce wasm.ir/import-func
-                                         ctx
-                                         func+)
-                                 (reduce wasm.ir/import-global
-                                         ctx
-                                         global+)
-                                 (reduce wasm.ir/import-mem
-                                         ctx
-                                         mem+)
-                                 (reduce wasm.ir/import-table
-                                         ctx
-                                         table+)))
-                             (tc.gen/tuple
-                               (tc.gen/vector (malli.gen/generator :wasm.import/func
-                                                                   {:registry registry}))
-                               (tc.gen/vector (malli.gen/generator :wasm.import/global
-                                                                   {:registry registry}))
-                               (tc.gen/vector (malli.gen/generator :wasm.import/mem
-                                                                   {:registry registry}))
-                               (tc.gen/vector (malli.gen/generator :wasm.import/table
-                                                                   {:registry registry}))))
+                Importsec
+                prepare-importsec
                 wasm.count/importsec'
                 :wasm.count/importsec
                 wasm.write/importsec'
@@ -292,14 +318,27 @@
 ;;;;;;;;;; Modules / Function Section
 
 
+(def Funcsec
+     [::funcsec
+      [:vector
+       :wasm/func]])
+
+
+
+(defn prepare-funcsec
+
+  [ctx {::keys [funcsec]}]
+
+  (reduce wasm.ir/assoc-func
+          ctx
+          funcsec))
+
+
 (tc.ct/defspec funcsec'
 
   (test-section wasm.bin/section-id-func
-                (tc.gen/fmap (fn [type+]
-                               (reduce wasm.ir/assoc-func
-                                       wasm/ctx
-                                       type+))
-                             (tc.gen/vector (generator :wasm/func)))
+                Funcsec
+                prepare-funcsec
                 wasm.count/funcsec'
                 :wasm.count/funcsec
                 wasm.write/funcsec'
@@ -309,14 +348,28 @@
 ;;;;;;;;;; Modules / Table Section
 
 
+(def Tablesec
+     [::tablesec
+      [:vector
+       :wasm/table]])
+
+
+
+(defn prepare-tablesec
+
+  [ctx {::keys [tablesec]}]
+
+  (reduce wasm.ir/assoc-table
+          ctx
+          tablesec))
+
+
+
 (tc.ct/defspec tablesec'
 
   (test-section wasm.bin/section-id-table
-                (tc.gen/fmap (fn [table+]
-                               (reduce wasm.ir/assoc-table
-                                       wasm/ctx
-                                       table+))
-                             (tc.gen/vector (generator :wasm/table)))
+                Tablesec
+                prepare-tablesec
                 wasm.count/tablesec'
                 :wasm.count/tablesec
                 wasm.write/tablesec'
@@ -326,14 +379,28 @@
 ;;;;;;;;;; Modules / Memory Section
 
 
+(def Memsec
+     [::memsec
+      [:vector
+       :wasm/mem]])
+
+
+
+(defn prepare-memsec
+
+  [ctx {::keys [memsec]}]
+
+  (reduce wasm.ir/assoc-mem
+          ctx
+          memsec))
+
+
+
 (tc.ct/defspec memsec'
 
   (test-section wasm.bin/section-id-table
-                (tc.gen/fmap (fn [mem+]
-                               (reduce wasm.ir/assoc-mem
-                                       wasm/ctx
-                                       mem+))
-                             (tc.gen/vector (generator :wasm/mem)))
+                Memsec
+                prepare-memsec
                 wasm.count/memsec'
                 :wasm.count/memsec
                 wasm.write/memsec'
@@ -343,14 +410,28 @@
 ;;;;;;;;;; Modules / Global Section
 
 
+(def Globalsec
+     [::globalsec
+      [:vector
+       :wasm/global]])
+
+
+
+(defn prepare-globalsec
+
+  [ctx {::keys [globalsec]}]
+
+  (reduce wasm.ir/assoc-global
+          ctx
+          globalsec))
+
+
+
 (tc.ct/defspec globalsec'
 
   (test-section wasm.bin/section-id-table
-                (tc.gen/fmap (fn [global+]
-                               (reduce wasm.ir/assoc-global
-                                       wasm/ctx
-                                       global+))
-                             (tc.gen/vector (generator :wasm/global)))
+                Globalsec
+                prepare-globalsec
                 wasm.count/globalsec'
                 :wasm.count/globalsec
                 wasm.write/globalsec'
@@ -360,16 +441,29 @@
 ;;;;;;;;;; Modules / Export Section
 
 
+(def Exportsec
+     [::exportsec
+      :wasm/exportsec])
+
+
+
+(defn prepare-exportsec
+
+  [ctx {::keys [exportsec]}]
+
+  (update ctx
+          :wasm/exportsec
+          merge
+          (into (sorted-map)
+                exportsec)))
+
+
+
 (tc.ct/defspec exportsec'
 
   (test-section wasm.bin/section-id-table
-                (tc.gen/fmap (fn [exportsec]
-                               (update wasm/ctx
-                                      :wasm/exportsec
-                                      merge
-                                      (into (sorted-map)
-                                            exportsec)))
-                             (generator :wasm/exportsec))
+                Exportsec
+                prepare-exportsec
                 wasm.count/exportsec'
                 :wasm.count/exportsec
                 wasm.write/exportsec'
@@ -379,14 +473,27 @@
 ;;;;;;;;;; Modules / Start Section
 
 
+(def Startsec
+     [::startsec
+      :wasm/startsec])
+
+
+
+(defn prepare-startsec
+
+  [ctx {::keys [startsec]}]
+
+  (assoc ctx
+         :wasm/startsec
+         startsec))
+
+
+
 (tc.ct/defspec startsec'
 
   (test-section wasm.bin/section-id-table
-                (tc.gen/fmap (fn [startsec]
-                               (assoc wasm/ctx
-                                      :wasm/startsec
-                                      startsec))
-                             (generator :wasm/startsec))
+                Startsec
+                prepare-startsec
                 wasm.count/startsec'
                 :wasm.count/startsec
                 wasm.write/startsec'
@@ -396,15 +503,28 @@
 ;;;;;;;;;; Modules / Element Section
 
 
+(def Elemsec
+     [::elemsec
+      [:vector
+       :wasm/elem]])
+
+
+
+(defn prepare-elemsec
+
+  [ctx {::keys [elemsec]}]
+
+  (reduce wasm.ir/assoc-elem
+          ctx
+          elemsec))
+
+
+
 (tc.ct/defspec elemsec'
 
   (test-section wasm.bin/section-id-table
-                (tc.gen/fmap (fn [elem+]
-                               (reduce wasm.ir/assoc-elem
-                                       wasm/ctx
-                                       elem+))
-                             (generator [:vector
-                                         :wasm/elem]))
+                Elemsec
+                prepare-elemsec
                 wasm.count/elemsec'
                 :wasm.count/elemsec
                 wasm.write/elemsec'
@@ -414,21 +534,34 @@
 ;;;;;;;;;; Modules / Code Section
 
 
+(def Codesec
+     [::codesec
+      [:vector
+       :wasm/code]])
+
+
+
+(defn prepare-codesec
+
+  [ctx {::keys [codesec]}]
+
+  (reduce (fn [ctx-2 code]
+            (update ctx-2
+                    :wasm/codesec
+                    (fn [codesec]
+                      (assoc codesec
+                             (count codesec)
+                             code))))
+          ctx
+          codesec))
+
+
+
 (tc.ct/defspec codesec'
 
   (test-section wasm.bin/section-id-table
-                (tc.gen/fmap (fn [code+]
-                               (reduce (fn [ctx-2 code]
-                                         (update ctx-2
-                                                 :wasm/codesec
-                                                 (fn [codesec]
-                                                   (assoc codesec
-                                                          (count codesec)
-                                                          code))))
-                                       wasm/ctx
-                                       code+))
-                             (generator [:vector
-                                         :wasm/code]))
+                Codesec
+                prepare-codesec
                 wasm.count/codesec'
                 :wasm.count/codesec
                 wasm.write/codesec'
@@ -441,15 +574,28 @@
 ;;;;;;;;;; Modules / Data Section
 
 
+(def Datasec
+     [::datasec
+      [:vector
+       :wasm/data]])
+
+
+
+(defn prepare-datasec
+
+  [ctx {::keys [datasec]}]
+
+  (reduce wasm.ir/assoc-data
+          ctx
+          datasec))
+
+
+
 (tc.ct/defspec datasec'
 
   (test-section wasm.bin/section-id-table
-                (tc.gen/fmap (fn [data+]
-                               (reduce wasm.ir/assoc-data
-                                       wasm/ctx
-                                       data+))
-                             (generator [:vector
-                                         :wasm/data]))
+                Datasec
+                prepare-datasec
                 wasm.count/datasec'
                 :wasm.count/datasec
                 wasm.write/datasec'
@@ -459,13 +605,27 @@
 ;;;;;;;;;; Modules / Data Count Section
 
 
+(def Datacountsec
+     [::datacountsec
+      :wasm/datacountsec])
+
+
+
+(defn prepare-datacountsec
+
+  [ctx {::keys [datacountsec]}]
+
+  (assoc ctx
+         :wasm/datacountsec
+         datacountsec))
+
+
+
 (tc.ct/defspec datacountsec'
 
   (test-section wasm.bin/section-id-table
-                (tc.gen/fmap #(assoc wasm/ctx
-                                     :wasm/datacountsec
-                                     %)
-                             (generator :wasm/datacountsec))
+                Datacountsec
+                prepare-datacountsec
                 wasm.count/datacountsec'
                 :wasm.count/datacountsec
                 wasm.write/datacountsec'
