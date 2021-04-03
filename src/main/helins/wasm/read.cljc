@@ -5,7 +5,22 @@
 
 (ns helins.wasm.read
 
-  ""
+  "Reading data from a WASM module represented as a BinF view.
+
+   Unless one wants to design a custom module parsing environment, ultimately, one should use the `decompile` function
+   from the `helins.wasm` namespace which does all the job for decompiling a whole WASM module.
+
+   This namespace mimicks the exact order of the [WASM binary specification](https://webassembly.github.io/spec/core/binary/index.html)
+   so that both can be read together.
+
+   Names of so called \"nonterminal\" symbols from the binary specification end with the ' character and are
+   not documented here as they are easily found in the specification and there is no better way for understanding
+   what such a symbol represents than reading about it in the context of that specification.
+
+   Names which do not end with the ' character are various helpers and abstractions not found in the specification. Hence,
+   they are documented here.
+
+   See README."
 
   {:author "Adam Helinski"}
 
@@ -57,7 +72,7 @@
 
 (defn- -err
 
-  ;;
+  ;; Used for throwing when something from the BinF view is not understood.
 
 
   ([string view]
@@ -82,7 +97,6 @@
 
 (defn vec'
 
-  ""
 
 
   ([f view]
@@ -112,8 +126,6 @@
 
 (defn byte'
 
-  ""
-
   [view]
 
   (binf/rr-u8 view))
@@ -124,8 +136,6 @@
 
 (defn i32'
 
-  ""
-
   [view]
 
   (s32' view))
@@ -133,8 +143,6 @@
 
 
 (defn i64'
-
-  ""
 
   [view]
 
@@ -144,8 +152,6 @@
 
 (defn s32'
 
-  ""
-
   [view]
 
   (binf.leb128/rr-i32 view))
@@ -153,8 +159,6 @@
 
 
 (defn s33'
-
-  ""
 
   [view]
 
@@ -165,8 +169,6 @@
 
 (defn s64'
 
-  ""
-
   [view]
 
   (binf.leb128/rr-i64 view))
@@ -175,8 +177,6 @@
 
 (defn u32'
 
-  ""
-
   [view]
 
   (binf.leb128/rr-u32 view))
@@ -184,8 +184,6 @@
 
 
 (defn u64'
-
-  ""
 
   [view]
 
@@ -197,8 +195,6 @@
 
 (defn f32'
 
-  ""
-
   [view]
 
   (binf/rr-f32 view))
@@ -206,8 +202,6 @@
 
 
 (defn f64'
-
-  ""
 
   [view]
 
@@ -218,8 +212,6 @@
 
 
 (defn name'
-
-  ""
 
   [view]
 
@@ -232,8 +224,6 @@
 
 (defn reftype'
 
-  ""
-
   [view]
 
   (byte' view))
@@ -243,8 +233,6 @@
 
 
 (defn valtype'
-
-  ""
 
   [view]
 
@@ -256,8 +244,6 @@
 
 (defn resulttype'
 
-  ""
-
   [view]
 
   (not-empty (vec' valtype'
@@ -268,8 +254,6 @@
 
 
 (defn funcref'
-
-  ""
 
   [view]
 
@@ -286,8 +270,6 @@
 
 (defn functype'
 
-  ""
-
   [view]
 
   (funcref' view)
@@ -299,8 +281,6 @@
 
 
 (defn limits'
-
-  ""
 
   [hmap view]
 
@@ -323,8 +303,6 @@
 
 (defn memtype'
 
-  ""
-
   [hmap view]
 
   (limits' hmap
@@ -335,8 +313,6 @@
 
 
 (defn tabletype'
-
-  ""
 
   [hmap view]
 
@@ -351,8 +327,6 @@
 
 (defn globaltype'
 
-  ""
-
   [hmap view]
 
   (wasm.ir/globaltype' hmap
@@ -363,8 +337,6 @@
 
 (defn mut'
    
-  ""
-
   [view]
 
   (let [flag (byte' view)]
@@ -538,7 +510,7 @@
 
 (defn op-var-local
 
-  ""
+  "Used for local variable instructions."
 
   [opvec _ctx view]
 
@@ -549,7 +521,7 @@
 
 (defn op-var-global
 
-  ""
+  "Used for global variable instructions."
 
   [opvec _ctx view]
 
@@ -573,8 +545,6 @@
 
 (defn table-init'
 
-  ""
-
   [opvec _ctx view]
 
   (conj opvec
@@ -585,8 +555,6 @@
 
 (defn elem-drop'
 
-  ""
-
   [opvec _ctx view]
 
   (conj opvec
@@ -595,8 +563,6 @@
 
 
 (defn table-copy'
-
-  ""
 
   [opvec _ctx view]
 
@@ -610,8 +576,6 @@
 
 (defn memarg'
 
-  ""
-
   [vect view]
 
   (conj vect
@@ -622,7 +586,7 @@
 
 (defn op-memarg
 
-  ""
+  "Used for memory instructions that have a [[memarg']]."
 
   [opvec _ctx view]
 
@@ -633,7 +597,7 @@
 
 (defn op-memory
 
-  ""
+  "Used for memory instructions that have a [[memidx']] as only immediate."
 
   [opvec _ctx view]
 
@@ -643,8 +607,6 @@
 
 
 (defn memory-init'
-
-  ""
 
   [opvec _ctx view]
 
@@ -656,8 +618,6 @@
 
 (defn data-drop'
 
-  ""
-
   [opvec _ctx view]
 
   (conj opvec
@@ -666,8 +626,6 @@
 
 
 (defn memory-copy'
-
-  ""
 
   [opvec _ctx view]
 
@@ -678,8 +636,6 @@
 
 
 (defn memory-fill'
-
-  ""
 
   [opvec _ctx view]
 
@@ -692,7 +648,7 @@
 
 (defn op-constval
 
-  ""
+  "Used for numerical operations declaring a constant value."
 
 
   ([const]
@@ -712,7 +668,10 @@
 
 (def op-main->f
 
-  ""
+  "Map of **opcode** -> **reading function** for opcodes which:
+  
+   - Have any kind of immediate(s)
+   - Is not 0xFC (the \"misc\" opcode that leads to a second-level opcode"
 
   {wasm.bin/block         block'
    wasm.bin/loop-         loop'
@@ -766,7 +725,7 @@
 
 (def op-misc->f
 
-  ""
+  "Map of **immediate to \"misc\" opcode (0xFC)** -> **reading function**."
 
   {wasm.bin/memory-init memory-init'
    wasm.bin/data-drop   data-drop'
@@ -783,7 +742,6 @@
 
 (defn instr'
 
-  ""
 
 
   ([ctx view]
@@ -830,7 +788,7 @@
 
 (defn instr'+
 
-  ""
+  "Behaves same as [[expr']]."
 
   [ctx view]
 
@@ -841,7 +799,7 @@
 
 (defn expr'
 
-  ""
+  "For a vector of [[instr']]."
 
   [ctx view]
 
@@ -861,7 +819,8 @@
 
 (defn idx
 
-  ""
+  "For the time being at least, all WASM indices are represented as [[u32']] and hence,
+   are read by this function."
 
   [view]
 
@@ -870,82 +829,53 @@
 
 
 (def typeidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def funcidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def tableidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def memidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def globalidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def elemidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def dataidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def localidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def labelidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 ;;;;;;;;;; Modules / Sections
 
 
 (defn section-id'
-
-  ""
 
   [view]
 
@@ -954,8 +884,6 @@
 
 
 (defn section'
-
-  ""
 
   [view]
 
@@ -980,7 +908,10 @@
 
 (defn func
 
-  ""
+  "For functions found in the funcsec and in imports.
+  
+   WASM specification does not have a special name for it since binary-wise
+   it is simply a type index."
 
   [hmap view]
 
@@ -993,8 +924,6 @@
 
 (defn customsec'
 
-  ""
-
   [ctx view]
 
   (custom' ctx
@@ -1003,8 +932,6 @@
 
 
 (defn custom'
-
-  ""
 
   [ctx view]
 
@@ -1023,8 +950,6 @@
 
 (defn typesec'
 
-  ""
-
   [ctx view]
 
   (vec' ctx
@@ -1040,8 +965,6 @@
 
 (defn importsec'
 
-  ""
-
   [ctx view]
 
   (vec' ctx
@@ -1051,8 +974,6 @@
 
 
 (defn import'
-
-  ""
 
   [ctx view]
 
@@ -1066,7 +987,7 @@
 
 (defn importdesc-func
 
-  ""
+  "Helper for reading an imported function."
 
   [ctx view hmap]
 
@@ -1078,7 +999,7 @@
 
 (defn importdesc-table
 
-  ""
+  "Helper for reading an imported table."
 
   [ctx view hmap]
 
@@ -1090,7 +1011,7 @@
 
 (defn importdesc-mem
 
-  ""
+  "Helper for reading an imported mem."
 
   [ctx view hmap]
 
@@ -1102,7 +1023,7 @@
 
 (defn importdesc-global
 
-  ""
+  "Helper for reading an imported global."
 
   [ctx view hmap]
 
@@ -1113,8 +1034,6 @@
 
 
 (defn importdesc'
-
-  ""
 
   [ctx view hmap]
 
@@ -1140,8 +1059,6 @@
 
 (defn funcsec'
 
-  ""
-
   [ctx view]
 
   (vec' ctx
@@ -1157,8 +1074,6 @@
 
 (defn tablesec'
 
-  ""
-
   [ctx view]
 
   (vec' ctx
@@ -1168,8 +1083,6 @@
 
 
 (defn table'
-
-  ""
 
   [ctx view]
 
@@ -1183,8 +1096,6 @@
 
 (defn memsec'
 
-  ""
-
   [ctx view]
 
   (vec' ctx
@@ -1194,8 +1105,6 @@
 
 
 (defn mem'
-
-  ""
 
   [ctx view]
 
@@ -1209,8 +1118,6 @@
 
 (defn globalsec'
 
-  ""
-
   [ctx view]
 
   (vec' ctx
@@ -1220,8 +1127,6 @@
 
 
 (defn global'
-
-  ""
 
   [ctx view]
 
@@ -1238,8 +1143,6 @@
 
 (defn exportsec'
 
-  ""
-
   [ctx view]
 
   (vec' ctx
@@ -1250,8 +1153,6 @@
 
 (defn export'
 
-  ""
-
   [ctx view]
 
   (exportdesc' ctx
@@ -1261,8 +1162,6 @@
 
 
 (defn exportdesc-any
-
-  ""
 
   [ctx hmap k-space idx]
 
@@ -1278,7 +1177,7 @@
 
 (defn exportdesc-func
 
-  ""
+  "Helper for reading an exported func."
 
   [ctx view hmap]
 
@@ -1291,7 +1190,7 @@
 
 (defn exportdesc-table
 
-  ""
+  "Helper for reading an exported table."
 
   [ctx view hmap]
 
@@ -1304,7 +1203,7 @@
 
 (defn exportdesc-mem
 
-  ""
+  "Helper for reading an exported mem."
 
   [ctx view hmap]
 
@@ -1317,7 +1216,7 @@
 
 (defn exportdesc-global
 
-  ""
+  "Helper for reading an exported global."
 
   [ctx view hmap]
 
@@ -1329,8 +1228,6 @@
 
 
 (defn exportdesc'
-
-  ""
 
   [ctx view hmap]
 
@@ -1355,8 +1252,6 @@
 
 (defn startsec'
 
-  ""
-
   [ctx view]
 
   (wasm.ir/startsec' ctx
@@ -1366,8 +1261,6 @@
 
 
 (defn start'
-
-  ""
 
   [hmap view]
 
@@ -1380,8 +1273,6 @@
 
 (defn elemsec'
 
-  ""
-
   [ctx view]
 
   (vec' ctx
@@ -1391,12 +1282,6 @@
 
 
 (defn elem'
-
-  ""
-
-  ;; Spec says that the initial byte can be interpreted as a bitfield.
-  ;; In practise, this is cumbersome and causing a couple of problems.
-  ;; Given a bit of repetition, it is best to be explicit.
 
   [ctx view]
 
@@ -1449,8 +1334,6 @@
 
 (defn elemkind'
 
-  ""
-
   [view]
 
   (byte' view))
@@ -1461,7 +1344,12 @@
 
 (defn codesec'
 
-  ""
+  "This function only finds functions and split them into individual BinF views.
+
+   This allows for implementing, if needed one day, multithreaded reading on a function-per-function
+   basis.
+  
+   For full decompilation, [[codesec'2]] is used later."
 
   [ctx view]
 
@@ -1479,8 +1367,6 @@
 
 (defn code'
 
-  ""
-
   [hmap view]
 
   (let [n-byte (u32' view)
@@ -1497,8 +1383,6 @@
 
 (defn func'
 
-  ""
-
   [hmap ctx view]
 
   (-> hmap
@@ -1511,29 +1395,19 @@
 
 (defn locals'
 
-  ""
-
   [view]
 
   (vec' (fn [view]
           [(u32' view)
            (valtype' view)])
-        view)
-
-  ;; Decompressed
-  ;;
-  #_(into []
-          (mapcat identity)
-          (vec' (fn [view]
-                  (repeat (u32' view)
-                          (valtype' view)))
-                view)))
+        view))
 
 
 
 (defn codesec'2
 
-  ""
+  "After applying [[codesec']], this function takes those function BinF views
+   and actually reads them"
 
   [ctx]
 
@@ -1560,8 +1434,6 @@
 
 (defn datasec'
 
-  ""
-
   [ctx view]
 
   (vec' ctx
@@ -1571,8 +1443,6 @@
 
 
 (defn data'
-
-  ""
 
   [ctx view]
 
@@ -1609,8 +1479,6 @@
 
 (defn datacountsec'
 
-  ""
-
   [ctx view]
 
   (wasm.ir/datacountsec' ctx
@@ -1622,9 +1490,8 @@
 
 (defn magic'
 
-  ""
-
-  ;; Checking for "\0asm" BOM (reversed u32 because view is little-endian).
+  ;; Checking for "\0asm" BOM (reversed u32 because BinF view is little-endian as requested by
+  ;; the WASM specification).
 
   [view]
 
@@ -1638,8 +1505,6 @@
 
 (defn version'
 
-  ""
-
   [view]
 
   (binf/rr-u32 view))
@@ -1648,7 +1513,7 @@
 
 (defn section'+
 
-  ""
+  "After applying [[module']], actually reads those sections as BinF views."
 
   [ctx]
 
@@ -1687,7 +1552,9 @@
 
 (defn module'
 
-  ""
+  "Finds sections and split them into BinF views.
+  
+   Then, see [[section'+]]."
 
   [ctx view]
 
