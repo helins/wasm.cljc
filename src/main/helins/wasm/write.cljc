@@ -741,7 +741,7 @@
                                opcode-2)
             (throw (ex-info (str "Unknown immediate to miscellaneous opcode: "
                                  opcode-2)
-                            {})))))
+                            {:wasm/opvec opvec})))))
       (if-some [f (op-main->f opcode)]
         (f view
            flatidx
@@ -750,7 +750,7 @@
                              opcode)
           (throw (ex-info (str "Unknown opcode: "
                                opcode)
-                          {}))))))
+                          {:wasm/opvec opvec}))))))
   view)
 
 

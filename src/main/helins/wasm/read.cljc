@@ -13,6 +13,7 @@
             [helins.binf.int64  :as binf.int64]
             [helins.binf.leb128 :as binf.leb128]
             [helins.wasm.bin    :as wasm.bin]
+            [helins.wasm.count  :as wasm.count]
             [helins.wasm.ir     :as wasm.ir]))
 
 
@@ -49,6 +50,31 @@
          tableidx'
          typeidx'
          u32')
+
+
+;;;;;;;;;; Private helpers
+
+
+(defn- -err
+
+  ;;
+
+
+  ([string view]
+
+   (-err string
+         view
+         nil))
+
+
+  ([string view offset]
+
+   (throw (ex-info string
+                   (cond->
+                     {:wasm/view view}
+                     offset
+                     (assoc :wasm.err/offset
+                            offset))))))
 
 
 ;;;;;;;;;; Conventions
@@ -250,9 +276,10 @@
   (let [b8-1 (byte' view)]
     (when (not= b8-1
                 wasm.bin/functype)
-      (throw (ex-info (str "Function type should start with 0x60, not: "
-                           b8-1)
-                      {}))))
+      (-err (str "Function type should start with 0x60, not: "
+                 b8-1)
+            view
+            wasm.count/byte')))
   nil)
 
 
@@ -285,9 +312,10 @@
       wasm.bin/limits-minmax (wasm.ir/limits' hmap
                                               (u32' view)
                                               (u32' view))
-      (throw (ex-info (str "Unknown limit type: "
-                           flag)
-                      {})))))
+      (-err (str "Unknown limit type: "
+                 flag)
+            view
+            wasm.count/byte'))))
 
 
 ;;;;;;;;;; Types / Memory Types
@@ -344,9 +372,10 @@
            flag
       wasm.bin/mut-const false
       wasm.bin/mut-var   true
-      (throw (ex-info (str "Unknown mutability flag for global: "
-                           flag)
-                      {})))))
+      (-err (str "Unknown mutability flag for global: "
+                 flag)
+            view
+            wasm.count/byte'))))
 
 
 ;;;;;;;;;; Instructions / Control Instructions
@@ -779,9 +808,10 @@
            (do
              (when-not (contains? wasm.bin/opcode-misc->opsym
                                   opcode-2)
-               (throw (ex-info (str "Secondary opcode for miscellaneous opcode is not a recognized instruction: "
-                                    opcode-2)
-                               {})))
+               (-err (str "Secondary opcode for miscellaneous opcode is not a recognized instruction: "
+                          opcode-2)
+                     view
+                     (wasm.count/u32' opcode-2)))
              opvec-2)))
        (if-some [f (op-main->f opcode)]
          (f opvec
@@ -790,9 +820,10 @@
          (do
            (when-not (contains? wasm.bin/opcode-main->opsym
                                 opcode)
-             (throw (ex-info (str "This opcode is not a recognized instruction: "
-                                  opcode)
-                             {})))
+             (-err (str "This opcode is not a recognized instruction: "
+                        opcode)
+                   view
+                   wasm.count/byte'))
            opvec))))))
 
 
@@ -930,9 +961,10 @@
 
   (let [id (section-id' view)]
     (when-not (wasm.bin/section-id? id)
-      (throw (ex-info (str "Unknown section ID: "
-                           id)
-                      {})))
+      (-err (str "Unknown section ID: "
+                 id)
+            view
+            wasm.count/section-id))
     (let [n-byte (u32' view)
           start  (binf/position view)]
       (binf/skip view
@@ -1093,9 +1125,10 @@
                wasm.bin/importdesc-table  importdesc-table
                wasm.bin/importdesc-mem    importdesc-mem
                wasm.bin/importdesc-global importdesc-global
-               (throw (ex-info (str "Unknown type in import description: "
-                                    type)
-                               {})))]
+               (-err (str "Unknown type in import description: "
+                          type)
+                     view
+                     wasm.count/byte'))]
 
     (f ctx
        view
@@ -1308,9 +1341,10 @@
                       wasm.bin/exportdesc-table  exportdesc-table
                       wasm.bin/exportdesc-mem    exportdesc-mem
                       wasm.bin/exportdesc-global exportdesc-global
-                      (throw (ex-info (str "Unknown type in export description: "
-                                           type)
-                                      {})))]
+                      (-err (str "Unknown type in export description: "
+                                 type)
+                            view
+                            wasm.count/byte'))]
     (f ctx
        view
        hmap)))
@@ -1371,9 +1405,10 @@
                             _    (when-not (<= 0x00
                                                flag
                                                0x07)
-                                   (throw (ex-info (str "Element segment flag is not in [0;7]: "
-                                                        flag)
-                                                   {})))
+                                   (-err (str "Element segment flag is not in [0;7]: "
+                                              flag)
+                                         view
+                                         wasm.count/byte'))
                             hmap (if (even? flag)
                                    (-> (if (or (= flag
                                                   0x02)
@@ -1550,9 +1585,10 @@
                   (when-not (<= 0x00
                                 flag
                                 0x02)
-                    (throw (ex-info (str "Data segment flat is not in [0;2]: "
-                                         flag)
-                                    {})))
+                    (-err (str "Data segment flat is not in [0;2]: "
+                               flag)
+                          view
+                          wasm.count/byte'))
                   (->  (if (= flag
                               0x01)
                          {:wasm.data/mode :passive}
@@ -1594,8 +1630,9 @@
 
   (when (not= (binf/rr-u32 view)
               wasm.bin/magic)
-    (throw (ex-info "WASM file does not start with magic word"
-                    {}))))
+    (-err "WASM file does not start with magic word"
+          view
+          4)))
 
 
 

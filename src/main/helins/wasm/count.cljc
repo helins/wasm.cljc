@@ -654,7 +654,7 @@
                                  opcode-2)
               (throw (ex-info (str "Unknown immediate to miscellaneous opcode: "
                                  opcode-2)
-                            {})))
+                            {:wasm/opvec opvec})))
             (+ opcode'
                (u32' opcode-2)))))
       (if-some [f (op-main->f opcode)]
@@ -667,7 +667,7 @@
             (throw (ex-info (str "Unknown opcode: "
                                  opvec
                                  opcode)
-                            {})))
+                            {:wasm/opvec opvec})))
           opcode')))))
 
 
