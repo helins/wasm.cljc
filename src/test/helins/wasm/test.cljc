@@ -53,6 +53,11 @@
 
 
 
+(def ctx-empty
+     (wasm/ctx))
+
+
+
 (def registry
      (-> (merge (malli/default-schemas)
                 (malli.util/schemas))
@@ -92,7 +97,7 @@
                                        {}
                                        opvec))
                   (fn read [view]
-                    (wasm.read/instr' wasm/ctx
+                    (wasm.read/instr' ctx-empty
                                       view))
                   value))
 
@@ -132,7 +137,7 @@
 
   (tc.prop/for-all [ctx (generator [:map
                                     {:gen/fmap (partial prepare
-                                                        wasm/ctx)}
+                                                        ctx-empty)}
                                     kv-schema])]
     (let [ctx-2  (f-count (assoc ctx
                                  :wasm/write
@@ -151,7 +156,7 @@
                       0)
            (let [section-id (wasm.read/section-id' view)
                  n-byte-2   (wasm.read/u32' view)
-                 ctx-3      (f-read wasm/ctx
+                 ctx-3      (f-read ctx-empty
                                     view)
                  diff       (clojure.data/diff ctx
                                                ctx-3)
@@ -241,7 +246,7 @@
                                     {}
                                     opvec))
                (fn read [view]
-                 (wasm.read/instr' wasm/ctx
+                 (wasm.read/instr' ctx-empty
                                    view))))
 
 
@@ -650,7 +655,7 @@
 (tc.ct/defspec module'
 
   (tc.prop/for-all [ctx (generator [:map
-                                    {:gen/fmap #(-> (assoc wasm/ctx
+                                    {:gen/fmap #(-> (assoc ctx-empty
                                                            :wasm/version
                                                            1)
                                                     (prepare-typesec %)

@@ -14,10 +14,7 @@
             #?(:cljs [helins.binf.gen	   :as binf.gen])
             [helins.binf.string            :as binf.string]
             [helins.wasm.bin               :as wasm.bin]
-            [malli.core                    :as malli]
-            [malli.error]
-            [malli.generator               :as malli.gen]
-            [malli.util]))
+            [malli.generator               :as malli.gen]))
 
 
 ;;;;;;;;;; Registry
@@ -573,30 +570,28 @@
                 :wasm/module              [:map
                                            [:wasm/version
                                             {:optional true}]
-                                           [:wasm/typesec
-                                            {:optional true}]
-                                           [:wasm/importsec
-                                            {:optional true}]
-                                           [:wasm/funcsec
-                                            {:optional true}]
-                                           [:wasm/tablesec
-                                            {:optional true}]
-                                           [:wasm/memsec
-                                            {:optional true}]
-                                           [:wasm/globalsec
-                                            {:optional true}]
-                                           [:wasm/exportsec
-                                            {:optional true}]
+                                           :wasm/typesec
+                                           :wasm/typeidx
+                                           :wasm/importsec
+                                           :wasm/funcsec
+                                           :wasm/funcidx
+                                           :wasm/tablesec
+                                           :wasm/tableidx
+                                           :wasm/memsec
+                                           :wasm/memidx
+                                           :wasm/globalsec
+                                           :wasm/globalidx
+                                           :wasm/exportsec
                                            [:wasm/startsec
                                             {:optional true}]
-                                           [:wasm/elemsec
-                                            {:optional true}]
+                                           :wasm/elemsec
+                                           :wasm/elemidx
                                            [:wasm/datacountsec
                                             {:optional true}]
                                            [:wasm/codesec
                                             {:optional true}]
-                                           [:wasm/datasec
-                                            {:optional true}]]
+                                           :wasm/datasec
+                                           :wasm/dataidx]
                 :wasm/mutable?            :boolean
                 :wasm/name                :wasm/buffer
                 :wasm/numtype             [:enum
@@ -776,43 +771,3 @@
                 :wasm.opcode/misc         [:= wasm.bin/misc])
          ]
   registry-3)))
-
-
-
-
-
-(comment
-
-
-  (def reg
-       (-> (merge (malli/default-schemas)
-                  (malli.util/schemas))
-           registry))
-
-
-  (-> (malli/explain [:merge
-                      [:map [:a :int]]
-                      [:or [:map [:b :string]]]]
-                     {:a 42 :b "ok"}
-                     {:registry (-> (merge (malli/default-schemas)
-                                           (malli.util/schemas))
-                                    registry)})
-      malli.error/humanize)
-
-
-
-  (malli.gen/generate :wasm.data/active
-                      {:registry (-> (merge (malli/default-schemas)
-                                            (malli.util/schemas))
-                                     registry)})
-
-
-
-  (malli.gen/generator [:and
-                        {:registry registry}
-                        :wasm/name])
-
-
-
-
-  )

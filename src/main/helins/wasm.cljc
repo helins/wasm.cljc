@@ -26,9 +26,11 @@
 ;;;;;;;;;;
 
 
-(def ctx
+(defn ctx
 
   ""
+
+  []
 
   {:wasm/codesec   (sorted-map)
    :wasm/dataidx   0
@@ -147,7 +149,7 @@
 
   ([view]
 
-   (decompile ctx
+   (decompile (ctx)
               view))
 
 
@@ -168,7 +170,7 @@
 
   ([path]
 
-   (decompile-file ctx
+   (decompile-file (ctx)
                    path))
 
 

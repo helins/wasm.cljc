@@ -36,15 +36,40 @@
             [malli.util]))
 
 
-;;;;;;;;;;
+;;;;;;;;;; Compilation / Decompilation
 
 
 (comment
+
 
   (def registry
        (-> (merge (malli/default-schemas)
                   (malli.util/schemas))
            wasm.schema/registry))
+
+
+
+  (malli.gen/generate :wasm/module
+                      {:registry (-> (merge (malli/default-schemas)
+                                            (malli.util/schemas))
+                                     registry)})
+
+
+
+  (-> (wasm/decompile-file "src/wasm/test.wasm")
+      ;(wasm/compile-file "/tmp/test.wasm")
+      ;(wasm/decompile-file "/tmp/test.wasm")
+      clojure.pprint/pprint
+      )
+
+
+  )
+
+
+;;;;;;;;;; Using Wasmer (alias :wasmer must be used, see deps)
+
+
+(comment
 
 
   (defn f
@@ -70,67 +95,4 @@
      (double 2))
 
   (f "foo")
-
-
-
-  (-> (wasm/decompile-file "src/wasm/test.wasm")
-      (wasm/compile-file "/tmp/test.wasm")
-      ;(wasm/decompile-file "/tmp/test.wasm")
-      clojure.pprint/pprint
-      )
-
-  (->
-      (wasm/decompile-file "/tmp/test.wasm")
-      clojure.pprint/pprint
-      )
-
-  (-> 
-      (->> 
-         (wasmer.module/load-source "src/wasm/test.wasm")
-         ;(wasmer.module/load-source "/tmp/test.wasm")
-         wasm/buffer->view
-      ;    (wasmer.module/load-source "src/wasm/import.wasm")
-      ;    (wasmer.module/load-source "src/wasm/simple.wasm")
-      ;    (wasmer.module/load-source "src/wasm/export.wasm")
-         wasm/decompile
-           )
-      ;:wasm/tablesec
-      ;wasm.count/importsec'
-      ;:wasm/write
-
-      ; :wasm/codesec
-      ; (get 1)
-      ; :wasm/expr
-      ; (->> (take 7))
-      ; wasm.count/expr'
-
-      ;clojure.pprint/pprint
-      )
-
-
-  (-> 
-      (wasmer.module/load-source "src/wasm/test.wasm")
-      ;(wasmer.module/load-source "src/wasm/import.wasm")
-      wasm/buffer->view
-      wasm/decompile
-
-      wasm/compile
-
-      ;:wasm/write
-      ;wasm.count/typesec
-      ;wasm.count/module
-
-      ;(binf/rr-buffer 39)
-      ;seq
-
-      binf/backing-buffer
-      wasm/buffer->view
-      wasm/decompile
-      clojure.pprint/pprint
-      )
-
-
-
-
-
   )
