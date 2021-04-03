@@ -9,22 +9,32 @@
 
   {:author "Adam"}
 
-  (:require [clojure.data]
-            [clojure.pprint]
-            [clojure.test.check.clojure-test :as tc.ct]
-            [clojure.test.check.properties   :as tc.prop]
-            [helins.binf                     :as binf]
-            [helins.binf.buffer              :as binf.buffer]
-            [helins.wasm                     :as wasm]
-            [helins.wasm.bin                 :as wasm.bin]
-            [helins.wasm.count               :as wasm.count]
-            [helins.wasm.ir                  :as wasm.ir]
-            [helins.wasm.read                :as wasm.read]
-            [helins.wasm.schema              :as wasm.schema]
-            [helins.wasm.write               :as wasm.write]
-            [malli.core                      :as malli]
-            [malli.util]
-            [malli.generator                 :as malli.gen]))
+  (:require ;[clojure.data]
+            ;[clojure.pprint]
+            [clojure.test :as t]
+            ;[clojure.test.check.clojure-test :as tc.ct]
+            ;[clojure.test.check.properties   :as tc.prop]
+            ;[helins.binf                     :as binf]
+            ;[helins.binf.buffer              :as binf.buffer]
+            ;[helins.wasm                     :as wasm]
+            ;[helins.wasm.bin                 :as wasm.bin]
+            ;[helins.wasm.count               :as wasm.count]
+            ;[helins.wasm.ir                  :as wasm.ir]
+            ;[helins.wasm.read                :as wasm.read]
+            ;[helins.wasm.schema              :as wasm.schema]
+            ;[helins.wasm.write               :as wasm.write]
+            ;[malli.core                      :as malli]
+            ;[malli.util]
+            ;[malli.generator                 :as malli.gen]
+            ))
+
+
+
+(t/deftest foo
+
+  (t/is (= 4 3)))
+
+(comment
 
 
 ;;;;;;;;;; Setup
@@ -691,3 +701,6 @@
         (clojure.pprint/pprint [:ctx ctx :ctx-2 ctx-2 :diff (take 2 diff)]))
       (= diff-A
          diff-B))))
+
+
+)

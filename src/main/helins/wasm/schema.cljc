@@ -801,7 +801,7 @@
 
 
 
-  (malli.gen/generate :wasm/module
+  (malli.gen/generate :wasm.data/active
                       {:registry (-> (merge (malli/default-schemas)
                                             (malli.util/schemas))
                                      registry)})

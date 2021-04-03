@@ -86,7 +86,7 @@
 
   [i64]
 
-  (binf.leb128/n-byte-i32 i64))
+  (binf.leb128/n-byte-i64 i64))
 
 
 
