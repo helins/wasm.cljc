@@ -12,6 +12,11 @@
 /target
 
 
+// Compilation
+
+compiled
+
+
 // CLJS utilities
 
 .cljs
@@ -22,11 +27,12 @@ out
 package.json
 
 
-// Resources
+// CLJS dev environment
 
-/resources/chui/*
-!/resources/chui/index.html
-/resources/public/*
-!/resources/public/index.html
+/cljs/*
+!/cljs/index.html
 
-./runtime/*
+
+// Wasmer
+
+./wasmer/runtime/*

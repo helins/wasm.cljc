@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
 
-./bin/misc/kaocha node "$@"
+./bin/test/node/shadow compile "$@"

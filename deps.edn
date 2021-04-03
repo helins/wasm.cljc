@@ -1,43 +1,44 @@
 {:aliases
  {:cljs
-  {:extra-deps {thheller/shadow-cljs {:mvn/version "RELEASE"}}
+  {:extra-deps {thheller/shadow-cljs {:mvn/version "2.11.23"}}
    :main-opts  ["-m" "shadow.cljs.devtools.cli"]}
 
   :deploy
-  {:exec-args  {:artifact  "release.jar"
+  {:exec-args  {:artifact  "compiled/jvm/release.jar"
                 :installer :remote}
    :exec-fn    deps-deploy.deps-deploy/deploy
-   :extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}}
+   :extra-deps {deps-deploy/deps-deploy {:mvn/version "0.1.5"}}}
 
   :dev
-  {:extra-deps  {criterium/criterium {:mvn/version "RELEASE"}}
-   :extra-paths ["src/dev"
+  {:extra-paths ["src/dev"
                  "src/test"]}
 
   :jar
-  {:exec-args    {:jar      "release.jar"
+  {:exec-args    {:jar      "compiled/jvm/release.jar"
                   :sync-pom true}
    :exec-fn      hf.depstar/jar
    :replace-deps {seancorfield/depstar {:mvn/version "2.0.171"}}}
 
   :install
-  {:exec-args  {:artifact  "release.jar"
+  {:exec-args  {:artifact  "compiled/jvm/release.jar"
                 :installer :local}
    :exec-fn    deps-deploy.deps-deploy/deploy
-   :extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}}
+   :extra-deps {deps-deploy/deps-deploy {:mvn/version "0.1.5"}}}
+
+  :kaocha
+  {:extra-deps {lambdaisland/kaocha {:mvn/version "1.0.829"}}}
 
   :test
-  {:extra-deps  {lambdaisland/chui      {:mvn/version "0.0.117"}
-                 lambdaisland/kaocha    {:mvn/version "1.0-612"}
-                 org.clojure/test.check {:mvn/version "1.1.0"}}
-   :extra-paths ["src/test"]}}
+  {:extra-paths ["src/test"]}
+
+  :wasmer
+  {:extra-deps  {org.wasmer/wasmer-jni-amd64-linux {:local/root "wasmer/runtime/wasmer-jni-amd64-linux-0.3.0.jar"}}
+   :extra-paths ["wasm/src/main"]}}
 
  :deps
- {io.helins/binf                    {:git/url "https://github.com/helins/binf.cljc"
-                                     :sha     "a255512f237e43a7c01ccbffbaa9bb3c70c0da4f"}
-  metosin/malli                     {:git/url "https://github.com/metosin/malli"
-                                     :sha     "0e5e3f1ee9bc8d6ea60dc16e59abf9cc295ab510"}
-  org.wasmer/wasmer-jni-amd64-linux {:local/root "runtime/wasmer-jni-amd64-linux-0.3.0.jar"}}
+ {io.helins/binf {:mvn/version "1.1.0-beta0"}
+  metosin/malli  {:git/url "https://github.com/metosin/malli"
+                  :sha     "0e5e3f1ee9bc8d6ea60dc16e59abf9cc295ab510"}}
 
  :paths
  ["src/main"]}

@@ -2,21 +2,19 @@
  {:dev
   {:asset-path "/js"
    :modules    {:main {:entries [helins.wasmeta.dev]}}
-   :output-dir "resources/public/js"
+   :output-dir "cljs/js"
    :target     :browser}
 
-
- :test
+ :test-node
  {:ns-regexp ".+"
-  :runner-ns lambdaisland.chui.shadow.browser-runner
-  :target    :browser-test
-  :test-dir  "resources/chui"}}
+  :output-to "compiled/node/test.js"
+  :target    :node-test}}
 
  :deps
  {:alias [:cljs]}
 
  :dev-http
- {8000 "resources/public"}
+ {8000 "cljs"}
  
  :nrepl
  {:port 14563}}

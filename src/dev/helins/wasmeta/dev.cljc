@@ -25,10 +25,10 @@
             [helins.wasm.schema     :as wasm.schema]
             [helins.wasm.test]
             [helins.wasm.write      :as wasm.write]
-            #?@(:clj [[helins.wasmer.fn       :as wasmer.fn]
-                      [helins.wasmer.instance :as wasmer.instance]
-                      [helins.wasmer.mem      :as wasmer.mem]
-                      [helins.wasmer.module   :as wasmer.module]])
+            ;#?@(:clj [[helins.wasmer.fn       :as wasmer.fn]
+            ;          [helins.wasmer.instance :as wasmer.instance]
+            ;          [helins.wasmer.mem      :as wasmer.mem]
+            ;          [helins.wasmer.module   :as wasmer.module]])
             [malli.core             :as malli]
             [malli.generator        :as malli.gen]
             [malli.provider]

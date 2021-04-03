@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+
+clojure -M:kaocha:test -m kaocha.runner --config-file kaocha.edn :jvm "$@"

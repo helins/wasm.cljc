@@ -1,7 +1,0 @@
-#!/usr/bin/env sh
-
-
-#rm -rf chui/js/*
-command="$1"
-shift
-clj -M:cljs:test "$command" test "$@"

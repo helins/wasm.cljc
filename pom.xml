@@ -32,6 +32,11 @@
       <artifactId>clojure</artifactId>
       <version>1.10.2</version>
     </dependency>
+    <dependency>
+      <groupId>io.helins</groupId>
+      <artifactId>binf</artifactId>
+      <version>1.1.0-beta0</version>
+    </dependency>
   </dependencies>
   <build>
     <sourceDirectory>src/main</sourceDirectory>

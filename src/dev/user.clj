@@ -9,8 +9,7 @@
 
   {:author "Adam Helinski"}
 
-  (:require [kaocha.repl]
-            [helins.wasmeta.dev :as wasmeta.dev]))
+  (:require [helins.wasmeta.dev :as wasmeta.dev]))
 
 
 (set! *warn-on-reflection*

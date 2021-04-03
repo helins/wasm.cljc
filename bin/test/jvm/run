@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
 
-./bin/misc/kaocha jvm "$@"
+./bin/test/jvm/kaocha "$@"
