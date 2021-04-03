@@ -19,4 +19,4 @@
  {8000 "resources/public"}
  
  :nrepl
- {:port 47869}}
+ {:port 14563}}

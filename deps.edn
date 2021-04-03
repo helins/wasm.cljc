@@ -11,7 +11,8 @@
 
   :dev
   {:extra-deps  {criterium/criterium {:mvn/version "RELEASE"}}
-   :extra-paths ["src/dev"]}
+   :extra-paths ["src/dev"
+                 "src/test"]}
 
   :jar
   {:exec-args    {:jar      "release.jar"

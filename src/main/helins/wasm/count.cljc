@@ -10,6 +10,7 @@
   {:author "Adam Helinski"}
 
   (:require [helins.binf        :as binf]
+            [helins.binf.int64  :as binf.int64]
             [helins.binf.leb128 :as binf.leb128]
             [helins.wasm.bin    :as wasm.bin]))
 
@@ -93,7 +94,7 @@
 
   [s33]
 
-  (binf.leb128/n-byte-i32 s33))
+  (binf.leb128/n-byte-i64 (binf.int64/i* s33)))
 
 
 

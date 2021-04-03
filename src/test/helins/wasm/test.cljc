@@ -11,9 +11,7 @@
 
   (:require [clojure.data]
             [clojure.pprint]
-            [clojure.test                    :as t]
             [clojure.test.check.clojure-test :as tc.ct]
-            [clojure.test.check.generators   :as tc.gen]
             [clojure.test.check.properties   :as tc.prop]
             [helins.binf                     :as binf]
             [helins.binf.buffer              :as binf.buffer]
@@ -32,15 +30,26 @@
 ;;;;;;;;;; Setup
 
 
-(alter-var-root #'wasm.count/-flatten-idx
-                (constantly (fn [_hmap idx]
-                              idx)))
+(let [f (fn [_hmap idx]
+          idx)]
+  #?(:clj  (alter-var-root #'wasm.count/-flatten-idx
+                           (constantly f))
+     :cljs (set! wasm.count/-flatten-idx
+                 f))
+  #?(:clj  (alter-var-root #'wasm.write/-flatten-idx
+                           (constantly f))
+     :cljs (set! wasm.write/-flatten-idx
+                 f)))
 
 
 
-(alter-var-root #'wasm.write/-flatten-idx
-                (constantly (fn [_hmap idx]
-                              idx)))
+#?(:cljs (extend-type js/ArrayBuffer
+
+  IEquiv
+
+    (-equiv [a b]
+      (= (seq a)
+         (seq b)))))
 
 
 
@@ -222,7 +231,7 @@
 
 
 (tc.ct/defspec instr'
-               2000
+               4000
 
   (test-direct :wasm/instr
                (partial wasm.count/instr'
