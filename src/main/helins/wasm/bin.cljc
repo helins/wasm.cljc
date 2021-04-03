@@ -131,7 +131,7 @@
    0x67 'i32.clz
    0x68 'i32.ctz
    0x69 'i32.popcnt
-   0x6A 'i32.and
+   0x6A 'i32.add
    0x6B 'i32.sub
    0x6C 'i32.mul
    0x6D 'i32.div_s
@@ -150,7 +150,7 @@
    0x79 'i64.clz
    0x7A 'i64.ctz
    0x7B 'i64.popcnt
-   0x7C 'i64.and
+   0x7C 'i64.add
    0x7D 'i64.sub
    0x7E 'i64.mul
    0x7F 'i64.div_s
@@ -691,7 +691,7 @@
 (def i32-popcnt
      0x69)
 
-(def i32-and
+(def i32-add
      0x6a)
 
 (def i32-sub
@@ -747,7 +747,7 @@
 (def i64-popcnt
      0x7b)
 
-(def i64-and
+(def i64-add
      0x7c)
 
 (def i64-sub
