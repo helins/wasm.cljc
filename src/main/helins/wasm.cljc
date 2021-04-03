@@ -30,29 +30,29 @@
 
   ""
 
-  {:wasm/codesec       (sorted-map)
-   :wasm/dataidx       0
-   :wasm/datasec       (sorted-map)
-   :wasm/exportsec     {:wasm.export/func   (sorted-map)
-                        :wasm.export/global (sorted-map)
-                        :wasm.export/mem    (sorted-map)
-                        :wasm.export/table  (sorted-map)}
-   :wasm/elemidx       0
-   :wasm/elemsec       (sorted-map)
-   :wasm/funcidx       0
-   :wasm/funcsec       (sorted-map)
-   :wasm/importsec     {:wasm.import/func   (sorted-map)
-                        :wasm.import/global (sorted-map)
-                        :wasm.import/mem    (sorted-map)
-                        :wasm.import/table  (sorted-map)}
-   :wasm/globalidx     0
-   :wasm/globalsec     (sorted-map)
-   :wasm/memidx        0
-   :wasm/memsec        (sorted-map)
-   :wasm/tableidx      0
-   :wasm/tablesec      (sorted-map)
-   :wasm/typeidx       0
-   :wasm/typesec       (sorted-map)})
+  {:wasm/codesec   (sorted-map)
+   :wasm/dataidx   0
+   :wasm/datasec   (sorted-map)
+   :wasm/exportsec {:wasm.export/func   (sorted-map)
+                    :wasm.export/global (sorted-map)
+                    :wasm.export/mem    (sorted-map)
+                    :wasm.export/table  (sorted-map)}
+   :wasm/elemidx   0
+   :wasm/elemsec   (sorted-map)
+   :wasm/funcidx   0
+   :wasm/funcsec   (sorted-map)
+   :wasm/importsec {:wasm.import/func   (sorted-map)
+                    :wasm.import/global (sorted-map)
+                    :wasm.import/mem    (sorted-map)
+                    :wasm.import/table  (sorted-map)}
+   :wasm/globalidx 0
+   :wasm/globalsec (sorted-map)
+   :wasm/memidx    0
+   :wasm/memsec    (sorted-map)
+   :wasm/tableidx  0
+   :wasm/tablesec  (sorted-map)
+   :wasm/typeidx   0
+   :wasm/typesec   (sorted-map)})
 
 
 ;;;;;;;;;; BinF views containing the source of a WASM module

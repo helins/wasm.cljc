@@ -2,11 +2,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.helins</groupId>
-  <artifactId>wasmeta</artifactId>
+  <artifactId>wasm</artifactId>
   <version>0.0.0-alpha0</version>
-  <name>wasmeta</name>
-  <description>Metaprogramming in WebAssembly</description>
-  <url>https://github.com/helins/wasmeta.cljc</url>
+  <name>WASM</name>
+  <description>WebAssembly compiler and decompiler in Clojure/script</description>
+  <url>https://github.com/helins/wasm.cljc</url>
   <licenses>
     <license>
       <name>Mozilla Public License Version 2.0</name>
@@ -21,9 +21,9 @@
     </developer>
   </developers>
   <scm>
-    <url>https://github.com/helins/wasmeta.cljc</url>
-    <connection>scm:git:git://github.com/helins/wasmeta.cljc.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/helins/wasmeta.cljc.git</developerConnection>
+    <url>https://github.com/helins/wasm.cljc</url>
+    <connection>scm:git:git://github.com/helins/wasm.cljc.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/helins/wasm.cljc.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
   <dependencies>

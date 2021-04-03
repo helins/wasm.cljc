@@ -3,7 +3,7 @@
 ;; file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 
-(ns helins.wasmeta.dev
+(ns helins.wasm.dev
 
   "CLJC playground during dev."
 

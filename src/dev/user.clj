@@ -9,7 +9,7 @@
 
   {:author "Adam Helinski"}
 
-  (:require [helins.wasmeta.dev :as wasmeta.dev]))
+  (:require [helins.wasm.dev]))
 
 
 (set! *warn-on-reflection*
