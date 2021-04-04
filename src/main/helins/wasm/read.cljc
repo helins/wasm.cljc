@@ -5,7 +5,7 @@
 
 (ns helins.wasm.read
 
-  "Reading data from a WASM module represented as a BinF view.
+  "Reading data from a WASM module represented as a BinF view. In other words, decompilation.
 
    Unless one wants to design a custom module parsing environment, ultimately, one should use the `decompile` function
    from the `helins.wasm` namespace which does all the job for decompiling a whole WASM module.
@@ -882,7 +882,7 @@
       (-err (str "Unknown section ID: "
                  id)
             view
-            wasm.count/section-id))
+            wasm.count/section-id'))
     (let [n-byte (u32' view)
           start  (binf/position view)]
       (binf/skip view

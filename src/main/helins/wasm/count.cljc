@@ -5,7 +5,14 @@
 
 (ns helins.wasm.count
 
-  ""
+  "Given WASM items described in Clojure data structures, computes their size in bytes.
+
+   This namespace is used before compilation for pre-computing how much memory to allocate
+   while recomputing indices so they fit in dense lists.
+
+   Everything is computed in a map that is being assoc'ed in the `ctx` at `:wasm/write`.
+
+   See README for namespace organization and naming scheme."
 
   {:author "Adam Helinski"}
 
@@ -51,8 +58,6 @@
 
 
 (defn vec'
-
-  ""
 
   [count-item coll]
 
@@ -154,8 +159,6 @@
 
 (defn resulttype'
 
-  ""
-
   [valtype+]
 
   (let [n-valtype (count valtype+)]
@@ -169,8 +172,6 @@
 
 (defn functype'
 
-  ""
-
   [[param+ result+]]
 
   (+ 1 ;; 0x60 functype
@@ -182,8 +183,6 @@
 
 
 (defn limits'
-
-  ""
 
   [{min- :wasm.limit/min
     max- :wasm.limit/max}]
@@ -201,8 +200,6 @@
 
 (defn memtype'
 
-  ""
-
   [mem]
 
   (limits' mem))
@@ -212,8 +209,6 @@
 
 
 (defn tabletype'
-
-  ""
 
   [table]
 
@@ -379,7 +374,7 @@
 
 (defn op-var-local
 
-  ""
+  "Used for local variable instructions."
 
   [_flatidx opvec]
 
@@ -389,7 +384,7 @@
 
 (defn op-var-global
 
-  ""
+  "Used for global variable instructions."
   
   [flatidx opvec]
 
@@ -413,8 +408,6 @@
 
 (defn op-table-misc
 
-  ""
-
   [flatidx opvec]
 
   (tableidx' (-flatten-idx (flatidx :wasm.flatidx/table)
@@ -423,8 +416,6 @@
 
 
 (defn table-init'
-
-  ""
 
   [flatidx opvec]
 
@@ -437,8 +428,6 @@
 
 (defn elem-drop'
 
-  ""
-
   [flatidx opvec]
 
   (elemidx' (-flatten-idx (flatidx :wasm.flatidx/elem)
@@ -447,8 +436,6 @@
 
 
 (defn table-copy'
-
-  ""
 
   [flatidx opvec]
   
@@ -464,8 +451,6 @@
 
 (defn memarg'
 
-  ""
-
   [[align offset]]
 
   (+ (u32' align)
@@ -475,7 +460,7 @@
 
 (defn op-memarg
 
-  ""
+  "Used for memory instructions that have a [[memarg']]."
 
   [_flatidx opvec]
 
@@ -485,7 +470,7 @@
 
 (defn op-memory
 
-  ""
+  "Used for memory instructions that have a [[memidx']] as only immediate."
 
   [flatidx opvec]
 
@@ -495,8 +480,6 @@
 
 
 (defn memory-init'
-
-  ""
 
   [flatidx opvec]
 
@@ -508,8 +491,6 @@
 
 (defn data-drop'
 
-  ""
-
   [flatidx opvec]
 
   (dataidx' (-flatten-idx (flatidx :wasm.flatidx/data)
@@ -519,8 +500,6 @@
 
 (defn memory-copy'
 
-  ""
-
   [_flatidx _opvec]
 
   (* 2
@@ -529,8 +508,6 @@
 
 
 (defn memory-fill'
-
-  ""
 
   [_flatidx _opvec]
 
@@ -542,7 +519,7 @@
 
 (defn op-constval
 
-  ""
+  "Used for numerical operations declaring a constant value."
 
 
   ([f-value]
@@ -566,7 +543,10 @@
 
 (def op-main->f
 
-  ""
+  "Map of **opcode** -> **reading function** for opcodes which:
+  
+   - Have any kind of immediate(s)
+   - Is not 0xFC (the \"misc\" opcode that leads to a second-level opcode"
 
   {wasm.bin/block         block'
    wasm.bin/loop-         loop'
@@ -620,7 +600,7 @@
 
 (def op-misc->f
 
-  ""
+  "Map of **immediate to \"misc\" opcode (0xFC)** -> **reading function**."
 
   {wasm.bin/memory-init memory-init'
    wasm.bin/data-drop   data-drop'
@@ -636,8 +616,6 @@
 
 
 (defn instr'
-
-  ""
 
   [flatidx opvec]
 
@@ -675,7 +653,7 @@
 
 (defn instr'+
 
-  ""
+  "Behaves same as [[expr']]."
 
   [flatidx opvec+]
 
@@ -690,7 +668,7 @@
 
 (defn expr'
 
-  ""
+  "For a vector of [[instr']]."
 
   [flatidx opvec+]
 
@@ -705,6 +683,9 @@
 
 (defn idx
 
+  "For the time being at least, all WASM indices are represented as [[u32']] and hence,
+   are read by this function."
+
   [idx]
 
   (u32' idx))
@@ -712,80 +693,53 @@
 
 
 (def typeidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def funcidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def tableidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def memidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def globalidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def elemidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def dataidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def localidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def labelidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 ;;;;;;;;;; Modules / Sections
 
 
-(def section-id
+(def section-id'
      1)
 
 
@@ -798,7 +752,7 @@
 
   (if (and n-byte
            (pos? n-byte))
-    (+ section-id
+    (+ section-id'
        (u32' n-byte)
        n-byte)
     0))
@@ -809,7 +763,10 @@
 
 (defn func
 
-  ""
+  "For functions found in the funcsec and in imports.
+  
+   WASM specification does not have a special name for it since binary-wise
+   it is simply a type index."
 
   [flatidx-type {:wasm/keys [typeidx]}]
 
@@ -820,7 +777,9 @@
 
 (defn section-space
 
-  ""
+  "Used by most WASM sections.
+  
+   Takes care of counting everything and maintaining a flattened index."
 
   [ctx k-section k-flatidx k-count count-item]
 
@@ -853,7 +812,7 @@
 
 ;;;;;;;;;; Modules / Custom Section
 
-
+;; Undecided.
 
 
 ;;;;;;;;;; Modules / Type Section
@@ -930,8 +889,6 @@
 
 (defn importdesc'
 
-  ""
-
   [ctx-write space k-flatidx f-item]
 
   (if (seq space)
@@ -960,8 +917,6 @@
 
 
 (defn funcsec'
-
-  ""
 
   [ctx]
 
@@ -1034,8 +989,6 @@
 
 (defn exportsec'
 
-  ""
-
   [{:as        ctx
     :wasm/keys [exportsec]}]
 
@@ -1068,8 +1021,6 @@
 
 
 (defn export'
-
-  ""
 
   [ctx-write space k-flatidx count-idx]
 
@@ -1119,8 +1070,6 @@
 
 (defn elemsec'
 
-  ""
-
   [{:as                               ctx
     {:as          ctx-write
      flatidx-func :wasm.flatidx/func} :wasm/write}]
@@ -1162,8 +1111,6 @@
 
 (defn codesec'
 
-  ""
-
   [{:as        ctx
     :wasm/keys [codesec]}]
 
@@ -1181,8 +1128,6 @@
 
 
 (defn code'
-
-  ""
 
   [ctx-write code]
 
@@ -1228,8 +1173,6 @@
 
 (defn datasec'
 
-  ""
-
   [{:as                             ctx
     {:as         ctx-write
      flatidx-mem :wasm.flatidx/mem} :wasm/write}]
@@ -1260,8 +1203,6 @@
 
 (defn datacountsec'
 
-  ""
-
   [ctx]
 
   (if-some [n-seg (get-in ctx
@@ -1289,7 +1230,9 @@
 
 (defn section'+
 
-  ""
+  "Sums all precomputed sections.
+  
+   Used by [[module']]."
 
   [{{:wasm.count/keys [codesec
                        datasec
@@ -1326,8 +1269,6 @@
 
 
 (defn module'
-
-  ""
 
   [ctx]
 
