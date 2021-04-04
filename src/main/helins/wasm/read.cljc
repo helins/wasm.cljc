@@ -10,17 +10,7 @@
    Unless one wants to design a custom module parsing environment, ultimately, one should use the `decompile` function
    from the `helins.wasm` namespace which does all the job for decompiling a whole WASM module.
 
-   This namespace mimicks the exact order of the [WASM binary specification](https://webassembly.github.io/spec/core/binary/index.html)
-   so that both can be read together.
-
-   Names of so called \"nonterminal\" symbols from the binary specification end with the ' character and are
-   not documented here as they are easily found in the specification and there is no better way for understanding
-   what such a symbol represents than reading about it in the context of that specification.
-
-   Names which do not end with the ' character are various helpers and abstractions not found in the specification. Hence,
-   they are documented here.
-
-   See README."
+   See README for namespace organization and naming scheme."
 
   {:author "Adam Helinski"}
 
