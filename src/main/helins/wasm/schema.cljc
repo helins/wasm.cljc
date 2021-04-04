@@ -42,7 +42,12 @@
           :wasm.import/name]
          
          instr-without-immediate+
-         [[0x45 :wasm/i32.eqz]
+         [[0x00 :wasm/unreachable]
+          [0x01 :wasm/nop]
+          [0x0F :wasm/return]
+          [0x1A :wasm/drop]
+          [0x1B :wasm/select]
+          [0x45 :wasm/i32.eqz]
           [0x46 :wasm/i32.eq]
           [0x47 :wasm/i32.ne]
           [0x48 :wasm/i32.lt_s]
@@ -270,7 +275,9 @@
                 [[wasm.bin/misc
                   wasm.bin/memory-fill]         :wasm/memory.fill]
 			    [wasm.bin/i32-const             :wasm/i32.const]
-			    [wasm.bin/i64-const             :wasm/i32.const]
+			    [wasm.bin/i64-const             :wasm/i64.const]
+			    [wasm.bin/f32-const             :wasm/f32.const]
+			    [wasm.bin/f64-const             :wasm/f64.const]
                 [[wasm.bin/misc
                   wasm.bin/i32-trunc_sat_f32_s] :wasm/i32.trunc_sat_f32_s]
                 [[wasm.bin/misc
@@ -672,8 +679,9 @@
                 :wasm/type                [:map
                                            :wasm/signature]
                 :wasm/typeidx             :wasm/idx
-                :wasm/typesec             [:map
-                                           :wasm/signature]
+                :wasm/typesec             [:map-of
+                                           :wasm/typeidx
+                                           :wasm/type]
                 :wasm/u32                 [:int
                                            {:max 4294967295
                                             :min 0}]
@@ -719,7 +727,7 @@
                                                       :wasm/offset
                                                       [:wasm.elem/mode [:= :active]]]]
                                             [:multi
-                                             {:dispatch :wasm/resolve}
+                                             {:dispatch :wasm.elem/resolve}
                                              [:expr
                                               (let [base-2 (conj base
                                                                  [:wasm.elem/resolve [:= :expr]]

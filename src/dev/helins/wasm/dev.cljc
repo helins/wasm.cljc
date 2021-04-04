@@ -30,6 +30,7 @@
             ;          [helins.wasmer.mem      :as wasmer.mem]
             ;          [helins.wasmer.module   :as wasmer.module]])
             [malli.core             :as malli]
+            [malli.error]
             [malli.generator        :as malli.gen]
             [malli.provider]
             [malli.registry]
@@ -49,17 +50,15 @@
 
 
 
-  (malli.gen/generate :wasm/module
-                      {:registry (-> (merge (malli/default-schemas)
-                                            (malli.util/schemas))
-                                     registry)})
+  (malli.gen/generate :wasm/typesec
+                      {:registry registry})
 
 
 
   (-> (wasm/decompile-file "src/wasm/test.wasm")
       ;(wasm/compile-file "/tmp/test.wasm")
       ;(wasm/decompile-file "/tmp/test.wasm")
-      clojure.pprint/pprint
+      ;clojure.pprint/pprint
       )
 
 

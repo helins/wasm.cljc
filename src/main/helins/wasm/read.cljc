@@ -197,7 +197,7 @@
 
   [view]
 
-  (binf/rr-f32 view))
+  (double (binf/rr-f32 view)))
 
 
 
