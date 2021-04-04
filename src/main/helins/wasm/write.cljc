@@ -5,7 +5,15 @@
 
 (ns helins.wasm.write
 
-  ""
+  "Writing a WASM module represented as Clojure data structures to a BinF view.
+   In other words, compilation.
+
+   Unless one wants to design a custom module compilation environment, ultimately, one should use the `compile` function
+   from the `helins.wasm` namespace which does all the job for compiling a whole WASM module.
+
+   For writing sections, things must be prepared with the [[helins.wasm.count]] namespace.
+
+   See README for namespace organization and naming scheme."
 
   {:author "Adam Helinski"}
 
@@ -143,8 +151,6 @@
 
 (defn name'
 
-  ""
-
   [view buffer]
 
   (-> view
@@ -157,8 +163,6 @@
 
 (defn reftype'
 
-  ""
-
   [view reftype]
 
   (binf/wr-b8 view
@@ -170,8 +174,6 @@
 
 (defn valtype'
 
-  ""
-
   [view valtype]
 
   (binf/wr-b8 view
@@ -182,8 +184,6 @@
 
 
 (defn resulttype'
-
-  ""
 
   [view valtype+]
 
@@ -212,8 +212,6 @@
 
 
 (defn limits'
-
-  ""
 
   [view {min- :wasm.limit/min
          max- :wasm.limit/max}]
@@ -447,7 +445,7 @@
 
 (defn op-var-local
 
-  ""
+  "Used for local variable instructions."
 
   [view _flatidx opvec]
 
@@ -457,9 +455,9 @@
 
 
 (defn op-var-global
-
-  ""
   
+  "Used for global variable instructions."
+
   [view flatidx opvec]
 
   (globalidx' view
@@ -484,7 +482,8 @@
 
 (defn op-table-misc
 
-  ""
+  "Table instruction involving a table index immediate (prefixed with
+   the 0xFC \"misc\" opcode)."
 
   [view flatidx opvec]
 
@@ -495,8 +494,6 @@
 
 
 (defn table-init'
-
-  ""
 
   [view flatidx opvec]
 
@@ -510,8 +507,6 @@
 
 (defn elem-drop'
 
-  ""
-
   [view flatidx opvec]
 
   (elemidx' view
@@ -521,8 +516,6 @@
 
 
 (defn table-copy'
-
-  ""
 
   [view flatidx opvec]
   
@@ -540,8 +533,6 @@
 
 (defn memarg'
 
-  ""
-
   [view [align offset]]
 
   (-> view
@@ -552,7 +543,7 @@
 
 (defn op-memarg
 
-  ""
+  "Used for memory instructions that have a [[memarg']]."
 
   [view _flatidx opvec]
 
@@ -563,7 +554,7 @@
 
 (defn op-memory
 
-  ""
+  "Used for memory instructions that have a [[memidx']] as only immediate."
 
   [view flatidx opvec]
 
@@ -574,8 +565,6 @@
 
   
 (defn memory-init'
-
-  ""
 
   [view flatidx opvec]
 
@@ -588,8 +577,6 @@
 
 (defn data-drop'
 
-  ""
-
   [view flatidx opvec]
 
   (dataidx' view
@@ -600,8 +587,6 @@
 
 (defn memory-copy'
 
-  ""
-
   [view _flatidx opvec]
 
   (-> view
@@ -611,8 +596,6 @@
 
 
 (defn memory-fill'
-
-  ""
 
   [view _flatidx opvec]
 
@@ -625,7 +608,7 @@
 
 (defn op-constval
 
-  ""
+  "Used for numerical operations declaring a constant value."
 
 
   ([f-value]
@@ -650,7 +633,10 @@
 
 (def op-main->f
 
-  ""
+  "Map of **opcode** -> **reading function** for opcodes which:
+  
+   - Have any kind of immediate(s)
+   - Is not 0xFC (the \"misc\" opcode that leads to a second-level opcode"
 
   {wasm.bin/block         block'
    wasm.bin/loop-         loop'
@@ -704,7 +690,7 @@
 
 (def op-misc->f
 
-  ""
+  "Map of **immediate to \"misc\" opcode (0xFC)** -> **reading function**."
 
   {wasm.bin/memory-init memory-init'
    wasm.bin/data-drop   data-drop'
@@ -720,8 +706,6 @@
 
 
 (defn instr'
-
-  ""
 
   [view flatidx opvec]
 
@@ -757,7 +741,7 @@
 
 (defn instr'+
 
-  ""
+  "Behaves same as [[expr']]."
 
   [view flatidx opvec+]
 
@@ -771,7 +755,7 @@
 
 (defn expr'
 
-  ""
+  "For a vector of [[instr']]."
 
   [view flatidx opvec+]
 
@@ -794,80 +778,53 @@
 
 
 (def typeidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def funcidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def tableidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def memidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def globalidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def elemidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def dataidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def localidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 
 (def labelidx'
-
-  "Alias to [[idx]]."
-
-  idx)
+     idx)
 
 
 ;;;;;;;;;; Modules / Sections
 
 
-(defn section-id
+(defn section-id'
 
   [view section-id]
 
@@ -880,7 +837,10 @@
 
 (defn func
 
-  ""
+  "For functions found in the funcsec and in imports.
+  
+   WASM specification does not have a special name for it since binary-wise
+   it is simply a type index."
 
   [view flatidx-type {:wasm/keys [typeidx]}]
 
@@ -892,13 +852,13 @@
 
 (defn section-externval
 
-  ""
+  "Helper for writing sections about WASM **externval** (eg. funcsec, memsec, tablesec...)"
 
   [view ctx k-section bin-section-id k-count compile-item]
 
   (when-some [section (not-empty (ctx k-section))]
     (-> view
-        (section-id bin-section-id)
+        (section-id' bin-section-id)
         (u32' (get-in ctx
                         [:wasm/write
                          k-count]))
@@ -914,14 +874,12 @@
 
 (defn typesec'
 
-  ""
-
   [view {:as        ctx
          :wasm/keys [typesec]}]
 
   (when (seq typesec)
     (-> view
-        (section-id wasm.bin/section-id-type)
+        (section-id' wasm.bin/section-id-type)
         (u32' (get-in ctx
                       [:wasm/write
                        :wasm.count/typesec]))
@@ -938,8 +896,6 @@
 
 (defn importsec'
 
-  ""
-
   [view {:wasm/keys                          [importsec]
          {flatidx-type :wasm.flatidx/type
           n-byte-      :wasm.count/importsec
@@ -947,7 +903,7 @@
 
   (when (pos? n-byte-)
     (-> view
-        (section-id wasm.bin/section-id-import)
+        (section-id' wasm.bin/section-id-import)
         (u32' n-byte-)
         (u32' n-import)
         (import'+ (importsec :wasm.import/func)
@@ -970,8 +926,6 @@
 
 
 (defn import'+
-
-  ""
 
   [view space import-type f]
 
@@ -1079,7 +1033,7 @@
 
   (when (pos? n-export)
     (-> view
-        (section-id wasm.bin/section-id-export)
+        (section-id' wasm.bin/section-id-export)
         (u32' n-byte-)
         (u32' n-export)
         (export' (exportsec :wasm.export/func)
@@ -1128,7 +1082,7 @@
   (when startsec
     (let [ctx-write (ctx :wasm/write)]
       (-> view
-          (section-id wasm.bin/section-id-start)
+          (section-id' wasm.bin/section-id-start)
           (u32' (ctx-write :wasm.count/startsec))
           (funcidx' (-flatten-idx (:wasm.flatidx/func ctx-write)
                                   (startsec :wasm/funcidx))))))
@@ -1140,8 +1094,6 @@
 
 (defn elemsec'
 
-  ""
-
   [view {:as        ctx
          :wasm/keys [elemsec]}]
 
@@ -1150,7 +1102,7 @@
            flatidx-func  :wasm.flatidx/func
            flatidx-table :wasm.flatidx/table} (ctx :wasm/write)]
       (-> view
-          (section-id wasm.bin/section-id-elem)
+          (section-id' wasm.bin/section-id-elem)
           (u32' (ctx-write :wasm.count/elemsec))
           (u32' (count elemsec)))
       (doseq [{:as             elem
@@ -1213,8 +1165,6 @@
 
 (defn elemkind'
 
-  ""
-
   [view elemkind]
 
   (binf/wr-b8 view
@@ -1226,15 +1176,13 @@
 
 (defn codesec'
 
-  ""
-
   [view {:as        ctx
          :wasm/keys [codesec]}]
 
   (when (seq codesec)
     (let [ctx-write (ctx :wasm/write)]
       (-> view
-          (section-id wasm.bin/section-id-code)
+          (section-id' wasm.bin/section-id-code)
           (u32' (ctx-write :wasm.count/codesec))
           (u32' (count codesec)))
       (doseq [[n-byte
@@ -1250,8 +1198,6 @@
 
 
 (defn code'
-
-  ""
 
   [view flatidx n-byte code]
 
@@ -1292,8 +1238,6 @@
 
 (defn datasec'
 
-  ""
-
   [view {:as        ctx
          :wasm/keys [datasec]}]
 
@@ -1301,7 +1245,7 @@
     (let [{:as         ctx-write
            flatidx-mem :wasm.flatidx/mem} (ctx :wasm/write)]
       (-> view
-          (section-id wasm.bin/section-id-data)
+          (section-id' wasm.bin/section-id-data)
           (u32' (ctx-write :wasm.count/datasec))
           (u32' (count datasec)))
       (doseq [{:wasm/keys [buffer
@@ -1332,14 +1276,12 @@
 
 (defn datacountsec'
 
-  ""
-
   [view {:as        ctx
          :wasm/keys [datacountsec]}]
 
   (when datacountsec
     (-> view
-        (section-id wasm.bin/section-id-datacount)
+        (section-id' wasm.bin/section-id-datacount)
         (u32' (get-in ctx
                       [:wasm/write
                        :wasm.count/datacountsec]))
@@ -1352,8 +1294,6 @@
 
 (defn magic'
 
-  ""
-
   [view]
 
   (binf/wr-b32 view
@@ -1362,8 +1302,6 @@
 
 
 (defn version'
-
-  ""
 
   [view {:wasm/keys [version]}]
 
@@ -1378,7 +1316,9 @@
 
 (defn section'+
 
-  ""
+  "Writes all existing sections.
+  
+   Used by [[module']]."
 
   [view ctx]
 
@@ -1399,8 +1339,6 @@
 
 
 (defn module'
-
-  ""
 
   [view ctx]
 
