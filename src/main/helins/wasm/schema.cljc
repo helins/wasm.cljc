@@ -5,7 +5,7 @@
 
 (ns helins.wasm.schema
 
-  ""
+  "See [[registry]]."
 
   {:author "Adam Helinski"}
 
@@ -26,7 +26,10 @@
   
    Either created from scratch or by upgrading the given one.
   
-   Must be used alongside `malli.core/default-schemas` and `malli.util/schemas`."
+   Must be used alongside `malli.core/default-schemas` and `malli.util/schemas`.
+  
+   Names following \"non-terminal\" symbols from the WASM binary specification.
+   See README."
 
   
   ([]

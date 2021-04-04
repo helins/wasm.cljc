@@ -5,12 +5,24 @@
 
 (ns helins.wasm.ir
 
-  ""
+  "Provides helpers for working with the intermediary representation (WASM binaries
+   expressed as Clojure data structures).
+  
+   Directly relates to the [[helins.wasm.schema]] namespace.
+  
+   Once again, names ending with the ' character relates to \"non-terminal\" symbols
+   from the WASM binary specification and can be found in the registry :as `:wasm/XXX`.
+
+   For instance, [[globaltype']] can used for creating a map describing a global variable
+   as defined by `:wasm/globaltype` in the registry.
+  
+   See README."
 
   {:author "Adam Helinski"})
 
 
 ;;;;;;;;;; Private - Miscellaneous helpers
+
 
 (defn -assoc-import
 
@@ -49,8 +61,6 @@
 
 (defn limits'
 
-  ""
-
 
   ([hmap limit-min]
 
@@ -72,7 +82,7 @@
 
 (defn memtype'
 
-  ""
+  "See [[limits']]."
 
   [limits]
 
@@ -84,7 +94,7 @@
 
 (defn tabletype'
 
-  ""
+  "See [[limits']]."
 
   [limits reftype]
 
@@ -98,8 +108,6 @@
 
 (defn globaltype'
 
-  ""
-
   [hmap valtype mutable?]
 
   (assoc hmap
@@ -112,7 +120,7 @@
 
 (defn assoc-type
 
-  ""
+  "Adds a [[type-signature]] to the typesec while updating the `:wasm/typeidx` index."
 
   [ctx type-signature]
 
@@ -125,7 +133,7 @@
 
 (defn type-signature
 
-  ""
+  "Create a map describing a type signature for the typesec."
 
   [hmap signature]
 
@@ -139,7 +147,9 @@
 
 (defn import'
 
-  ""
+  "Creates a generic map for imports.
+  
+   Used by other functions such as [[import-func]]."
 
   [hmap buffer-module buffer-name]
 
@@ -151,7 +161,7 @@
 
 (defn import-func
 
-  ""
+  "Adds in the importsec the given [[func]]."
 
   [ctx func]
 
@@ -164,7 +174,7 @@
 
 (defn import-global
 
-  ""
+  "Adds in the importsec the given [[global']]."
 
   [ctx global]
 
@@ -177,7 +187,7 @@
 
 (defn import-mem
 
-  ""
+  "Adds in the importsec the given [[mem']]."
 
   [ctx mem]
 
@@ -190,7 +200,7 @@
 
 (defn import-table
 
-  ""
+  "Adds in the importsec the given [[table']]."
 
   [ctx table]
 
@@ -205,7 +215,7 @@
 
 (defn assoc-func
 
-  ""
+  "Adds a [[func]] to the funcsec while updating the `:wasm/funcidx` index."
 
   [ctx func]
 
@@ -218,7 +228,9 @@
 
 (defn func
 
-  ""
+  "Creates a map describing a function for the funcsec.
+  
+   See [assoc-func]."
 
   [hmap typeidx]
 
@@ -232,7 +244,7 @@
 
 (defn assoc-table
 
-  ""
+  "Adds a [[table']] to the tablesec while updating the `:wasm/tableidx` index."
 
   [ctx table]
 
@@ -245,8 +257,6 @@
 
 (defn table'
 
-  ""
-
   [limits reftype]
 
   (tabletype' limits
@@ -258,7 +268,7 @@
 
 (defn assoc-mem
 
-  ""
+  "Adds a [[mem']] to the memsec while udpating the `:wasm/memidx` index."
 
   [ctx mem]
 
@@ -268,12 +278,22 @@
                    mem))
 
 
+
+(defn mem'
+
+  "See [[memtype']]."
+
+  [limits]
+
+  (memtype' limits))
+
+
 ;;;;;;;;;; Modules / Global section
 
 
 (defn assoc-global
 
-  ""
+  "Adds a [[global']] to the globalsec while updating the `:wasm/globalidx` index."
 
   [ctx global]
 
@@ -285,8 +305,6 @@
 
 
 (defn global'
-
-  ""
 
   [hmap valtype mutable? expr]
 
@@ -302,8 +320,6 @@
 
 (defn export'
 
-  ""
-
   [hmap buffer-name]
 
   (assoc hmap
@@ -316,8 +332,6 @@
 
 (defn startsec'
 
-  ""
-
   [ctx start]
 
   (assoc ctx
@@ -327,8 +341,6 @@
 
 
 (defn start'
-
-  ""
 
   [hmap funcidx]
 
@@ -342,7 +354,10 @@
 
 (defn assoc-elem
 
-  ""
+  "Adds an `elem'XX` to the elemsec while updating the `:wasm/elemidx` index.
+  
+   Those `elem'XX` functions from the namespace refer to the different elem types
+   described in the WASM binary specification, each having an `XX` flag."
 
   [ctx elem]
   
@@ -355,7 +370,7 @@
 
 (defn elem'00
 
-  ""
+  "See [[assoc-elem]]."
 
   [hmap expr-offset funcidx+]
 
@@ -369,7 +384,7 @@
 
 (defn elem'01
 
-  ""
+  "See [[assoc-elem]]."
 
   [hmap _elemkind funcidx+]
 
@@ -383,7 +398,7 @@
 
 (defn elem'02
 
-  ""
+  "See [[assoc-elem]]."
 
   [hmap tableidx expr-offset elemkind funcidx+]
 
@@ -399,7 +414,7 @@
 
 (defn elem'03
 
-  ""
+  "See [[assoc-elem]]."
 
   [hmap elemkind funcidx+]
 
@@ -413,7 +428,7 @@
 
 (defn elem'04
 
-  ""
+  "See [[assoc-elem]]."
 
   [hmap expr-offset expr-elem+]
 
@@ -427,7 +442,7 @@
 
 (defn elem'05
 
-  ""
+  "See [[assoc-elem]]."
 
   [hmap reftype expr-elem+]
 
@@ -441,7 +456,7 @@
 
 (defn elem'06
 
-  ""
+  "See [[assoc-elem]]."
 
   [hmap tableidx expr-offset reftype expr-elem+]
 
@@ -457,7 +472,7 @@
 
 (defn elem'07
 
-  ""
+  "See [[assoc-elem]]."
 
   [hmap reftype expr-elem+]
 
@@ -473,8 +488,6 @@
 
 (defn func'
 
-  ""
-
   [hmap local+ expr]
 
   (assoc hmap
@@ -487,7 +500,10 @@
 
 (defn assoc-data
 
-  ""
+  "Adds a `data'XX` to the datasec while updating the `:wasm/dataidx` index.
+  
+   Those `data'XX` functions from the namespace refer to the different elem types
+   described in the WASM binary specification, each having an `XX` flag."
 
   [ctx data]
   
@@ -500,7 +516,7 @@
 
 (defn data'00
 
-  ""
+  "See [[assoc-data]]."
 
   [hmap expr buffer]
 
@@ -513,7 +529,7 @@
 
 (defn data'01
 
-  ""
+  "See [[assoc-data]]."
 
   [hmap buffer]
 
@@ -525,7 +541,7 @@
 
 (defn data'02
 
-  ""
+  "See [[assoc-data]]."
 
   [hmap memidx expr buffer]
 
@@ -541,8 +557,6 @@
 
 (defn datacountsec'
 
-  ""
-
   [ctx n-data-seg]
 
   (assoc-in ctx
@@ -556,7 +570,9 @@
 
 (defn version'
 
-  ""
+  "Adds a version to the `ctx`.
+  
+   For the time being, on version 1 exists."
 
   [ctx]
 
