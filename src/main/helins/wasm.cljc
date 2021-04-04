@@ -5,7 +5,11 @@
 
 (ns helins.wasm
 
-  ""
+  "Core namespace for compiling and decompiling WASM binaries.
+
+   Mentions the [BinF library](https://github.com/helins/binf.cljc).
+  
+   See README."
 
   {:author "Adam Helinski"}
 
@@ -28,7 +32,10 @@
 
 (defn ctx
 
-  ""
+  "Returns a new empty context as described in the README.
+  
+   Can be used with [[decompile]] but is typically not necessary as one is created
+   when none is provided."
 
   []
 
@@ -62,7 +69,7 @@
 
 (defn buffer->view
 
-  ""
+  "Prepares a BinF buffer to a BinF view ready for decompilation."
 
   [buffer]
 
@@ -74,7 +81,7 @@
 
 (defn prepare-view
 
-  ""
+  "Prepares a BinF view for decompilation by setting the right endianess."
 
   [view]
 
@@ -98,7 +105,7 @@
 
 (defn compile
 
-  ""
+  "Compiles the given `ctx` into a BinF view."
 
   [ctx]
 
@@ -114,7 +121,7 @@
 
 #?(:clj (defn compile-file
 
-  ""
+  "Compiles the given `ctx` right directly to the given file `path`."
 
   [ctx ^String path]
 
@@ -144,7 +151,7 @@
 
 (defn decompile
 
-  ""
+  "Decompiles the given BinF `view` into a `ctx`."
 
 
   ([view]
@@ -165,7 +172,7 @@
 
 #?(:clj (defn decompile-file
 
-  ""
+  "Decompiles the file at `path` into a `ctx`."
 
 
   ([path]

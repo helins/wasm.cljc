@@ -715,7 +715,7 @@
 
 (def op-misc->f
 
-  "Map of **immediate to \"misc\" opcode (0xFC)** -> **reading function**."
+  "Map of **immediate** to \"misc\" opcode (0xFC)** -> **reading function**."
 
   {wasm.bin/memory-init memory-init'
    wasm.bin/data-drop   data-drop'

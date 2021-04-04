@@ -5,7 +5,8 @@
 
 (ns helins.wasm.bin
 
-  ""
+  "Soberly defines binary values described in the WASM binary specifications
+   such as opcodes."
 
   {:author "Adam Helinski"}
 
@@ -17,8 +18,13 @@
 
 (def opcode-main->opsym
 
-  ""
+  "Map of `binary value` to `Clojure symbol` corresponding to the \"non-terminal\"
+   symbols described in the WASM binary specification.
 
+   Only for opcodes which:
+ 
+   - Have any kind of immediate(s)
+   - Is not 0xFC (the \"misc\" opcode that leads to a second-level opcode"
   
   {0x00 'unreachable
    0x01 'nop
@@ -248,7 +254,8 @@
 
 (def opcode-misc->opsym
 
-  ""
+  "Map of `**immediate** to the [[misc]] opcode` to `Clojure symbols`, akin
+   to [[opcode-main->opsym]]."
 
   {0x00 'i32.trunc_sat_f32_s
    0x01 'i32.trunc_sat_f32_u
@@ -283,7 +290,7 @@
 
 (defn misc?
 
-  ""
+  "It this the [[misc]] opcode?"
 
   [opcode]
 
@@ -1056,7 +1063,7 @@
 
 (defn section-id?
 
-  ""
+  "Is this a valid section id?"
 
   [section-id]
 
@@ -1101,15 +1108,9 @@
 
 
 (def magic
-
-  ""
-
-  0x6d736100)
+     0x6d736100)
 
 
 
 (def version-1
-
-  ""
-
-  1)
+     1)
