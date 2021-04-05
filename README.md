@@ -1,8 +1,8 @@
 # WASM 1.1 compiler / decompiler
 
-[![Clojars](https://img.shields.io/clojars/v/helins/wasm.svg)](https://clojars.org/helins/wasm)
+[![Clojars](https://img.shields.io/clojars/v/io.helins/wasm.svg)](https://clojars.org/io.helins/wasm)
 
-[![Cljdoc](https://cljdoc.org/badge/helins/wasm)](https://cljdoc.org/d/helins/wasm)
+[![Cljdoc](https://cljdoc.org/badge/io.helins/wasm)](https://cljdoc.org/d/io.helins/wasm)
 
 ![CircleCI](https://circleci.com/gh/helins/wasm.cljc.svg?style=shield)
 
@@ -108,7 +108,7 @@ from Clojurescript:
 
 ## Installation
 
-After adding [this library](https://clojars.org/helins/wasm) to dependencies,
+After adding [this library](https://clojars.org/io.thelins/wasm) to dependencies,
 one must also manually add Malli. As of today, an unreleased version is needed:
 
 ```clojure
@@ -121,7 +121,7 @@ one must also manually add Malli. As of today, an unreleased version is needed:
 
 In summary:
 
-| Namespace | Does |
+| Namespace | About |
 |---|---|
 | helins.wasm | Compiling and decompiling WASM modules |
 | helins.wasm.bin | Defines all simple binary values such as opcodes |
@@ -181,12 +181,12 @@ an example).
 
 ## Sections
 
-In binaries, most WASM sections in the binary format are essentially a list of items,
+In the binary format, most WASM sections format are essentially a list of items,
 such as the data section being a list of data segments. Other parts of the program,
 such as instructions operating on such a data segment, refer to an item by
 its index in that list.
 
-Howewer, working with a list of items and addressing them by indices is hard work,
+Howewer, working with lists of items and addressing those items by index is hard work,
 especially maintaining those references when things are removed, added, and
 move around. Hence, those sections are described by sorted maps of `index` ->
 `item`. They can be sparse and during compilation, indices (references) will be
