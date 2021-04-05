@@ -7,7 +7,7 @@
   {:exec-args  {:artifact  "compiled/jvm/release.jar"
                 :installer :remote}
    :exec-fn    deps-deploy.deps-deploy/deploy
-   :extra-deps {deps-deploy/deps-deploy {:mvn/version "0.1.5"}}}
+   :extra-deps {slipset/deps-deploy {:mvn/version "0.1.5"}}}
 
   :dev
   {:extra-paths ["src/dev"
@@ -23,10 +23,14 @@
   {:exec-args  {:artifact  "compiled/jvm/release.jar"
                 :installer :local}
    :exec-fn    deps-deploy.deps-deploy/deploy
-   :extra-deps {deps-deploy/deps-deploy {:mvn/version "0.1.5"}}}
+   :extra-deps {slipset/deps-deploy {:mvn/version "0.1.5"}}}
 
   :kaocha
   {:extra-deps {lambdaisland/kaocha {:mvn/version "1.0.829"}}}
+
+  :malli
+  {:extra-deps {metosin/malli  {:git/url "https://github.com/metosin/malli"
+                                :sha     "0e5e3f1ee9bc8d6ea60dc16e59abf9cc295ab510"}}}
 
   :test
   {:extra-paths ["src/test"]}
@@ -37,8 +41,7 @@
 
  :deps
  {io.helins/binf {:mvn/version "1.1.0-beta0"}
-  metosin/malli  {:git/url "https://github.com/metosin/malli"
-                  :sha     "0e5e3f1ee9bc8d6ea60dc16e59abf9cc295ab510"}}
+  metosin/malli  {:mvn/version "0.4.0"}}
 
  :paths
  ["src/main"]}

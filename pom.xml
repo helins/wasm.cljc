@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.helins</groupId>
   <artifactId>wasm</artifactId>
-  <version>0.0.0-alpha0</version>
+  <version>0.0.0-alpha1</version>
   <name>WASM</name>
   <description>WebAssembly compiler and decompiler in Clojure/script</description>
   <url>https://github.com/helins/wasm.cljc</url>
@@ -36,6 +36,11 @@
       <groupId>io.helins</groupId>
       <artifactId>binf</artifactId>
       <version>1.1.0-beta0</version>
+    </dependency>
+    <dependency>
+      <groupId>metosin</groupId>
+      <artifactId>malli</artifactId>
+      <version>0.4.0</version>
     </dependency>
   </dependencies>
   <build>

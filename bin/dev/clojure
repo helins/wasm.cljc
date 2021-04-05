@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
 
-clj -M:dev:test"$@"
+clj -M:dev:malli:test"$@"

@@ -4,8 +4,6 @@
 
 [![Cljdoc](https://cljdoc.org/badge/io.helins/wasm)](https://cljdoc.org/d/io.helins/wasm)
 
-![CircleCI](https://circleci.com/gh/helins/wasm.cljc.svg?style=shield)
-
 Compatible with Clojurescript.
 
 A novel library for the WebAssembly (WASM) ecosystem:
@@ -115,6 +113,9 @@ one must also manually add Malli. As of today, an unreleased version is needed:
 {metosin/malli {:git/url "https://github.com/metosin/malli"
                 :sha     "0e5e3f1ee9bc8d6ea60dc16e59abf9cc295ab510"}}
 ```
+
+The imported version (lastest release), does not support generation of
+instructions (and hence, modules).
 
 
 ## Namespaces
