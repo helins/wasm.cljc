@@ -630,12 +630,13 @@
 	                                        :min -2147483648}]
                 :wasm/s64                 #?(:clj  int?
 	                                         :cljs [:fn
-	                               	           	  {:gen/gen binf.gen/i64}
-	                               	           	  #(and (instance? js/BigInt
-	                               	             	            	   %)
-	                               	                 	    (<= (js/BigInt. "-9223372036854775808")
-	                               	                 		    %
-	                               	                 	        (js/BigInt. "9223372036854775807")))])
+	                               	           	    {:error/message "Must be signed 64-bit BigInt"
+                                                     :gen/gen       binf.gen/i64}
+	                               	           	    #(and (= (type %)
+                                                             js/BigInt)
+	                               	                   	  (<= (js/BigInt "-9223372036854775808")
+                                                              %
+	                               	                   	      (js/BigInt "9223372036854775807")))])
                 :wasm/start               [:map
                                            :wasm/funcidx]
                 :wasm/startsec            :wasm/start
@@ -692,12 +693,12 @@
                                             :min 0}]
                 :wasm/u64                 #?(:clj  int?
 	                                         :cljs [:fn
-	                               	      	      {:gen/gen binf.gen/u64}
-	                               	      	      #(and (instance? js/BigInt
-	                               	      	   	     		   	   %)
-	                               	      			    (<= (js/BigInt. 0)
-	                               	      			 	    %
-	                               	      				    (js/BigInt. "18446744073709551615")))])
+	                               	      	        {:gen/gen binf.gen/u64}
+	                               	      	        #(and (= (type %)
+                                                             js/BigInt)
+	                               	      		  	      (<= (js/BigInt 0)
+	                               	      		  	 	      %
+	                               	      		  		      (js/BigInt "18446744073709551615")))])
                 :wasm/valtype             [:or
                                            :wasm/numtype
                                            :wasm/reftype]
