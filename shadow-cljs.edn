@@ -1,7 +1,7 @@
 {:builds
  {:dev
   {:asset-path "/js"
-   :modules    {:main {:entries [helins.wasmeta.dev]}}
+   :modules    {:main {:entries [helins.wasm.dev]}}
    :output-dir "cljs/js"
    :target     :browser}
 
@@ -14,7 +14,8 @@
  {:alias [:cljs]}
 
  :dev-http
- {8000 "cljs"}
+ {8000 ["cljs"
+        "src/wasm"]}
  
  :nrepl
  {:port 14563}}

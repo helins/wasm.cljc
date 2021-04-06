@@ -20,6 +20,7 @@
             [helins.wasm            :as wasm]
             [helins.wasm.bin        :as wasm.bin]
             [helins.wasm.count      :as wasm.count]
+            [helins.wasm.example]
             [helins.wasm.ir         :as wasm.ir]
             [helins.wasm.read       :as wasm.read]
             [helins.wasm.schema     :as wasm.schema]
@@ -61,6 +62,16 @@
       ;clojure.pprint/pprint
       )
 
+  
+  (-> (js/fetch "test.wasm")
+      (.then (fn [resp]
+               (.arrayBuffer resp)))
+      (.then (fn [array-buffer]
+               (-> array-buffer
+                   binf/view
+                   wasm/prepare-view
+                   wasm/decompile
+                   clojure.pprint/pprint))))
 
   )
 
