@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.helins</groupId>
   <artifactId>wasm</artifactId>
-  <version>0.0.0-alpha1</version>
+  <version>0.0.0-alpha2</version>
   <name>WASM</name>
   <description>WebAssembly compiler and decompiler in Clojure/script</description>
   <url>https://github.com/helins/wasm.cljc</url>

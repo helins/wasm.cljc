@@ -12,9 +12,15 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Malli schemas related to js/BigInt
-
 ### Removed
+
+
+
+## [0.0.0-alpha2] - 2021-04-06
+
+### Fixed
+
+- Malli schemas related to js/BigInt
 
 
 
@@ -38,5 +44,6 @@ All notable changes to this project will be documented in this file.
 
 
 [Unreleased]: https://github.com/helins/wasm.cljc/compare/0.0.0-alpha1...HEAD
+[0.0.0-alpha1]: https://github.com/helins/wasm.cljc/compare/0.0.0-alpha1...0.0.0-alpha2
 [0.0.0-alpha1]: https://github.com/helins/wasm.cljc/compare/0.0.0-alpha0...0.0.0-alpha1
 [0.0.0-alpha0]: https://github.com/helins/wasm.cljc/tree/0.0.0-alpha0
