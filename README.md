@@ -41,7 +41,7 @@ proposals](https://github.com/WebAssembly/proposals).
 
 ## Documentation
 
-The [full API is available on Cljdoc](https://cljdoc.org/d/helins/wasm).
+The [full API is available on Cljdoc](https://cljdoc.org/d/io.helins/wasm).
 
 Namespaces follow one naming scheme. In the [WASM binary specification](https://webassembly.github.io/spec/core/binary/index.html),
 any item is defined by a so-called "non-terminal symbol". For instance, the
@@ -54,6 +54,12 @@ docstrings in Cljdoc since it is best to read and follow the WASM specification.
 Namespaces mimick exactly that specification for that reason.
 
 All other names, such as higher-level abstractions, are fully described on Cljdoc.
+
+
+## Examples
+
+Working examples are available in the [helins.wasm.example](../main/src/example/helins/wasm/example.cljc)
+namespace.
 
 
 ## Usage, brief overview
@@ -83,7 +89,8 @@ In very, very short:
 ;; Of course, we can recompile it:
 ;;
 (def compiled
-     (wasm/compile-file decompiled))
+     (wasm/compile-file decompiled
+                        "/tmp/test2.wasm"))
 ```
 
 Working with files is the only JVM-exclusive utility in this library.
