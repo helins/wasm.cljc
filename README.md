@@ -103,11 +103,31 @@ from Clojurescript:
 (require '[helins.binf :as binf])
 
 
-(.then (js/fetch "")
-       (fn [array-buffer]
-         (-> array-buffer
-             binf/view
-             wasm/decompile)))
+;; Storage for our decompiled WASM program
+;;
+(def *decompiled
+     (atom nil))
+
+
+;; Fetching and decompiling WASM source from somewhere
+;;
+(-> (js/fetch "some_url/some_module.wasm")
+    (.then (fn [resp]
+             (.arrayBuffer resp)))
+    (.then (fn [array-buffer]
+             (reset! *decompiled
+                     (-> array-buffer
+                         ;; Wrapping buffer in a BinF view and preparing it (will set the right endianess)
+                         binf/view
+                         wasm/prepare-view
+                         ;; Decompiling
+                         wasm/decompile)))))
+
+
+;; And later, we can just as well recompile it to a BinF view
+;;
+(def compiled
+     (wasm/compile @*decompiled))
 ```
 
 
