@@ -4,9 +4,7 @@
 
 [![Cljdoc](https://cljdoc.org/badge/io.helins/wasm)](https://cljdoc.org/d/io.helins/wasm)
 
-Compatible with Clojurescript.
-
-A novel library for the WebAssembly (WASM) ecosystem:
+A novel Clojure/script library for the WebAssembly (WASM) ecosystem:
 
 - WASM programs as simple immutable Clojure data structures
 - Decompiling and compiling WASM binaries
@@ -17,8 +15,16 @@ A novel library for the WebAssembly (WASM) ecosystem:
 - Fully described using [Malli](https://github.com/metosin/malli)
 - Robust, backed up by generative testing
 
+Supported platforms:
+
+- [Babashka](https://github.com/babashka/babashka) >= v0.3.5 (besides `helins.wasm.schema` namespace)
+- Browser
+- JVM
+- NodeJS
+
 All binary processing relies on the powerful
 [BinF](https://github.com/helins/binf.cljc) library.
+
 
 ## Status
 
@@ -266,6 +272,19 @@ and working excusively with those native languages.
 Hence, this library is one of its kind by offering a powerful interactive
 environment, on the JVM as well as in the browser, and leveraging Clojure
 idioms which are excellent for analyzing WASM code.
+
+
+## Babashka
+
+Currently, [Babashka](https://github.com/babashka/babashka) does not support
+Malli. Hence, the `helins.wasm.schema` namespace is not supported. However,
+compilation, decompilation, and everything else work.
+
+[This very simple script](../main/src/babashka/decompile.clj) shows how to
+decompile a WASM file in the terminal using barely a few lines.
+
+This opens the possibility for quickly developing WASM dev tools that start up
+fast and, for instance, output some structural information about given binaries.
 
 
 ## Running tests
