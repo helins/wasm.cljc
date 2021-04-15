@@ -1511,12 +1511,8 @@
                                           view]}]
             (if (= id
                    wasm.bin/section-id-custom)
-              (update ctx-2
-                      :wasm.bin/customsec
-                      (fnil conj
-                            [])
-                      (customsec' ctx-2
-                                  view))
+              (customsec' ctx-2
+                          view)
               ((condp =
                       id
                   wasm.bin/section-id-type      typesec'
